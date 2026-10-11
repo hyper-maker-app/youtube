@@ -547,5 +547,6 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Yapılan İş / Sonuç**: Created a 120-word six-beat Gallipoli script and generated the narration and six accepted keyframes. Flow repeatedly returned PUBLIC_ERROR_UNUSUAL_ACTIVITY while regenerating the missing kf02; no video blocks were completed, and a resumable handoff.md was written.
 - **İptal / Kabul Gerekçesi**: Flow declined the HTTP-minted reCAPTCHA assessment for this session, so the selected provider could not complete image generation. Automatic provider substitution would violate the Flow-only requirement.
 - **Kalıcı Kural / Ders**: Keep FLOW_RECAPTCHA=http. On PUBLIC_ERROR_UNUSUAL_ACTIVITY, stop repeated submissions, preserve the exact run and prompts, write a handoff, and resume only after Google Flow accepts requests again.
+- **Tekrar Testi (2026-10-11)**: A new 15-scene, 60-second Flow-only run produced a 66.77-second narration and a topic-specific Gallipoli screenplay without calling Vertex. Flow refused the first environment reference with the same PUBLIC_ERROR_UNUSUAL_ACTIVITY before any keyframe or video was created. The browser token diagnostic succeeded, but the configured HTTP assessment was still rejected. The production remains incomplete; keep this rejection classified as an account/session assessment failure, not a video-model quality result.
 
 ---

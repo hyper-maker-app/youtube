@@ -1200,6 +1200,29 @@ async def admit_keyframe(
     return verdict
 
 
+def write_flow_asset_handoff(ctx: RunContext, entry: Any, output_path: Path, error: Exception) -> Path:
+    """Save an exact retry contract when Flow refuses a roster/keyframe asset."""
+    text = str(error).casefold()
+    unusual = any(token in text for token in (
+        "public_error_unusual_activity", "assessment refused", "unusual activity detected"
+    ))
+    category = "PUBLIC_ERROR_UNUSUAL_ACTIVITY" if unusual else "Flow asset-generation failure"
+    handoff = ctx.out_dir / "handoff.md"
+    resume = f'python main.py --resume "{ctx.out_dir}" --video playwright_flow --image playwright_flow'
+    handoff.write_text(
+        "\n".join([
+            "# Google Flow asset handoff", "",
+            f"Generation stopped on {category}; no alternative provider or still-image fallback was used.",
+            "Resolve the Flow session issue, then resume the same run to reuse accepted assets.", "",
+            f"- Asset: `{entry.id}`", f"- Output: `{output_path}`",
+            f"- Aspect: `{entry.aspect_ratio}`", f"- Run: `{ctx.out_dir}`",
+            "- Prompt:", "", str(entry.prompt), "", "## Resume", "", f"`{resume}`", "",
+        ]),
+        encoding="utf-8",
+    )
+    return handoff
+
+
 async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]) -> dict[str, Any]:
     """Generate only missing/invalid assets; retain verified accepted artifacts on resume."""
     reusable_voice = _reusable_narration(ctx, script, state)
@@ -1265,7 +1288,15 @@ async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]
                 path = ctx.out_dir / "roster" / f"{entry.id}.png"
                 if not path.is_file() or path.stat().st_size <= 0:
                     print(f"    [roster] Hazırlanıyor ({index}/{total_sheets}): {entry.id}...", flush=True)
-                    await image.generate_reference_sheet(entry.prompt, path, index, entry.aspect_ratio)
+                    try:
+                        await image.generate_reference_sheet(entry.prompt, path, index, entry.aspect_ratio)
+                    except Exception as exc:
+                        if ctx.image_provider.casefold().replace("-", "_") in {"playwright_flow", "playwrightflow"}:
+                            handoff = write_flow_asset_handoff(ctx, entry, path, exc)
+                            raise ProviderHandoffPending(
+                                f"Google Flow stopped asset generation; handoff written to {handoff}", handoff
+                            ) from exc
+                        raise
                 return entry.id, str(path)
             sheet_results: list[tuple[str, str]] = []
             for i, e in missing_entries:

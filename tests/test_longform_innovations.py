@@ -104,6 +104,43 @@ def test_dynamic_screenplay_generation_and_flexible_durations():
     assert len(a_roll_shots) >= 1
 
 
+def test_gallipoli_one_minute_flow_fallback_has_fifteen_topic_specific_native_shots():
+    """A one-minute Flow plan must stay on Gallipoli facts and 4-second clips."""
+    import pipeline
+
+    timeline = pipeline.provider_timeline(blocks=15)
+    script = generate_dynamic_screenplay(
+        "1915 The Battle of Gallipoli", timeline=timeline, target_blocks=15
+    )
+
+    assert len(script.beats) == len(script.shots) == 15
+    assert script.timeline.block_count == 15
+    assert script.timeline.total_duration == 60.0
+    assert all(shot.duration == 4.0 for shot in script.shots)
+    assert len({shot.location_id for shot in script.shots}) == 15
+    assert "stonework" not in " ".join(beat.text for beat in script.beats).casefold()
+    assert any("Nusret" in beat.text for beat in script.beats)
+    assert any("Bouvet" in beat.text for beat in script.beats)
+    assert any("25 April" in beat.text for beat in script.beats)
+
+
+def test_flow_roster_assessment_failure_writes_sanitized_resume_handoff(tmp_path):
+    from types import SimpleNamespace
+    from pipeline import write_flow_asset_handoff
+
+    ctx = SimpleNamespace(out_dir=tmp_path)
+    entry = SimpleNamespace(id="environment_test", aspect_ratio="16:9", prompt="historical shoreline")
+    handoff = write_flow_asset_handoff(
+        ctx, entry, tmp_path / "roster" / "environment_test.png",
+        RuntimeError("PUBLIC_ERROR_UNUSUAL_ACTIVITY account acct-private"),
+    )
+    body = handoff.read_text(encoding="utf-8")
+    assert "PUBLIC_ERROR_UNUSUAL_ACTIVITY" in body
+    assert "acct-private" not in body
+    assert "--resume" in body
+    assert "historical shoreline" in body
+
+
 def test_lip_sync_service_and_graceful_fallback():
     """Verify LipSyncService engine detection and seamless Ken Burns fallback."""
     service = LipSyncService("live_portrait")

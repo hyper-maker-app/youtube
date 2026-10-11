@@ -193,7 +193,12 @@ def main(argv: list[str] | None = None) -> int:
         })
     print(f"topic   : {topic}")
     run_mode_label = f"test-blocks={args.test_blocks}" if args.test_blocks is not None else "full"
-    timeline_label = "persisted" if args.resume or args.test_blocks is not None else "provisional; voice will lock 6-13 blocks"
+    if args.resume or args.test_blocks is not None:
+        timeline_label = "persisted"
+    elif args.format == "longform":
+        timeline_label = "provisional longform plan; narration sets the final footage duration"
+    else:
+        timeline_label = "provisional; voice will lock 6-13 blocks"
     print(f"timeline: {timeline.block_count} x {timeline.native_clip_duration:.1f}s = {timeline.total_duration:.1f}s footage + {config.TAIL_HOLD:.1f}s tail ({run_mode_label}; {timeline_label})")
     print(f"mode    : {profile_mode.name}")
     print(f"providers: llm={args.llm or config.LLM_PROVIDER}, image={args.image or config.IMAGE_PROVIDER}, voice={args.voice or config.VOICE_PROVIDER}, video={args.video or config.VIDEO_PROVIDER}")
