@@ -560,3 +560,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: When rendering longform historical stamps, add an explicit stamp for eras without witness profiles and add a regression test for the topic.
 
 ---
+
+### [ADR-052] Longform Flow prompts retain era-specific evidence and motion
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Remove stale Flow prompt truncation, prevent generic Antiquity evidence in 1915 scenes, and improve historical human-action prompts.
+- **Yapılan İş / Sonuç**: Added World War I truth-sheet facts and materials, preserved authored host proof, removed Vertex's 900-character sanitizer from Playwright Flow, separated longform text restrictions, and removed the blanket ban on historical people in B-roll.
+- **İptal / Kabul Gerekçesi**: Flow is a separate provider with no Vertex 900-character contract; period-specific proof and people performing authored actions improve historical credibility; irrelevant chemical-symbol bans add prompt noise.
+- **Kalıcı Kural / Ders**: Keep sanitizers provider-specific; bind historical prompts to a verified era; only prohibit visible people when the authored scene requires an empty environment.
+
+---

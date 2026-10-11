@@ -11,6 +11,11 @@ from services.playwright_flow_client import PlaywrightFlowClient
 logger = logging.getLogger(__name__)
 
 
+def sanitize_flow_prompt(prompt: str) -> str:
+    """Normalize whitespace without applying Vertex-specific prompt truncation."""
+    return " ".join(prompt.split())
+
+
 class PlaywrightFlowVideoProvider(BaseVideoProvider):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -35,7 +40,9 @@ class PlaywrightFlowVideoProvider(BaseVideoProvider):
         duration: float = 4.0,
         reference_images: list[Path] | None = None,
     ) -> Path:
-        clean_prompt = VertexVeoProvider.sanitize_prompt(motion_prompt)
+        # Flow has its own prompt budget and is not subject to Vertex's 900-char cap.
+        # Keep the full authored camera/action/lighting contract intact.
+        clean_prompt = sanitize_flow_prompt(motion_prompt)
         aspect_ratio = "16:9" if getattr(config, "LONGFORM_MODE", False) else "9:16"
         logger.info(f"Generating video with Playwright CDP Flow ({aspect_ratio}): {clean_prompt[:60]}...")
         try:

@@ -294,7 +294,8 @@ def generate_dynamic_screenplay(
         if is_a_roll:
             start_prompt = compile_character_shot_prompt(character, scene_desc, role_info, aspect_ratio, era=era)
             start_prompt = apply_clothing_lock(start_prompt, era=era)
-            start_prompt = apply_ancient_equipment_rule(start_prompt)
+            if era != "world_war_i":
+                start_prompt = apply_ancient_equipment_rule(start_prompt)
             end_prompt = start_prompt
             motion_prompt = apply_movement_lock(str(curated_entry.get("action")) if curated_entry and curated_entry.get("action") else (
                 f"{character.name} faces the camera in documentary style with calm focused expression and closed mouth, gesturing toward {mat_text} "
@@ -304,7 +305,8 @@ def generate_dynamic_screenplay(
             subj_desc = character.anchor_description(era=era)
             vis_domain = "character"
             dom_event = f"{character.name} addresses the viewer on location at {sheet.location_name}"
-            proof_str = f"{character.name}'s brass temporal chronometer and {mat_text}"
+            authored_proof = curated_entry.get("proof") if curated_entry else None
+            proof_str = f"{character.name}'s brass temporal chronometer; {authored_proof or mat_text}"
             cont_anchor = f"{character.name} in {era} wardrobe"
             scale = "medium"
         elif is_witness:
@@ -312,7 +314,8 @@ def generate_dynamic_screenplay(
             witness = w1 if slot == 1 else w2
             start_prompt = compile_witness_shot_prompt(witness, scene_desc, aspect_ratio=aspect_ratio, era=era)
             start_prompt = apply_clothing_lock(start_prompt, era=era)
-            start_prompt = apply_ancient_equipment_rule(start_prompt)
+            if era != "world_war_i":
+                start_prompt = apply_ancient_equipment_rule(start_prompt)
             end_prompt = start_prompt
             motion_prompt = apply_movement_lock(
                 f"{witness['name']} looks toward the camera with period gravitas, thoughtful neutral expression and closed mouth in documentary interview framing, "

@@ -204,6 +204,11 @@ _ANTI_TEXT_SHIELD = (
     "geometric forms only."
 )
 
+_LONGFORM_TEXT_SHIELD = (
+    "No readable text, labels, generated captions, diagrams, graphics, logos, or watermarks. "
+    "Keep maps and documents visually period-authentic with markings too small to read."
+)
+
 _ROSTER_ANTI_TEXT_SUFFIX = (
     " ABSOLUTE PROHIBITION: This reference sheet must contain ZERO text, ZERO letters, "
     "ZERO numbers, ZERO chemical symbols, ZERO labels, ZERO annotations, ZERO watermarks "
@@ -1086,7 +1091,7 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
                 f"[Style & Render]: Photorealistic 8k cinematic documentary B-roll frame, National Geographic and BBC Earth 35mm film aesthetic, "
                 f"anamorphic lens optics, authentic atmospheric volumetric lighting, hyper-detailed textures, authentic historical weathering, "
                 f"natural dust motes, 16:9 widescreen composition, {lighting_style}. "
-                "ABSOLUTELY NO people, NO human figures, NO modern archaeologists, pure architectural and archaeological environment only. "
+                "Include historically appropriate people only when the authored scene calls for them; no modern visitors or archaeologists. "
                 "ZERO CGI plastic sheen, ZERO 3D mannequin look, ZERO artificial graphics."
             )
             speech_directive = "Pure environmental B-roll: ABSOLUTELY NO people or human figures."
@@ -1104,7 +1109,7 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
         directives_part = (
             f"[Directives]: {_marker_instruction(shot)} Important proof in {shot.push_quadrant} when applicable. "
             f"Reserve the lower-third caption safe zone. {raw} Single continuous cinematic widescreen scene only, no split-screen, no side-by-side panels. "
-            f"{_ANTI_TEXT_SHIELD} {speech_directive} No dialogue subtitles, text overlays, channel watermark, UI, or HUD."
+            f"{_LONGFORM_TEXT_SHIELD} {speech_directive} No dialogue subtitles, text overlays, channel watermark, UI, or HUD."
         )
         parts = (style_part, framing_part, state_part, env_part, directives_part)
     else:
@@ -1151,7 +1156,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
     phase = _PHASE_DIRECTION.get(shot.journey_phase, _PHASE_DIRECTION["explore"])
     framing = _PHASE_FRAMING.get(shot.journey_phase, _PHASE_FRAMING["explore"])
     physics_verbs = (
-        "natural subtle documentary movement, authentic fabric drape, atmospheric dust motes, and steady camera float"
+        "natural continuous physical action, authentic fabric and water motion, environmental movement grounded in the shot"
         if is_longform
         else _DOMAIN_PHYSICS_VERBS.get(shot.normalized_domain, _DOMAIN_PHYSICS_VERBS["anatomical"])
     )
@@ -1161,6 +1166,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
         else _DOMAIN_AUDIO_CUES.get(shot.normalized_domain, _DOMAIN_AUDIO_CUES["anatomical"])
     )
     raw_motion = _canonicalize_model_brief(shot.motion_prompt, mode=mode)
+    text_shield = _LONGFORM_TEXT_SHIELD if is_longform else _ANTI_TEXT_SHIELD
     spatial_clause = _spatial_vector_clause(shot, mode)
     role_clause = _role_decoupling_clause(shot)
     scale_anchor = _incident_scale_reference_clause(shot, mode)
@@ -1243,8 +1249,8 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Scene & Motion]: One continuous {shot.duration:.1f}-second cinematic macro push-in. Horizontal 16:9 widescreen framing. Camera accelerates smoothly toward {shot.detail_target or shot.subject_id}, {boundary_desc} {axis_desc}. Zero jump cuts, no flashing.",
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Transition from {shot.entry_state} to {shot.exit_state}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_motion}",
-                f"[Style & Audio]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics. Audio: {audio_motion}.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {_ANTI_TEXT_SHIELD} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1252,7 +1258,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Transition from {shot.entry_state} to {shot.exit_state}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_motion}",
                 f"[Style & Audio]: Zack D. Films 3D documentary animation style, Blender Cycles render aesthetic. Audio: {audio_motion}.",
-                f"[Directives]: {_marker_instruction(shot)} Keep lower-middle caption-safe space clear. {raw_motion}{spatial_clause}{role_clause} {_ANTI_TEXT_SHIELD} Characters have closed or neutral mouths. No dialogue, lip-sync, text, generated captions, logos, watermark, UI, or HUD. Instead of any burst or spark, plain physical structural failure only; no light flash, debris shower, or pyrotechnics.",
+                f"[Directives]: {_marker_instruction(shot)} Keep lower-middle caption-safe space clear. {raw_motion}{spatial_clause}{role_clause} {text_shield} Characters have closed or neutral mouths. No dialogue, lip-sync, text, generated captions, logos, watermark, UI, or HUD. Instead of any burst or spark, plain physical structural failure only; no light flash, debris shower, or pyrotechnics.",
             )
     elif is_pull_out:
         is_mech = mode.name == "mechanical" or shot.normalized_domain in {"mechanical", "physics", "engineering"}
@@ -1267,8 +1273,8 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Scene & Motion]: Continuous {shot.duration:.1f}-second cinematic pull-back reveal. Horizontal 16:9 widescreen framing. Camera accelerates backward along the optical axis, pulling out from {target_struct} {boundary_phrase} to settle into a {shot.scale} shot of {revealed_subject}. {interp_phrase} Zero jump cuts, no flashing.",
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_pull}",
-                f"[Style & Audio]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics. Audio: {audio_pull}.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {_ANTI_TEXT_SHIELD} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1276,10 +1282,12 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_pull}",
                 f"[Style & Audio]: Zack D. Films 3D documentary animation style, Blender Cycles render aesthetic. Audio: {audio_pull}.",
-                f"[Directives]: {_marker_instruction(shot)} Keep lower-middle caption-safe space clear. {raw_motion}{spatial_clause}{role_clause} {_ANTI_TEXT_SHIELD} Characters have closed or neutral mouths. No dialogue, lip-sync, text, generated captions, logos, watermark, UI, or HUD. Instead of any burst or spark, plain physical structural failure only; no light flash, debris shower, or pyrotechnics.",
+                f"[Directives]: {_marker_instruction(shot)} Keep lower-middle caption-safe space clear. {raw_motion}{spatial_clause}{role_clause} {text_shield} Characters have closed or neutral mouths. No dialogue, lip-sync, text, generated captions, logos, watermark, UI, or HUD. Instead of any burst or spark, plain physical structural failure only; no light flash, debris shower, or pyrotechnics.",
             )
     else:
         lighting_clause = "5600K warm golden directional key, sharp cyan rim light"
+        if is_longform:
+            lighting_clause = "period-accurate natural light consistent with the authored scene and weather"
         if shot.journey_phase == "explore" and shot.normalized_domain == "mechanical":
             lighting_clause = f"{lighting_clause}, high-contrast studio rim light, tactile macro surface reflections"
         if is_longform:
@@ -1287,8 +1295,8 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Scene & Motion]: One coherent {shot.duration:.1f}-second 16:9 widescreen cinematic documentary scene. Framing: {framing}. Move from {shot.entry_state} to {shot.exit_state}.",
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {_environment_motion_clause(shot, mode, scale=shot.scale)} {lighting_clause}.",
-                f"[Style & Audio]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics. Audio: {audio_cue or 'atmospheric ambient room tone'}.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {_ANTI_TEXT_SHIELD} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1296,7 +1304,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show exactly one causal physical state change: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Begin in latent seed state, end in peak state so physical transformation is asymmetric. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {_environment_motion_clause(shot, mode, scale=shot.scale)} {lighting_clause}.",
                 f"[Style & Audio]: Zack D. Films 3D documentary animation style, Blender Cycles render aesthetic. Audio: {audio_cue}.",
-                f"[Directives]: {_marker_instruction(shot)} Keep lower-middle caption-safe space clear. {raw_motion}{spatial_clause}{role_clause} {_ANTI_TEXT_SHIELD} Characters have closed or neutral mouths. No dialogue, lip-sync, text, generated captions, logos, watermark, UI, or HUD. Instead of any burst or spark, plain physical structural failure only; no light flash, debris shower, or pyrotechnics.",
+                f"[Directives]: {_marker_instruction(shot)} Keep lower-middle caption-safe space clear. {raw_motion}{spatial_clause}{role_clause} {text_shield} Characters have closed or neutral mouths. No dialogue, lip-sync, text, generated captions, logos, watermark, UI, or HUD. Instead of any burst or spark, plain physical structural failure only; no light flash, debris shower, or pyrotechnics.",
             )
 
     motion = " ".join(part for part in parts if part)

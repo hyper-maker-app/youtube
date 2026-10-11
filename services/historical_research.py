@@ -52,6 +52,31 @@ class HistoricalTruthSheet:
 
 
 _CURATED_ERA_KNOWLEDGE: dict[str, dict[str, Any]] = {
+    "world_war_i": {
+        "civilization": "Ottoman Empire and Allied forces in the First World War",
+        "location_name": "Gallipoli Peninsula and the Dardanelles Strait",
+        "time_period": "1915",
+        "verified_dates": ["8 March 1915 (Nusret mine-laying at Erenköy Bay)", "18 March 1915 (Allied naval assault)", "25 April 1915 (landings on Gallipoli)"],
+        "architecture_and_materials": [
+            "early twentieth-century steel-hulled battleships, coal smoke, and period naval fittings",
+            "Ottoman coastal batteries with period artillery, earthworks, and stone revetments",
+            "wooden mine-laying vessel Nusret with hemp rigging and tethered contact mines",
+            "wool field coats, webbing, leather boots, and period steel helmets where historically appropriate",
+            "wooden landing boats, canvas field gear, paper charts, and brass navigation instruments",
+        ],
+        "sensory_details": [
+            "cold salt spray and coal smoke drifting across the narrow strait",
+            "distant naval guns echoing between the Gallipoli and Anatolian shores",
+            "wind pulling at wool coats as dark water moves around anchored mines",
+            "wood creaking, hemp lines tightening, and waves striking a small vessel's hull",
+        ],
+        "prohibited_anachronisms": ["modern ships", "radar", "radio communications equipment after the period shown", "modern camouflage", "nylon rope", "plastic", "modern aircraft", "modern labels or readable generated text"],
+        "verified_facts": [
+            "Nusret laid a line of 26 mines in Erenköy Bay on 8 March 1915.",
+            "The Allied fleet attacked the Dardanelles on 18 March 1915; Bouvet, Irresistible, and Ocean were lost, and Inflexible was damaged.",
+            "The failed naval passage was followed by Allied landings on the Gallipoli peninsula on 25 April 1915.",
+        ],
+    },
     "egyptian": {
         "civilization": "Ancient Egyptian Middle/New Kingdom",
         "location_name": "Faiyum Oasis & Hawara Plateau",

@@ -30,6 +30,9 @@ from services.mode_profile import EXPLORER, ANATOMICAL, INCIDENT
 from core.narrative_longform import LongformEngine
 from providers.base import BaseLLMProvider
 import editor
+from services.historical_research import get_historical_truth_sheet
+from services.screenplay import generate_dynamic_screenplay
+from providers.video.playwright_flow import sanitize_flow_prompt
 
 
 class MockLLM(BaseLLMProvider):
@@ -185,6 +188,37 @@ def test_screenplay_motion_prompt_compilation_explorer():
     assert "Zack D. Films 3D documentary animation style" not in video_prompt
     assert "glossy stylized 3d" not in video_prompt.lower()
     assert "Vertical 9:16" not in video_prompt
+    assert "chemical formula symbols" not in video_prompt.lower()
+    assert "5600K warm golden directional key" not in video_prompt
+    assert "atmospheric dust motes" not in video_prompt
+    keyframe_prompt = compile_keyframe_prompt(shot, "start", mode=EXPLORER).lower()
+    assert "chemical formula symbols" not in keyframe_prompt
+    assert "no modern visitors or archaeologists" in keyframe_prompt
+
+
+def test_flow_prompt_is_not_truncated_at_vertex_limit():
+    source = "A" * 950 + " authored camera tracks beside the ship under cold moonlight."
+    compiled = sanitize_flow_prompt(source)
+    assert len(compiled) > 900
+    assert compiled.endswith("authored camera tracks beside the ship under cold moonlight.")
+
+
+def test_world_war_one_truth_sheet_is_period_specific():
+    sheet = get_historical_truth_sheet("1915 The Battle of Gallipoli")
+    corpus = " ".join(sheet.architecture_and_materials + sheet.verified_facts + sheet.prohibited_anachronisms).casefold()
+    assert sheet.era == "world_war_i"
+    assert "1915" in sheet.time_period
+    assert "antiquity" not in corpus
+    assert "ashlar" not in corpus
+    assert "26 mines" in corpus
+    assert "nusret" in corpus
+
+
+def test_world_war_one_screenplay_keeps_authored_proof():
+    script = generate_dynamic_screenplay("1915 The Battle of Gallipoli", target_blocks=15)
+    assert "chronometer" in script.shots[0].proof_on_screen.lower()
+    assert "allied battleships" in script.shots[0].proof_on_screen.lower()
+    assert "nusret" in script.shots[1].proof_on_screen.lower()
 
 
 def test_canonicalize_model_brief_allows_realism_in_explorer():
