@@ -1363,11 +1363,31 @@ async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]
                         shutil.copy2(roster_direct, path)
                         generated = path
                     else:
-                        generated = Path(await image.generate_keyframe(
-                            candidate_prompt, path, seed + attempt - 1, kf_ratio,
-                            reference_image=previous, reference_images=roster_refs, is_hero=is_hero,
-                            negative_prompt=neg_prompt,
-                        ))
+                        try:
+                            generated = Path(await image.generate_keyframe(
+                                candidate_prompt, path, seed + attempt - 1, kf_ratio,
+                                reference_image=previous, reference_images=roster_refs, is_hero=is_hero,
+                                negative_prompt=neg_prompt,
+                            ))
+                        except Exception as exc:
+                            if (ctx.image_provider or config.IMAGE_PROVIDER or "").casefold().replace("-", "_") in {"playwright_flow", "playwrightflow"}:
+                                unusual = any(token in str(exc).casefold() for token in ("public_error_unusual_activity", "assessment refused", "unusual activity detected"))
+                                category = "PUBLIC_ERROR_UNUSUAL_ACTIVITY" if unusual else "Flow CLI/session failure"
+                                handoff_path = ctx.out_dir / "handoff.md"
+                                handoff_path.write_text(
+                                    "\n".join([
+                                        "# Google Flow keyframe handoff", "",
+                                        f"Generation stopped on {category}; no alternative image provider was used.",
+                                        "Wait for the Flow account/session cooldown, then complete the exact missing keyframe below and resume this run.", "",
+                                        f"## {key}", "", f"- Output: `{path}`", f"- Aspect: `{kf_ratio}`",
+                                        f"- Prompt: {candidate_prompt}",
+                                        f"- Reference frame: `{previous if previous else 'none'}`",
+                                        "- Roster references: " + ", ".join(f"`{item}`" for item in roster_refs),
+                                        "- Contract: no text, captions, logos, or watermarks.", "",
+                                    ]), encoding="utf-8",
+                                )
+                                raise ProviderHandoffPending(f"Google Flow keyframe generation stopped ({category}); handoff written to {handoff_path}", handoff_path) from exc
+                            raise
                     if not generated.is_file() or generated.stat().st_size <= 0:
                         raise RuntimeError(f"Image provider returned an empty keyframe for {key}")
                     verdict = await _admit(image, key, generated, previous)
@@ -1479,7 +1499,9 @@ async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]
     script = _lock_audio_driven_timeline(ctx, script, vo, state)
     vo_dur = float(vo.get("duration") or 0.0)
     blocks_count = script.timeline.block_count if script.timeline else len(script.shots)
-    print(f"    ✓ Ses üretildi: {vo_dur:.2f}s | Kilitlenen Blok: {blocks_count} blok x 4.0s")
+    duration_values = tuple(script.timeline.shot_durations) if script.timeline and script.timeline.shot_durations else tuple(shot.duration for shot in script.shots)
+    duration_summary = ", ".join(f"{value:g}s" for value in duration_values)
+    print(f"    ✓ Ses üretildi: {vo_dur:.2f}s | Kilitlenen Blok: {blocks_count} blok ({duration_summary})")
     if not script.frame_plan:
         script.frame_plan = build_frame_plan(script)
         script.editorial_plan = build_editorial_plan(script)
@@ -1509,7 +1531,9 @@ async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]
 
 def write_handoff(ctx: RunContext, script: Script, refs: dict[str, Any] | None = None, reason: str | None = None) -> Path:
     handoff = ctx.out_dir / "handoff.md"
-    lines = ["# Manual video handoff", "", reason or "Video generation requires manual Flow completion.", "", "Generate these exact 4-second vertical blocks, then resume the run.", ""]
+    is_longform = getattr(ctx, "format", "short") == "longform" or script.mode == "explorer" or getattr(config, "LONGFORM_MODE", False)
+    aspect = "16:9 landscape" if is_longform else "9:16 vertical"
+    lines = ["# Manual video handoff", "", reason or "Video generation requires manual Flow completion.", "", f"Generate these exact {aspect} blocks, then resume the run.", ""]
     frame_plan = script.frame_plan or build_frame_plan(script)
     for shot, frame in zip(script.shots, frame_plan):
         start_id, end_id = str(frame["start_frame_id"]), frame.get("end_frame_id")
@@ -1518,7 +1542,7 @@ def write_handoff(ctx: RunContext, script: Script, refs: dict[str, Any] | None =
         lines.extend([
             f"## blocks/block{shot.block:02d}.mp4", "",
             f"- Start frame: `{start}`", f"- End frame: `{end or 'none (first-frame-only terminal payoff)'}`", f"- Prompt: {optimize_for_flow(shot, mode=ctx.mode)['video_prompt']}",
-            f"- Contract: 9:16, {shot.duration:.1f} seconds, no text/captions/watermarks.", "",
+            f"- Contract: {aspect}, {shot.duration:.1f} seconds, no text/captions/watermarks.", "",
         ])
     handoff.write_text("\n".join(lines), encoding="utf-8")
     return handoff
@@ -1684,6 +1708,13 @@ async def phase4_motion(ctx: RunContext, script: Script, refs: dict[str, Any], s
                     else:
                         res = await provider.animate_block(*video_args)
                 except Exception as exc:
+                    flow_error = str(exc)
+                    unusual_activity = any(token in flow_error.casefold() for token in (
+                        "public_error_unusual_activity", "assessment refused", "unusual activity detected"
+                    ))
+                    if selected in {"playwright_flow", "playwrightflow"} and unusual_activity:
+                        handoff = write_handoff(ctx, script, refs, f"Google Flow rejected video generation because of an unusual-activity assessment: {flow_error}")
+                        raise ProviderHandoffPending("Google Flow requires its account cooldown before video generation can continue.", handoff) from exc
                     logger.warning(f"Animation failed for block {shot.block} ({exc}); retrying once...")
                     if flow_roster_refs:
                         res = await flow_method(*video_args, reference_images=flow_roster_refs)

@@ -539,3 +539,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Herhangi bir degisiklik sonrasinda audit_and_sync.py dogrulamasi yapilip hemen ardindan tum degisiklikler origin/main dalina otomatik commit ve push edilmelidir.
 
 ---
+
+### [ADR-050] Flow HTTP CAPTCHA Unusual Activity During Gallipoli Longform
+- **Tarih**: 2026-10-11
+- **Durum**: `ABANDONED`
+- **Talep / Fikir**: Produce a six-block 16:9 Gallipoli documentary using Google Flow for all images and videos, with no Vertex or paid Google Cloud requests.
+- **Yapılan İş / Sonuç**: Created a 120-word six-beat Gallipoli script and generated the narration and six accepted keyframes. Flow repeatedly returned PUBLIC_ERROR_UNUSUAL_ACTIVITY while regenerating the missing kf02; no video blocks were completed, and a resumable handoff.md was written.
+- **İptal / Kabul Gerekçesi**: Flow declined the HTTP-minted reCAPTCHA assessment for this session, so the selected provider could not complete image generation. Automatic provider substitution would violate the Flow-only requirement.
+- **Kalıcı Kural / Ders**: Keep FLOW_RECAPTCHA=http. On PUBLIC_ERROR_UNUSUAL_ACTIVITY, stop repeated submissions, preserve the exact run and prompts, write a handoff, and resume only after Google Flow accepts requests again.
+
+---

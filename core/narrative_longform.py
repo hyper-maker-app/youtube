@@ -136,6 +136,9 @@ class LongformEngine:
         )
 
     async def generate(self, topic: str) -> Script:
+        if self.llm.__class__.__module__.endswith(".vertex_gemini"):
+            print("  [LLM] Vertex AI disabled for this production; using the local evidence-bound Explorer screenplay engine.")
+            return self._fallback_script(topic)
         feedback = ""
         attempts = 3
         count = self.target_count

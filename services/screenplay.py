@@ -54,6 +54,64 @@ def generate_dynamic_screenplay(
     total_blocks = target_blocks or (timeline.block_count if timeline and timeline.block_count >= 5 else 8)
     
     curated = list(getattr(sheet, "curated_beats", []) or [])
+    if era == "world_war_i" and any(term in topic.casefold() for term in ("gallipoli", "canakkale", "çanakkale", "dardanelles")):
+        curated = [
+            {
+                "text": "At dawn on 18 March 1915, I watch Allied battleships enter the Dardanelles, expecting gunfire to open the route toward Constantinople.",
+                "role": "host_nova", "emphasis": ["18 March 1915", "Dardanelles"], "scale": "wide",
+                "scene": "Nova arrives at the Gallipoli shore at dawn, 18 March 1915; period wool field coat and brass chronometer on her left wrist, Allied battleships entering the distant strait.",
+                "proof": "Allied battleships entering the Dardanelles on 18 March 1915",
+                "action": "Nova steps against the coastal wind and unfolds a field map as the fleet advances; her coat and hair move naturally, camera glides from her shoulder toward the strait with strong layered parallax.",
+                "lighting": "golden dawn beneath heavy coastal cloud",
+                "location_id": "gallipoli_1915_shore_dawn",
+            },
+            {
+                "text": "The Ottoman minelayer Nusret laid twenty-six mines in Erenköy Bay on 8 March, hidden beneath a dark, choppy surface.",
+                "role": "narrator", "emphasis": ["Nusret", "twenty-six mines"], "scale": "medium",
+                "scene": "The Ottoman minelayer Nusret laying a line of twenty-six contact mines in Erenköy Bay on the night of 8 March 1915; authentic early twentieth-century vessel and naval crew.",
+                "proof": "Nusret and its mine-laying operation in Erenköy Bay",
+                "action": "Nusret moves through black water as sailors haul one contact mine over the rail and lower it with period rigging; rope strains, wake ripples, deck lamps flicker, and the camera tracks beside the hull.",
+                "lighting": "cold moonlight with warm deck lanterns",
+                "location_id": "erenkoy_bay_1915_night",
+            },
+            {
+                "text": "Ottoman coastal batteries answered with smoke and thunder as crews loaded shells, reset their guns, and fired across the strait.",
+                "role": "narrator", "emphasis": ["coastal batteries", "fired"], "scale": "close",
+                "scene": "Ottoman coastal artillery battery at the Dardanelles on 18 March 1915; period heavy gun, wool-uniformed artillery crew, sandbags and powder smoke.",
+                "proof": "An Ottoman artillery crew loading and firing a period coastal gun",
+                "action": "Crewmen haul a shell, load the breech, traverse the gun and fire once; recoil jolts the barrel as powder smoke rolls past, camera tracks laterally across sandbags to reveal depth.",
+                "lighting": "chiaroscuro daylight filtered through powder smoke",
+                "location_id": "dardanelles_battery_1915",
+            },
+            {
+                "text": "The French battleship Bouvet struck a mine and capsized; Irresistible and Ocean were also lost during the retreat.",
+                "role": "narrator", "emphasis": ["Bouvet", "mine"], "scale": "wide",
+                "scene": "The French battleship Bouvet in the Dardanelles on 18 March 1915, historically grounded pre-dreadnought silhouette on rough gray water, non-graphic depiction.",
+                "proof": "Bouvet listing and capsizing after striking a mine",
+                "action": "Bouvet takes a mine blast along the hull, lists sharply and capsizes as waves surge over the deck; distant ships alter course, camera tracks low across moving water with visible parallax.",
+                "lighting": "cold storm light with brief orange blast illumination",
+                "location_id": "dardanelles_bouvet_1915",
+            },
+            {
+                "text": "The Allied fleet withdrew. The failed sea passage did not end the campaign; troops landed on Gallipoli on 25 April 1915.",
+                "role": "narrator", "emphasis": ["withdrew", "25 April 1915"], "scale": "medium",
+                "scene": "A damaged Allied warship withdrawing from the Dardanelles after the failed naval assault; smoke trails past the rocky peninsula, authentic 1915 silhouettes.",
+                "proof": "The fleet turning away from the Dardanelles after the failed passage",
+                "action": "The damaged ship turns away under its own power as smaller period vessels maneuver through choppy water to assist; smoke drifts downwind while the camera lifts gently from the wake toward the retreating fleet.",
+                "lighting": "muted late-afternoon light with smoke haze",
+                "location_id": "dardanelles_retreat_1915",
+            },
+            {
+                "text": "The struggle shifted from sea to shore and endured months, leaving a legacy remembered in Turkey, Australia, New Zealand, and Britain.",
+                "role": "narrator", "emphasis": ["sea to shore", "legacy"], "scale": "wide",
+                "scene": "Nova walks the Gallipoli shoreline at evening, same face, chestnut hair, left-wrist brass chronometer and 1915 wool-and-linen camouflage; the Dardanelles opens behind her.",
+                "proof": "The Gallipoli peninsula and the sea-to-land campaign shift",
+                "action": "Nova folds her map and walks along the wind-beaten shore; waves cross the rocks and clouds move over the strait as the camera tracks backward to reveal the peninsula in layered depth.",
+                "lighting": "soft overcast evening light, reflective and restrained",
+                "location_id": "gallipoli_1915_shore_evening",
+                "character_reference": True,
+            },
+        ]
 
     # 1. Generate dynamic beats
     beats: list[Beat] = []
@@ -139,7 +197,11 @@ def generate_dynamic_screenplay(
     durations: list[float] = []
     for i in range(total_blocks):
         role_info = classify_shot_role(i + 1, total_blocks)
+        if (curated_role := curated_shot_map.get(i + 1)) is not None and curated_role.get("action"):
+            role_info = {"is_speaking_avatar": curated_role.get("role") == "host_nova", "is_witness_interview": False}
         if role_info.get("is_speaking_avatar") or role_info.get("is_witness_interview"):
+            durations.append(8.0)
+        elif (curated_role := curated_shot_map.get(i + 1)) is not None and curated_role.get("action"):
             durations.append(8.0)
         else:
             durations.append(6.0 if i % 2 == 0 else 8.0)
@@ -178,7 +240,10 @@ def generate_dynamic_screenplay(
             t_start, t_end = current_time, current_time + shot_dur
             current_time = t_end
 
+        curated_entry = curated_shot_map.get(block)
         role_info = classify_shot_role(block, total_blocks)
+        if curated_entry and curated_entry.get("action"):
+            role_info = {"is_speaking_avatar": curated_entry.get("role") == "host_nova", "is_witness_interview": False}
         is_witness = role_info.get("is_witness_interview", False)
         is_a_roll = role_info.get("is_speaking_avatar", False) and not is_witness
 
@@ -188,7 +253,6 @@ def generate_dynamic_screenplay(
         scene_desc = f"{sheet.location_name} highlighting {mat_text}"
         scale = "wide" if block % 2 == 1 else "close"
 
-        curated_entry = curated_shot_map.get(block)
         if curated_entry:
             if curated_entry.get("scene"):
                 scene_desc = curated_entry["scene"]
@@ -202,10 +266,10 @@ def generate_dynamic_screenplay(
             start_prompt = apply_clothing_lock(start_prompt, era=era)
             start_prompt = apply_ancient_equipment_rule(start_prompt)
             end_prompt = start_prompt
-            motion_prompt = apply_movement_lock(
+            motion_prompt = apply_movement_lock(str(curated_entry.get("action")) if curated_entry and curated_entry.get("action") else (
                 f"{character.name} faces the camera in documentary style with calm focused expression and closed mouth, gesturing toward {mat_text} "
                 "with steady cinematic camera and natural posture"
-            )
+            ))
             subj_id = f"host_{character.name.lower()}"
             subj_desc = character.anchor_description(era=era)
             vis_domain = "character"
@@ -242,18 +306,23 @@ def generate_dynamic_screenplay(
             from services.prompt_compiler import format_veo_cinematography_prompt
             motion_prompt = format_veo_cinematography_prompt(
                 shot_type=f"Cinematic {scale} documentary camera move",
-                subject_labor=f"slow camera glide revealing {proof_target}",
-                lighting="golden hour morning light with volumetric dust motes",
-                historical_atmosphere=f"authentic {era} sanctuary",
+                subject_labor=str(curated_entry.get("action")) if curated_entry and curated_entry.get("action") else f"slow camera glide revealing {proof_target}",
+                lighting=str(curated_entry.get("lighting")) if curated_entry and curated_entry.get("lighting") else "golden hour morning light with volumetric dust motes",
+                historical_atmosphere=f"historically accurate {era} documentary scene",
                 camera_vector="slow steady cinematic dolly in",
                 fps="24fps",
             )
-            subj_id = f"broll_shot_{block:02d}"
-            subj_desc = f"pure architectural environment of {sheet.location_name} (zero people)"
-            vis_domain = "archaeology"
-            dom_event = f"camera glides across {proof_target}"
+            subj_id = "host_nova" if curated_entry and curated_entry.get("character_reference") else f"broll_shot_{block:02d}"
+            if curated_entry and curated_entry.get("character_reference"):
+                subj_desc = character.anchor_description(era=era)
+                vis_domain = "character"
+                dom_event = f"{character.name} walks the Gallipoli shoreline as the campaign shifts from sea to land"
+            else:
+                subj_desc = f"historically grounded environment of {sheet.location_name}"
+                vis_domain = "archaeology"
+                dom_event = str(curated_entry.get("action")) if curated_entry and curated_entry.get("action") else f"camera glides across {proof_target}"
             proof_str = proof_target
-            cont_anchor = f"{sheet.location_name} {era} masonry"
+            cont_anchor = str(curated_entry.get("continuity_anchor")) if curated_entry and curated_entry.get("continuity_anchor") else f"{sheet.location_name} {era} setting"
 
         shots.append(Shot(
             block=block,
@@ -277,7 +346,7 @@ def generate_dynamic_screenplay(
             continuity_anchor=cont_anchor,
             detail_target=proof_target,
             quality_critical=["authentic lighting", "zero modern equipment", "full headroom" if (is_a_roll or is_witness) else "zero people in B-roll"],
-            location_id=f"site_{era}_{block:02d}",
+            location_id=str(curated_entry.get("location_id")) if curated_entry and curated_entry.get("location_id") else f"site_{era}_{block:02d}",
             endpoint_mode="first_only",
         ))
 

@@ -49,6 +49,10 @@ ERA_WARDROBE_CATALOG: dict[str, str] = {
         "expertly tailored stitched deerskin and soft woven flax tunic, natural sinew bindings, "
         "raw-edge earthy fur-trimmed shoulder mantle, prehistoric amber bead accents"
     ),
+    "world_war_i": (
+        "period-plausible ankle-length charcoal wool skirt, high-neck unbleached linen blouse, heavy olive wool field coat "
+        "with hand-stitched seams and small brass buttons, leather ankle boots; no synthetic fabrics or modern tactical gear"
+    ),
     "medieval": (
         "sturdy wool cotehardie dress with fitted sleeves, under-chemise of bleached flax, "
         "earthy moss-green traveler cloak with hood, understated leather girdle belt"
@@ -75,7 +79,7 @@ def detect_era(text: str) -> str:
         return "egyptian"
     if any(k in lower for k in ("rome", "roman", "greek", "greece", "athens", "pompeii", "caesar", "sparta", "olympia", "gladiator")):
         return "greco_roman"
-    if any(k in lower for k in ("ottoman", "istanbul", "constantinople", "sultan", "bazaar", "topkapi", "byzantine", "anatolia", "canakkale", "çanakkale", "gallipoli")):
+    if any(k in lower for k in ("ottoman", "istanbul", "constantinople", "sultan", "bazaar", "topkapi", "byzantine", "anatolia")):
         return "ottoman"
     if any(k in lower for k in ("medieval", "castle", "knight", "middle ages", "crusade", "viking", "feudal")):
         return "medieval"

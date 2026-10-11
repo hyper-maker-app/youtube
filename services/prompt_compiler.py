@@ -59,7 +59,10 @@ def apply_clothing_lock(prompt: str, era: str = "default") -> str:
     elif era_lower == "ottoman":
         fabric_anchor = "tailored wool kaftan over silk-woven entari with period sash and leather traveling footwear"
     elif era_lower == "world_war_i":
-        fabric_anchor = "1915-era heavy woven wool service tunic with period-correct cut, hand-stitched seams, brass buttons, puttees, and worn leather boots; no synthetic fabric or modern tactical gear"
+        if re.search(r"\bnova\b", cleaned, re.IGNORECASE):
+            fabric_anchor = "period-plausible ankle-length charcoal wool skirt, high-neck unbleached linen blouse, heavy olive wool field coat with hand-stitched seams and small brass buttons, leather ankle boots; no synthetic fabrics or modern tactical gear"
+        else:
+            fabric_anchor = "1915-era heavy woven wool service tunic with period-correct cut, hand-stitched seams, brass buttons, puttees, and worn leather boots; no synthetic fabric or modern tactical gear"
     else:
         fabric_anchor = "authentic hand-woven linen tunic with natural vegetable-dye threading and leather fastenings"
 
