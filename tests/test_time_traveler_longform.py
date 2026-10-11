@@ -225,6 +225,11 @@ def test_world_war_one_screenplay_keeps_authored_proof():
     assert "nusret" in script.shots[1].proof_on_screen.lower()
     assert "sailors haul a contact mine" in script.shots[1].start_image_prompt.lower()
     assert not any("zero people" in item for item in script.shots[1].quality_critical)
+    keyframe_prompt = compile_keyframe_prompt(script.shots[1], "start", mode=EXPLORER).lower()
+    motion_prompt = optimize_for_flow(script.shots[1], mode=EXPLORER)["video_prompt"].lower()
+    assert "mandatory authored human subjects" in keyframe_prompt
+    assert "clearly visible throughout" in motion_prompt
+    assert "object-only view" in motion_prompt
 
 
 def test_canonicalize_model_brief_allows_realism_in_explorer():
@@ -436,8 +441,8 @@ def test_explorer_28_beat_hybrid_nova_and_witness_storyboard():
         os.environ["LONGFORM_MODE"] = "false"
 
 
-def test_longform_captions_distinguish_nova_and_witness_and_include_era_stamp():
-    """Verify Longform ASS subtitles include EraStamp, BrandWatermark, and visually distinct NovaSub vs WitnessSub styles."""
+def test_longform_voiceover_captions_omit_speaker_labels_and_keep_era_stamp():
+    """Voiceover captions stay unlabelled and retain only useful historical context."""
     import captions
     from services.script_engine import annotate_words
 
@@ -468,15 +473,13 @@ def test_longform_captions_distinguish_nova_and_witness_and_include_era_stamp():
         is_longform=True,
     )
     assert "Style: NovaSub," in ass_text
-    assert "Style: WitnessSub," in ass_text
-    assert "Style: WitnessBadge," in ass_text
     assert "Style: EraStamp," in ass_text
-    assert "Style: BrandWatermark," in ass_text
     assert "HAWARA, EGYPT — 1840 BC" in ass_text
-    assert "TIME TRAVELER NOVA" in ass_text
-    assert "[NOVA]:" in ass_text
-    assert "[TANIK / WITNESS — ARCHITECT NEFERHOTEP]:" in ass_text
-    assert "HISTORICAL EYEWITNESS: ARCHITECT NEFERHOTEP (1840 BC)" in ass_text
+    assert "TIME TRAVELER NOVA" not in ass_text
+    assert "[NOVA]:" not in ass_text
+    assert "[TANIK / WITNESS" not in ass_text
+    assert "HISTORICAL EYEWITNESS:" not in ass_text
+    assert "arrived" in ass_text and "built" in ass_text
 
 
 def test_longform_gallipoli_era_stamp_uses_world_war_i_not_antiquity():

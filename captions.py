@@ -169,19 +169,14 @@ def _group_events(
     # 16:9 Longform mode: distinct styling and speaker tags for Nova vs Historical Witness
     speaker, label = _speaker_key(group[0])
     is_witness = (speaker == "witness")
-    style_name = "WitnessSub" if is_witness else "NovaSub"
+    # Longform dialogue is narrated voiceover, not on-camera character speech.
+    # Keep one caption treatment and never label the narrator as a visible speaker.
+    style_name = "NovaSub"
     # libass BGR colors:
     # Nova tag: cyan-gold (&H00FFD447), active word: warm cyan (&H00FFE680)
     # Witness tag: amber-orange (&H0047B8FF), active word: bright gold (&H0000D7FF)
-    if is_witness:
-        clean_lbl = re.sub(r"\s*\([^)]*\)", "", label).strip().upper()
-        tag = f"TANIK / WITNESS — {clean_lbl}" if clean_lbl and clean_lbl != "HISTORICAL WITNESS" else "WITNESS"
-        prefix = f"{{\\c&H0047B8FF&\\b1}}[{_ass_escape(tag)}]:{{\\rWitnessSub}} "
-        active_col = "&H0000D7FF&"
-    else:
-        host_label = _ass_escape(label.upper())
-        prefix = f"{{\\c&H00FFD447&\\b1}}[{host_label}]:{{\\rNovaSub}} "
-        active_col = "&H00FFE680&"
+    prefix = ""
+    active_col = "&H00FFE680&"
 
     shown_tokens: list[str] = []
     for w in group:
@@ -242,12 +237,7 @@ def build_ass(
 
     events: list[str] = []
     if longform:
-        # 1. Persistent subtle top-right watermark (like Zaman Yolcusu Defne)
-        char_name = (getattr(config, "EXPLORER_CHARACTER_NAME", "Nova") or "Nova").upper()
-        events.append(
-            f"Dialogue: 2,{_ass_time(0.0)},{_ass_time(limit)},BrandWatermark,,0,0,0,,TIME TRAVELER {char_name}"
-        )
-        # 2. Opening Historical Era & Location Stamp (bottom-right, 0.4s -> 7.5s)
+        # Opening historical era and location stamp (bottom-right, 0.4s -> 7.5s).
         stamp_end = min(limit, 7.5)
         if stamp_end > 0.6:
             stamp_text = _ass_escape(_resolve_era_stamp(topic))
@@ -262,16 +252,6 @@ def build_ass(
         if gi + 1 < len(groups):
             group_end = min(group_end, float(groups[gi + 1][0]["start"]))
         group_end = min(limit, max(group_end, float(group[0]["start"]) + config.CAPTION_MIN_DURATION))
-
-        if longform:
-            spk, lbl = _speaker_key(group[0])
-            if spk == "witness":
-                g_start = max(0.0, float(group[0].get("start") or 0.0))
-                if group_end - g_start >= 0.15:
-                    badge_lbl = _ass_escape(lbl.upper())
-                    events.append(
-                        f"Dialogue: 1,{_ass_time(g_start)},{_ass_time(group_end)},WitnessBadge,,0,0,0,,🎙️ HISTORICAL EYEWITNESS: {badge_lbl}"
-                    )
 
         for i, (start, end, style_name, text) in enumerate(_group_events(group, group_end, lang, longform=longform)):
             # Only the first word of a group leads in; the rest inherit the previous end.
@@ -295,14 +275,8 @@ def build_ass(
         longform_styles = (
             f"\nStyle: NovaSub,{config.CAPTION_FONT},40,&H00FFFFFF,&H000000FF,"
             f"&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,2,2,80,80,52,1"
-            f"\nStyle: WitnessSub,{config.CAPTION_FONT},40,&H00C8F0FF,&H000000FF,"
-            f"&H00001828,&H96000000,-1,-1,0,0,100,100,0,0,1,3,2,2,80,80,52,1"
-            f"\nStyle: WitnessBadge,{config.CAPTION_FONT},26,&H0047B8FF,&H000000FF,"
-            f"&H00000000,&H96000000,-1,0,0,0,100,100,1,0,1,2,1,1,80,80,132,1"
             f"\nStyle: EraStamp,{config.CAPTION_FONT},30,&H0080E6FF,&H000000FF,"
             f"&H00000000,&H96000000,-1,0,0,0,100,100,1,0,1,3,2,3,64,64,125,1"
-            f"\nStyle: BrandWatermark,{config.CAPTION_FONT},24,&H55FFFFFF,&H000000FF,"
-            f"&H55000000,&H00000000,-1,0,0,0,100,100,2,0,1,1,1,9,48,48,36,1"
         )
     header = f"""[Script Info]
 ScriptType: v4.00+

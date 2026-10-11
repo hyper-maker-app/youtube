@@ -580,3 +580,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Longform scenes may show people only when the verified historical beat assigns them a specific action; encode that action in both still and motion prompts, with era-accurate clothing and equipment.
 
 ---
+
+### [ADR-054] Longform action shots require visible historical people and clean voiceover captions
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: The first generated Gallipoli film passed motion checks but compared less well with its reference because authored sailors and gunners were absent, and captions carried redundant speaker tags and a persistent decorative label.
+- **Yapılan İş / Sonuç**: Strengthened both keyframe and motion prompts to require named crew and workers visibly completing authored actions, with 1915 role-specific wardrobe; removed longform speaker badges and the automatic TIME TRAVELER watermark while retaining the opening date/location stamp.
+- **İptal / Kabul Gerekçesi**: Concrete human action is important documentary evidence, and voiceover is not dialogue from an on-screen person. Unnecessary labels compete with scene imagery and captions.
+- **Kalıcı Kural / Ders**: For longform B-roll, make explicitly authored people mandatory visible subjects at readable scale; present voiceover captions without visible-speaker labels or decorative automatic branding.
+
+---

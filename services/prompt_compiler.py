@@ -140,10 +140,19 @@ def compile_longform_broll_prompt(
         f"Photorealistic 8k National Geographic and BBC Earth 35mm documentary frame of {scene_description}. "
         f"Visible physical evidence: {proof_target}. "
         f"Atmospheric volumetric lighting, {aspect_ratio} widescreen, authentic weathered stone and natural materials, "
-        "deep shadow contrast. If people are present in the authored scene, show them performing continuous purposeful period-correct work, never posing. Natural continuous body movement, shifting weight, moving fabric, coordinated purposeful labor, and atmospheric wind physics. No modern archaeologists, no anachronistic equipment, no text, no watermarks."
+        "deep shadow contrast. When the authored action names people, they must be clearly visible performing that action, never replaced by an empty landscape or object-only composition. "
+        "Natural continuous body movement, shifting weight, moving fabric, coordinated purposeful labor, and atmospheric wind physics. No modern archaeologists, no anachronistic equipment, no text, no watermarks."
     )
     if action_description.strip():
         base += f" Clearly depict the authored historical action: {action_description.strip()}"
+        if re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women)\b", action_description, re.I):
+            base += (
+                " The named people are mandatory visible subjects in the foreground or middle distance, "
+                "with enough scale to read their coordinated hand and body actions while the historical setting remains identifiable. "
+                "Clothing, headwear, tools, and equipment must match the exact 1915 force and role described; no generic ancient costume, modern uniform, or modern safety gear."
+            )
+        elif re.search(r"\bhands?\b", action_description, re.I):
+            base += " Show the specifically authored hand action clearly, attached to a period-correct sleeve; do not invent a face or additional person."
     base = apply_ancient_equipment_rule(base)
     if truth_sheet:
         for forbidden in truth_sheet.prohibited_anachronisms[:4]:

@@ -1097,7 +1097,17 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
                 "Include historically appropriate people only when the authored scene calls for them; no modern visitors or archaeologists. "
                 "ZERO CGI plastic sheen, ZERO 3D mannequin look, ZERO artificial graphics."
             )
-            speech_directive = "Historically grounded environment; show people only when the authored scene specifies them, in period-correct clothing and purposeful action."
+            has_authored_people = bool(re.search(
+                r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women)\b",
+                shot.dominant_event or "",
+                re.I,
+            ))
+            speech_directive = (
+                "Mandatory authored human subjects: clearly show the named crew or workers performing the specific action in the foreground or middle distance; "
+                "use force- and role-accurate 1915 clothing and equipment, never generic ancient costume; do not omit them."
+                if has_authored_people
+                else "Historically grounded environment; show people only when the authored scene specifies them, in period-correct clothing and purposeful action."
+            )
         framing_part = (
             f"[Framing & Subject]: Horizontal 16:9 widescreen composition, {shot.camera_angle or 'eye-level cinematic framing'}, "
             f"{shot.subject_description or shot.subject_id}.{secondary_clause} Domain: {shot.normalized_domain}; scale: {shot.scale}. "
@@ -1163,6 +1173,15 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
         if is_longform
         else _DOMAIN_PHYSICS_VERBS.get(shot.normalized_domain, _DOMAIN_PHYSICS_VERBS["anatomical"])
     )
+    if is_longform and re.search(
+        r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women)\b",
+        shot.dominant_event or "",
+        re.I,
+    ):
+        physics_verbs += (
+            ", named people remain clearly visible throughout, actively completing the authored hand and body actions; "
+            "do not replace them with an empty landscape, ship-only, or object-only view"
+        )
     audio_cue = (
         "ambient historical courtyard air and natural documentary room tone"
         if is_longform

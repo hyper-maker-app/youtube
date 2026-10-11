@@ -72,6 +72,18 @@ def test_prompt_compiler_clothing_and_movement_locks():
     assert "timber lever" in locked_equipment or "hewn cedar timber levers" in locked_equipment
 
 
+def test_historical_broll_requires_visible_authored_crew_actions():
+    prompt = compile_longform_broll_prompt(
+        "Ottoman minelayer Nusret laying contact mines in Erenköy Bay in 1915",
+        "a period contact mine lowered from the rail",
+        action_description="Sailors haul a contact mine over the rail and lower it with hemp rope.",
+    ).casefold()
+    assert "sailors haul a contact mine" in prompt
+    assert "mandatory visible subjects" in prompt
+    assert "empty landscape or object-only composition" in prompt
+    assert "exact 1915 force and role" in prompt
+
+
 def test_prompt_compiler_multi_shot_syntax():
     """Verify Multi-Shot Prompting syntax formatting."""
     multi_prompt = format_multi_shot_prompt(
