@@ -961,9 +961,12 @@ def compile_motion_prompt(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_s
 
 def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATOMICAL, *, prior_shots: list[Shot] | None = None) -> str:
     raw = _canonicalize_model_brief(shot.start_image_prompt if endpoint == "start" else shot.end_image_prompt, mode=mode)
+    is_longform = mode.name == "explorer" or ((getattr(config, "LONGFORM_MODE", False) or getattr(config, "IS_EXPLORER_FORMAT", False)) and mode.name not in {"anatomical", "incident", "mechanical"})
     state = shot.entry_state if endpoint == "start" else shot.exit_state
     optics = _SCALE_OPTICS.get(shot.scale, _SCALE_OPTICS["close"])
     lighting = _LIGHTING_MATRIX.get(shot.scale, _LIGHTING_MATRIX["close"])
+    if is_longform:
+        lighting = "period-accurate natural light and weather matching the authored scene"
     if mode.environment_style != "void":
         lighting = lighting.replace("separating subject from void", "separating subject from background")
     if shot.journey_phase == "explore" and shot.normalized_domain == "mechanical":
@@ -1010,7 +1013,9 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
         char_trait = "3D medical and scientific cutaway visualization, "
         render_entity_type = "Glossy Stylized 3D Medical and Scientific Cutaway Visualization Render"
 
-    if mode.environment_style == "void":
+    if is_longform:
+        lighting_style = "period-accurate natural light and weather, photorealistic historical documentary lighting"
+    elif mode.environment_style == "void":
         lighting_style = "minimalist dark studio void lighting"
     else:
         lighting_style = "dramatic 3D cinematic environment lighting"
@@ -1048,8 +1053,6 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
             if not re.search(r"\b(?:breach|rupture|damage|sever|fracture|blowout|fail|broken|shatter|detache?d?)\b", item.replace("_", " "), re.I)
         ]
 
-    is_longform = mode.name == "explorer" or ((getattr(config, "LONGFORM_MODE", False) or getattr(config, "IS_EXPLORER_FORMAT", False)) and mode.name not in {"anatomical", "incident", "mechanical"})
-
     if is_longform:
         subj_id_low = (shot.subject_id or "").casefold()
         is_broll_shot = subj_id_low.startswith("broll")
@@ -1076,7 +1079,7 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
                 "Complete head, hair, and shoulders framed comfortably inside frame with generous headroom above crown of head (NEVER crop forehead or top of head). "
                 "ZERO plastic sheen, ZERO 3D mannequin look, ZERO CGI cartoon distortion. Absolutely no amateur vlog graphics or fake HUD."
             )
-            speech_directive = "Natural mouth articulation for on-camera host."
+            speech_directive = "Closed or neutral mouth; the host never speaks or lip-syncs, with narration delivered as voiceover."
         elif is_witness_shot:
             style_part = (
                 f"[Style & Render]: Photorealistic 8k cinematic documentary frame, National Geographic and BBC Earth 35mm film aesthetic, "
@@ -1085,7 +1088,7 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
                 f"authentic atmospheric volumetric lighting, 16:9 widescreen composition, {lighting_style}. "
                 "NO modern safari hats, NO modern clothing, ZERO plastic sheen, ZERO 3D mannequin look."
             )
-            speech_directive = "Natural mouth articulation for historical witness interview."
+            speech_directive = "Closed or neutral mouth; the historical figure does not speak or lip-sync, with narration delivered as voiceover."
         else:
             style_part = (
                 f"[Style & Render]: Photorealistic 8k cinematic documentary B-roll frame, National Geographic and BBC Earth 35mm film aesthetic, "
@@ -1094,7 +1097,7 @@ def compile_keyframe_prompt(shot: Shot, endpoint: str, mode: ModeProfile = ANATO
                 "Include historically appropriate people only when the authored scene calls for them; no modern visitors or archaeologists. "
                 "ZERO CGI plastic sheen, ZERO 3D mannequin look, ZERO artificial graphics."
             )
-            speech_directive = "Pure environmental B-roll: ABSOLUTELY NO people or human figures."
+            speech_directive = "Historically grounded environment; show people only when the authored scene specifies them, in period-correct clothing and purposeful action."
         framing_part = (
             f"[Framing & Subject]: Horizontal 16:9 widescreen composition, {shot.camera_angle or 'eye-level cinematic framing'}, "
             f"{shot.subject_description or shot.subject_id}.{secondary_clause} Domain: {shot.normalized_domain}; scale: {shot.scale}. "
@@ -1245,12 +1248,13 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
             audio_motion = audio_cue or "subtle visceral fluid flow, sterile room tone"
 
         if is_longform:
+            lighting_motion = f"{_environment_motion_clause(shot, mode)} Period-accurate natural light and weather matching the scene."
             parts = (
                 f"[Scene & Motion]: One continuous {shot.duration:.1f}-second cinematic macro push-in. Horizontal 16:9 widescreen framing. Camera accelerates smoothly toward {shot.detail_target or shot.subject_id}, {boundary_desc} {axis_desc}. Zero jump cuts, no flashing.",
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Transition from {shot.entry_state} to {shot.exit_state}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_motion}",
                 f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover. No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1269,12 +1273,13 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
         lighting_pull = f"{_environment_motion_clause(shot, mode)} Macro mechanical sheen resolving into 5600K studio key light, sharp cyan rim light." if is_mech else f"{_environment_motion_clause(shot, mode)} Clinical macro glow resolving into 5600K studio key light, sharp cyan rim light."
         audio_pull = audio_cue or ("subtle tactile mechanical hum, metal strain, sterile room tone" if is_mech else "subtle visceral fluid flow, sterile room tone")
         if is_longform:
+            lighting_pull = f"{_environment_motion_clause(shot, mode)} Period-accurate natural light and weather matching the scene."
             parts = (
                 f"[Scene & Motion]: Continuous {shot.duration:.1f}-second cinematic pull-back reveal. Horizontal 16:9 widescreen framing. Camera accelerates backward along the optical axis, pulling out from {target_struct} {boundary_phrase} to settle into a {shot.scale} shot of {revealed_subject}. {interp_phrase} Zero jump cuts, no flashing.",
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_pull}",
                 f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover. No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1296,7 +1301,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {_environment_motion_clause(shot, mode, scale=shot.scale)} {lighting_clause}.",
                 f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Natural speaking articulation or closed mouth. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover. No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (

@@ -570,3 +570,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Keep sanitizers provider-specific; bind historical prompts to a verified era; only prohibit visible people when the authored scene requires an empty environment.
 
 ---
+
+### [ADR-053] Longform historical B-roll depicts authored period workers
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Improve Gallipoli Flow scenes after generated B-roll compositions were visually deserted despite screenplay-assigned crew actions.
+- **Yapılan İş / Sonuç**: Removed blanket people-free B-roll directives from longform screenplay and explorer prompts; added authored action text to keyframe prompts and period-correct labor constraints; repaired the resumable Gallipoli run prompts without changing its locked timeline.
+- **İptal / Kabul Gerekçesi**: The authored narrative includes sailors, gunners, and ship crews whose purposeful work is visible historical evidence; blanket exclusion directly contradicted those scenes and reduced visual credibility.
+- **Kalıcı Kural / Ders**: Longform scenes may show people only when the verified historical beat assigns them a specific action; encode that action in both still and motion prompts, with era-accurate clothing and equipment.
+
+---

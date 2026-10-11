@@ -191,9 +191,13 @@ def test_screenplay_motion_prompt_compilation_explorer():
     assert "chemical formula symbols" not in video_prompt.lower()
     assert "5600K warm golden directional key" not in video_prompt
     assert "atmospheric dust motes" not in video_prompt
+    assert "closed or neutral mouths" in video_prompt.lower()
+    assert "natural speaking articulation" not in video_prompt.lower()
     keyframe_prompt = compile_keyframe_prompt(shot, "start", mode=EXPLORER).lower()
     assert "chemical formula symbols" not in keyframe_prompt
     assert "no modern visitors or archaeologists" in keyframe_prompt
+    assert "period-accurate natural light" in keyframe_prompt
+    assert "5600k" not in keyframe_prompt
 
 
 def test_flow_prompt_is_not_truncated_at_vertex_limit():
@@ -219,6 +223,8 @@ def test_world_war_one_screenplay_keeps_authored_proof():
     assert "chronometer" in script.shots[0].proof_on_screen.lower()
     assert "allied battleships" in script.shots[0].proof_on_screen.lower()
     assert "nusret" in script.shots[1].proof_on_screen.lower()
+    assert "sailors haul a contact mine" in script.shots[1].start_image_prompt.lower()
+    assert not any("zero people" in item for item in script.shots[1].quality_critical)
 
 
 def test_canonicalize_model_brief_allows_realism_in_explorer():
@@ -407,11 +413,12 @@ def test_explorer_28_beat_hybrid_nova_and_witness_storyboard():
             assert "[HISTORICAL EYEWITNESS INTERVIEW" in s.start_image_prompt
             assert "NO modern safari hats" in s.start_image_prompt
 
-        # B-Roll shots must forbid people and never use 'host presents tangible physical evidence on screen'
+        # B-Roll includes historical people when the authored scene assigns them work.
         broll_shots = [s for s in script.shots if s.subject_id.startswith("broll_")]
         assert len(broll_shots) == 23
         for s in broll_shots:
-            assert "ABSOLUTELY NO people" in s.start_image_prompt
+            assert "no modern archaeologists" in s.start_image_prompt.lower()
+            assert "period-correct work" in s.start_image_prompt.lower()
             assert "host presents tangible physical evidence" not in s.proof_on_screen
 
         # 1:1 Keyframe-to-Block alignment in Longform (_keyframe_jobs)

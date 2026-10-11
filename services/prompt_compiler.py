@@ -133,6 +133,7 @@ def compile_longform_broll_prompt(
     proof_target: str,
     truth_sheet: HistoricalTruthSheet | None = None,
     aspect_ratio: str = "16:9",
+    action_description: str = "",
 ) -> str:
     """Compile photorealistic National Geographic / BBC Earth B-roll plate prompt enforcing all locks."""
     base = (
@@ -141,6 +142,8 @@ def compile_longform_broll_prompt(
         f"Atmospheric volumetric lighting, {aspect_ratio} widescreen, authentic weathered stone and natural materials, "
         "deep shadow contrast. If people are present in the authored scene, show them performing continuous purposeful period-correct work, never posing. Natural continuous body movement, shifting weight, moving fabric, coordinated purposeful labor, and atmospheric wind physics. No modern archaeologists, no anachronistic equipment, no text, no watermarks."
     )
+    if action_description.strip():
+        base += f" Clearly depict the authored historical action: {action_description.strip()}"
     base = apply_ancient_equipment_rule(base)
     if truth_sheet:
         for forbidden in truth_sheet.prohibited_anachronisms[:4]:

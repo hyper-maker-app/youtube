@@ -319,12 +319,14 @@ def build_explorer_shots(
                 f"Photorealistic 8k National Geographic and BBC Earth 35mm documentary B-roll frame of {scene_desc}. "
                 f"Visible physical evidence: {authored_proof}. "
                 f"Atmospheric volumetric lighting, {aspect_ratio} widescreen, authentic weathered stone and natural materials, "
-                "deep shadow contrast. ABSOLUTELY NO people, NO human figures, NO modern archaeologists, NO text."
+                "deep shadow contrast. If the authored historical scene includes people, show period-correct workers performing the specific action, never posing. "
+                "Natural continuous body movement, shifting weight, moving fabric, coordinated purposeful labor. No modern archaeologists, no text."
             )
             end_prompt = (
                 f"Cinematic perspective across {scene_desc} highlighting {authored_proof}, "
                 f"dynamic camera push-in revealing intricate architectural or archaeological textures, "
-                f"{aspect_ratio} widescreen. ABSOLUTELY NO people, NO human figures, NO text."
+                f"{aspect_ratio} widescreen. Show only people and actions explicitly supported by the authored historical scene; "
+                "period-correct clothing and purposeful movement, no modern archaeologists, no text."
             )
             from services.prompt_compiler import format_veo_cinematography_prompt
             motion_prompt = format_veo_cinematography_prompt(
@@ -336,7 +338,7 @@ def build_explorer_shots(
                 fps="24fps",
             )
             subj_id = f"broll_{block:02d}_{journey_phase}"
-            subj_desc = f"pure architectural and archaeological environment showing {scene_desc} (ABSOLUTELY NO people)"
+            subj_desc = f"historical environment showing {scene_desc}; include period-correct people only when the authored scene assigns them an action"
             vis_domain = bp_entry.get("domain", "archaeology")
             dominant_ev = f"camera reveals {authored_proof}"
             proof_str = authored_proof
@@ -363,7 +365,7 @@ def build_explorer_shots(
             visual_domain=vis_domain,
             continuity_anchor=cont_anchor,
             detail_target=authored_proof,
-            quality_critical=["authentic lighting", "zero text", "full headroom" if (is_a_roll or is_witness) else "zero people in B-roll"],
+            quality_critical=["authentic lighting", "zero text", "full headroom" if (is_a_roll or is_witness) else "period-correct people only when assigned an authored action"],
             location_id=f"site_{era}_{journey_phase}",
             endpoint_mode="first_only",
         ))

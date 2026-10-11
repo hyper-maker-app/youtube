@@ -334,6 +334,7 @@ def generate_dynamic_screenplay(
                 proof_target=proof_target,
                 truth_sheet=sheet,
                 aspect_ratio=aspect_ratio,
+                action_description=str(curated_entry.get("action") or "") if curated_entry else "",
             )
             end_prompt = start_prompt
             from services.prompt_compiler import format_veo_cinematography_prompt
@@ -378,7 +379,7 @@ def generate_dynamic_screenplay(
             visual_domain=vis_domain,
             continuity_anchor=cont_anchor,
             detail_target=proof_target,
-            quality_critical=["authentic lighting", "zero modern equipment", "full headroom" if (is_a_roll or is_witness) else "zero people in B-roll"],
+            quality_critical=["authentic lighting", "zero modern equipment", "full headroom" if (is_a_roll or is_witness) else "period-correct visible people performing the authored action when called for"],
             location_id=str(curated_entry.get("location_id")) if curated_entry and curated_entry.get("location_id") else f"site_{era}_{block:02d}",
             endpoint_mode="first_only",
         ))
