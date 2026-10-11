@@ -141,6 +141,17 @@ def test_flow_roster_assessment_failure_writes_sanitized_resume_handoff(tmp_path
     assert "historical shoreline" in body
 
 
+def test_world_war_one_documentary_metadata_avoids_ancient_history_labels():
+    from metadata import _fallback
+
+    meta = _fallback("1915 The Battle of Gallipoli", "en", mode="explorer")
+    combined = " ".join([*meta["titles"], *meta["tags"], meta["description"]]).casefold()
+    assert "ancient mysteries" not in combined
+    assert "ancient civilization" not in combined
+    assert any("gallipoli" in tag for tag in meta["tags"])
+    assert any("dardanelles" in tag for tag in meta["tags"])
+
+
 def test_lip_sync_service_and_graceful_fallback():
     """Verify LipSyncService engine detection and seamless Ken Burns fallback."""
     service = LipSyncService("live_portrait")

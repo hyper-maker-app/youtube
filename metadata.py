@@ -36,17 +36,36 @@ def _fallback(topic: str, lang: str, mode: str = "anatomical") -> dict:
     import config
     is_doc = mode == "explorer" or getattr(config, "LONGFORM_MODE", False)
     if is_doc:
-        for bt in ["documentary", "history", "ancient mysteries", "archaeology", "time travel", "ancient civilization"]:
+        from services.character import detect_era
+
+        era = detect_era(topic)
+        era_tags = {
+            "world_war_i": ["world war i", "gallipoli campaign", "dardanelles", "military history", "ottoman history"],
+            "ottoman": ["ottoman history", "istanbul history", "1453 constantinople", "historical reenactment"],
+            "neolithic": ["ancient history", "archaeology", "prehistoric mystery", "neolithic"],
+            "egyptian": ["ancient history", "egyptian history", "archaeology", "ancient mystery"],
+            "greco_roman": ["ancient history", "roman history", "greek history", "archaeology"],
+        }
+        base_tags = ["historical documentary", "history", "time travel"] + era_tags.get(
+            era, ["historical reenactment", "history documentary"]
+        )
+        for bt in base_tags:
             if bt not in tags:
                 tags.append(bt)
         clean_title = re.sub(r"^(the\s+)?secrets\s+of\s+", "", title, flags=re.IGNORECASE).strip()
+        if era == "world_war_i" and "gallipoli" in topic.casefold():
+            event_title = "The 18 March 1915 Dardanelles Battle"
+            legacy_title = "How Gallipoli's Naval Campaign Changed History"
+        else:
+            event_title = f"The Untold Story of {clean_title}"
+            legacy_title = f"How {clean_title} Changed History"
         titles = [
             f"{title} — Historical Documentary",
-            f"The Secrets of {clean_title}",
-            f"Ancient Mysteries: {clean_title}",
+            event_title,
+            legacy_title,
         ]
-        hashtags = " ".join(f"#{t.replace(' ', '')}" for t in ["documentary", "history", "ancientmysteries"] + tags[:3])
-        description = f"{title}. An immersive first-person historical documentary exploration.\n\n{hashtags}"
+        hashtags = " ".join(f"#{t.replace(' ', '')}" for t in base_tags[:4])
+        description = f"{title}. A historically grounded, cinematic documentary with researched period detail.\n\n{hashtags}"
     else:
         for bt in ["shorts", "science facts", "3d animation", "facts", "zackdfilms"]:
             if bt not in tags:
