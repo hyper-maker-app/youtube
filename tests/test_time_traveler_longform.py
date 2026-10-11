@@ -438,3 +438,9 @@ def test_longform_captions_distinguish_nova_and_witness_and_include_era_stamp():
     assert "HISTORICAL EYEWITNESS: ARCHITECT NEFERHOTEP (1840 BC)" in ass_text
 
 
+def test_longform_gallipoli_era_stamp_uses_world_war_i_not_antiquity():
+    import captions
+
+    assert captions._resolve_era_stamp("1915 The Battle of Gallipoli") == "DARDANELLES, OTTOMAN EMPIRE — 1915"
+
+

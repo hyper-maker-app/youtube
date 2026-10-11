@@ -206,6 +206,8 @@ def _resolve_era_stamp(topic: str | None) -> str:
     try:
         from services.character import detect_era, get_era_witness
         era = detect_era(topic or "")
+        if era == "world_war_i":
+            return "DARDANELLES, OTTOMAN EMPIRE — 1915"
         w1 = get_era_witness(era, 1)
         stamp = w1.get("location_stamp") or "HISTORICAL EXPEDITION — ANTIQUITY"
         if topic and stamp == "HISTORICAL SITE — ANTIQUITY":

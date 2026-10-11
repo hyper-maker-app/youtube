@@ -550,3 +550,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Tekrar Testi (2026-10-11)**: A new 15-scene, 60-second Flow-only run produced a 66.77-second narration and a topic-specific Gallipoli screenplay without calling Vertex. Flow refused the first environment reference with the same PUBLIC_ERROR_UNUSUAL_ACTIVITY before any keyframe or video was created. The browser token diagnostic succeeded, but the configured HTTP assessment was still rejected. The production remains incomplete; keep this rejection classified as an account/session assessment failure, not a video-model quality result.
 
 ---
+
+### [ADR-051] Resolve longform WWI era stamps from period-specific metadata
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Generate a one-minute 1915 Gallipoli longform test and inspect all on-screen metadata.
+- **Yapılan İş / Sonuç**: Visual review found an Antiquity stamp on a World War I documentary because the witness catalog had no WWI entry; the caption resolver now emits DARDANELLES, OTTOMAN EMPIRE — 1915 directly.
+- **İptal / Kabul Gerekçesi**: Era labels must come from the topic era classifier and must not inherit generic default witness metadata.
+- **Kalıcı Kural / Ders**: When rendering longform historical stamps, add an explicit stamp for eras without witness profiles and add a regression test for the topic.
+
+---
