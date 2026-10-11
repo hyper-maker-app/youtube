@@ -529,3 +529,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Always verify block motion using 2D affine residual optical flow analysis (services.motion_authenticity). Never accept cached blocks without verifiable provenance sidecars. Never hardcode motion scores or silence ffmpeg filter output in quality gates.
 
 ---
+
+### [ADR-049] Mandatory Git Auto-Commit & Auto-Push After Every Modification Across All LLMs
+- **Tarih**: 2026-10-11
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Her yapilan degisiklikten sonra pushlama zorunlulugu getirilmesi istendi.
+- **Yapılan İş / Sonuç**: Tum LLM yonergelerine zorunlu git push maddesi eklendi, scripts/audit_and_sync.py ile denetim saglandi ve scripts/git_sync.py eklendi.
+- **İptal / Kabul Gerekçesi**: Yerel degisikliklerin kaybolmasini onlemek, coklu LLM arasi durum tutarliligini korumak ve kullaniciya sifir efor saglamak icin.
+- **Kalıcı Kural / Ders**: Herhangi bir degisiklik sonrasinda audit_and_sync.py dogrulamasi yapilip hemen ardindan tum degisiklikler origin/main dalina otomatik commit ve push edilmelidir.
+
+---

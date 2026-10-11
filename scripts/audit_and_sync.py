@@ -329,6 +329,17 @@ def audit_decisions_and_llm_sync(report: AuditReport) -> None:
     else:
         report.passed("All LLM rules agree on dynamic 6–13 block provider-native contract")
 
+    # Verify mandatory git commit and push clause exists in all 5 rule files
+    missing_git_push = []
+    for rf in rule_files:
+        text = (ROOT / rf).read_text(encoding="utf-8")
+        if "git push" not in text.lower():
+            missing_git_push.append(rf)
+    if missing_git_push:
+        report.failed(f"Missing mandatory git push clause in rule files: {missing_git_push}")
+    else:
+        report.passed("All 5 LLM instruction files enforce mandatory git commit & push after modifications")
+
     # 3. Automatic MCP Sync Check
     try:
         sync_mcp_configs.sync_all()

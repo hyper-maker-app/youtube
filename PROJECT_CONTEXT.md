@@ -21,9 +21,11 @@ Kalıcı prodüksiyon ve mimari yükseltmeler için [`WALKTHROUGH.md`](file:///c
 
 ---
 
-## 3. Otomatik Bakım ve Doğrulama Kuralı (Zero-Manual-Effort)
-- **Kullanıcı manuel audit komutu çalıştırmayacaktır.**
-- Bir AI ajan (hangi LLM olursa olsun) kodda, promptta, sağlayıcılarda veya zamanlamada bir değişiklik yaptığında, yanıt vermeden önce **otomatik olarak** `python scripts/audit_and_sync.py` çalıştırmak ve 0 hata ile geçtiğini doğrulamak zorundadır.
+## 3. Otomatik Bakım, Doğrulama ve Git Push Kuralı (Zero-Manual-Effort)
+- **Kullanıcı manuel audit veya git komutu çalıştırmayacaktır.**
+- Bir AI ajan veya geliştirici (hangi LLM olursa olsun) kodda, promptta, dokümantasyonda, konfigürasyonda, sağlayıcılarda veya zamanlamada bir değişiklik yaptığında:
+  1. Yanıt vermeden önce **otomatik olarak** `python scripts/audit_and_sync.py` çalıştırmak ve 0 hata ile geçtiğini doğrulamak zorundadır.
+  2. Doğrulamanın hemen ardından yapılan tüm değişiklikleri **otomatik olarak** Git'e commit edip GitHub uzak deposuna pushlamak (`git add .`, `git commit -m "..."`, `git push origin main`) zorundadır. Yerel çalışma dizininde commit'lenmemiş veya push'lanmamış değişiklik bırakılamaz.
 
 ---
 

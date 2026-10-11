@@ -22,9 +22,10 @@ Consult `DECISIONS.md` (ADR log), `DURUM.md` (status), and `WALKTHROUGH.md` (rel
 - Always check `DECISIONS.md` (`youtube-decision-memory` MCP or `python scripts/decision.py search "query"`) before changing architecture or visual styles.
 - Automatically document cancelled or failed experiments in `DECISIONS.md` with status `ABANDONED` or `REJECTED`.
 
-## Automatic Maintenance (Zero User Effort)
-- The user will never manually run audit or synchronization scripts.
+## Automatic Maintenance & Git Push Mandate (Zero User Effort)
+- The user will never manually run audit or synchronization scripts, nor any git commands.
 - The assistant must automatically execute `python scripts/audit_and_sync.py` after code/prompt modifications to ensure 0 failures.
+- Mandatory Git Commit & Push: Whenever any code, documentation, prompts, configs, or assets are modified, the assistant must automatically commit and push all changes (`git add .`, `git commit -m "..."`, `git push origin main`) to GitHub before concluding the turn. Leaving uncommitted or unpushed changes is strictly forbidden.
 
 ## MCP Active Usage Mandate
 - Actively use `youtube-decision-memory` (`search_decisions`), `youtube-research` (`evaluate_claim`, `research_topic`), `youtube-media-inspector` (`measure_audio_loudness`, `detect_black_or_freeze`, `analyze_audio_spectrum`, `analyze_video_stability`), and `youtube-pipeline-db` (`recent_topics`, `record_run`) for verification, claim evaluation, loudness/quality inspection, and run history.

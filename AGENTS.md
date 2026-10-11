@@ -73,10 +73,12 @@ a resume must preserve it exactly.
 - Do not repeat or re-propose previously `ABANDONED` or `REJECTED` approaches (such as lip-sync, decorative neon arrows, or fast crash zooms).
 - If an experiment fails, produces bad visual output, or the user requests cancellation/revert ("olmadı / iptal et / geri al"), the AI agent must AUTOMATICALLY record it into `DECISIONS.md` using `scripts/decision.py record` documenting what was requested, what was done, why it was abandoned, and the permanent lesson learned.
 
-## Automatic maintenance mandate (Zero manual effort for user)
+## Automatic maintenance and git push mandate (Zero manual effort for user)
 
-- The user will NEVER manually run `python scripts/audit_and_sync.py` or MCP sync scripts.
-- Whenever ANY AI agent modifies pipeline code, providers, video timing, or prompts, the agent must AUTOMATICALLY run `python scripts/audit_and_sync.py` in the background and verify that all checks pass (0 failures) before responding to the user.
+- The user will NEVER manually run `python scripts/audit_and_sync.py`, git commands, or MCP sync scripts.
+- Whenever ANY developer or AI agent (Gemini, Claude, Cursor, Codex, Antigravity, etc.) modifies code, configs, prompts, documentation, or assets:
+  1. The agent must AUTOMATICALLY run `python scripts/audit_and_sync.py` in the background and verify that all checks pass (0 failures) before responding to the user.
+  2. The agent must AUTOMATICALLY stage, commit, and push all changes (`git add .`, `git commit -m "..."`, `git push origin main`) to GitHub (`https://github.com/hyper-maker-app/youtube.git`). Leaving uncommitted or unpushed modifications in the local workspace is strictly forbidden.
 - If MCP configurations or server scripts change, the agent must automatically run `python scripts/sync_mcp_configs.py`.
 - Read `ARCHITECTURE.md`, `PROJECT_CONTEXT.md`, `DURUM.md`, and `WALKTHROUGH.md` as companion references.
 

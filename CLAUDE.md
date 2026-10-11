@@ -18,7 +18,10 @@ Consult `DECISIONS.md` (ADR log), `DURUM.md` (status), and `WALKTHROUGH.md` (rel
 - If an idea was previously marked `ABANDONED` or `REJECTED`, warn the user with the ADR reasoning and do not re-introduce failed patterns.
 - If a change is attempted and fails, or if the user requests cancellation/revert ("olmadı / iptal et / geri al"), AUTOMATICALLY record it into `DECISIONS.md` using `scripts/decision.py record`.
 
-## Automatic Maintenance Mandate (Zero Manual Effort for User)
-- The user will NEVER manually run `python scripts/audit_and_sync.py`.
-- Whenever you make changes to pipeline code, providers, shaders, or timing, you MUST automatically run `python scripts/audit_and_sync.py` and verify 0 failures before finishing.
+## Automatic Maintenance and Git Push Mandate (Zero Manual Effort for User)
+- The user will NEVER manually run `python scripts/audit_and_sync.py` or git commands.
+- Whenever you make changes to pipeline code, providers, shaders, prompts, configs, or docs, you MUST automatically:
+  1. Run `python scripts/audit_and_sync.py` and verify 0 failures before finishing.
+  2. Automatically commit and push all changes (`git add .`, `git commit -m "..."`, `git push origin main`) to GitHub. Leaving uncommitted or unpushed modifications is strictly forbidden.
 - If MCP configurations or tools change, automatically run `python scripts/sync_mcp_configs.py`.
+

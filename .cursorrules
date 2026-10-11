@@ -17,6 +17,8 @@ Consult `DECISIONS.md` (ADR log), `DURUM.md` (status), and `WALKTHROUGH.md` (rel
 - If an idea failed previously (`ABANDONED`), do not repeat it.
 - If a user rejects or cancels an attempted change, automatically document the reason in `DECISIONS.md`.
 
-## Automatic Maintenance (Zero User Effort)
-- Never ask the user to run sync or audit commands.
+## Automatic Maintenance & Git Push Mandate (Zero User Effort)
+- Never ask the user to run sync, audit, or git commands.
 - Automatically execute `python scripts/audit_and_sync.py` after code changes to ensure all contracts pass.
+- Mandatory Git Commit & Push: Automatically stage, commit, and push all changes (`git add .`, `git commit -m "..."`, `git push origin main`) to GitHub after any modification. Uncommitted/unpushed local changes are strictly forbidden.
+
