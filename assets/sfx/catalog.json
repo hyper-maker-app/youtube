@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "asset_id": "whoosh_deep",
+      "local_path": "assets/sfx/whoosh_deep.wav",
+      "sha256": "53035a41e0197293856b8da1995dfb0a9b38f135cff7f073d6b9be9a3ba78531",
+      "source_url": "https://creativecommons.org/publicdomain/zero/1.0/whoosh_deep",
+      "creator": "YouTube Pipeline Acoustic Engine",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "commercial_allowed": true,
+      "attribution": "",
+      "tags": [
+        "whoosh",
+        "deep",
+        "breath",
+        "dive",
+        "camera",
+        "flight",
+        "motion",
+        "zoom",
+        "push",
+        "speed",
+        "rush"
+      ],
+      "duration": 2.5,
+      "lufs": -11.4,
+      "peak": -1.0
+    },
+    {
+      "asset_id": "liquid_squish_slide",
+      "local_path": "assets/sfx/liquid_squish_slide.wav",
+      "sha256": "45a10e3d2e5de78cb35fe8ede5c301830312e122023275bbf0e76c588368c076",
+      "source_url": "https://creativecommons.org/publicdomain/zero/1.0/liquid_squish_slide",
+      "creator": "YouTube Pipeline Acoustic Engine",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "commercial_allowed": true,
+      "attribution": "",
+      "tags": [
+        "liquid",
+        "squish",
+        "slide",
+        "soap",
+        "viscous",
+        "membrane",
+        "fluid",
+        "water",
+        "wet",
+        "tension",
+        "tissue",
+        "clamping",
+        "mucus"
+      ],
+      "duration": 2.5,
+      "lufs": -9.3,
+      "peak": -1.0
+    },
+    {
+      "asset_id": "chamber_pop_open",
+      "local_path": "assets/sfx/chamber_pop_open.wav",
+      "sha256": "7f11f964b8eb02d1db00136d391afaae3b2f0fbbcdabe77382edf3ccc6331d06",
+      "source_url": "https://creativecommons.org/publicdomain/zero/1.0/chamber_pop_open",
+      "creator": "YouTube Pipeline Acoustic Engine",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "commercial_allowed": true,
+      "attribution": "",
+      "tags": [
+        "chamber",
+        "pop",
+        "open",
+        "alveoli",
+        "expansion",
+        "pressure",
+        "release",
+        "break",
+        "breaking",
+        "rebound",
+        "snap",
+        "burst"
+      ],
+      "duration": 1.8,
+      "lufs": -18.2,
+      "peak": -1.0
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "test1_incident": {
+    "topic": "The pilot who got sucked out of the cockpit window",
+    "run_dir": "out/the-pilot-who-got-sucked-out-of-the-cockpit-wind_20260912_112826",
+    "total_blocks": 13,
+    "total_keyframes": 13,
+    "status": "13/13 ADMITTED (100%)",
+    "keyframes": {
+      "kf01": {
+        "attempt1": {
+          "verdict": "RET",
+          "score": 3,
+          "reason": "Surroundings are not intact due to visible windshield fractures and condensation; Fails baseline normal cruise state requirement"
+        },
+        "critique_injected": "CRITICAL CORRECTION FROM ART DIRECTOR: Surroundings are not intact due to visible windshield fractures and condensation; Fails baseline normal cruise state requirement. YOU MUST FIX THIS ERROR IMMEDIATELY.",
+        "attempt2": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Intact baseline surroundings verified"
+        }
+      },
+      "kf02": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Cockpit interior and pilot state verified"
+        }
+      },
+      "kf03": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Critical bottleneck passed on attempt 1! Exterior slipstream and pinned pilot verified"
+        }
+      },
+      "kf04": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Aerodynamic buffeting and exterior frame verified"
+        }
+      },
+      "kf05": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Sub-zero slipstream frost and wind shear verified"
+        }
+      },
+      "kf06": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 9,
+          "reason": "Perfect continuity and volumetric lighting"
+        }
+      },
+      "kf07": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Interior rescue grip and physical mechanics verified"
+        }
+      },
+      "kf08": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Descent trajectory and cockpit pressure verified"
+        }
+      },
+      "kf09": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Oxygen mask and crew coordination verified"
+        }
+      },
+      "kf10": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Emergency landing vector verified"
+        }
+      },
+      "kf11": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Runway touchdown and aircraft deceleration verified"
+        }
+      },
+      "kf12": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Emergency response and medical team verified"
+        }
+      },
+      "kf13": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Resolved aftermath and pilot survival payoff verified"
+        }
+      }
+    }
+  },
+  "test2_anatomical": {
+    "topic": "Why your eyes never freeze in sub-zero air",
+    "run_dir": "out/why-your-eyes-never-freeze-in-sub-zero-air_20260912_123621",
+    "total_blocks": 11,
+    "total_keyframes": 12,
+    "status": "12/12 ADMITTED (100%)",
+    "keyframes": {
+      "kf01": {
+        "attempt1": {
+          "verdict": "RET",
+          "score": 4,
+          "reason": "Subject right eye is missing or fused with plastic skin instead of an open eye; Anchor mismatch on mannequin_right_eye"
+        },
+        "critique_injected": "CRITICAL CORRECTION FROM ART DIRECTOR: Subject right eye is missing or fused with plastic skin instead of an open eye. YOU MUST FIX THIS ERROR IMMEDIATELY.",
+        "attempt2": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Right eye and open wet cornea verified"
+        }
+      },
+      "kf02": {
+        "attempt1": {
+          "verdict": "RET",
+          "score": 4,
+          "reason": "Iris color changed from blue to hazel-brown; Continuity mismatch: displays anatomical left eye instead of anchor right eye"
+        },
+        "critique_injected": "CRITICAL CORRECTION FROM ART DIRECTOR: Iris color changed; displays left eye instead of anchor right eye. YOU MUST FIX THIS ERROR IMMEDIATELY.",
+        "attempt2": {
+          "verdict": "RET",
+          "score": 5,
+          "reason": "Failed required extreme close-up framing on corneal surface; Framing and shot scale duplicate prior state instead of requested macro view"
+        },
+        "accepted_via": "Physical continuity fallback: identity preserved, state transition delegated to video motion"
+      },
+      "kf03": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Corneal tear interface macro view verified"
+        }
+      },
+      "kf04": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Ocular vascular bed and heat radiation verified"
+        }
+      },
+      "kf05": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Capillary erythrocyte flow verified"
+        }
+      },
+      "kf06": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Match-Cut priority rule passed on attempt 1! Road salt analogy verified without false domain-bleed rejection"
+        }
+      },
+      "kf07": {
+        "attempt1": {
+          "verdict": "RET",
+          "score": 3,
+          "reason": "Visible text labels on ions ('Cl-'); Text violation under gate rules"
+        },
+        "critique_injected": "CRITICAL CORRECTION FROM ART DIRECTOR: Visible text labels on ions ('Cl-'); Text violation under gate rules. [MANDATORY CORRECTION — TEXT REMOVAL]: Eliminate ALL alphanumeric characters, labels, and symbols. Represent ions as plain unlabeled luminous spheres.",
+        "attempt2": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Text stripped successfully via Art Director critique injection; ions rendered as pure luminous spheres"
+        }
+      },
+      "kf08": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Molecular water lattice disruption verified"
+        }
+      },
+      "kf09": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Liquid saline layer stability verified"
+        }
+      },
+      "kf10": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Eyelid blinking action verified"
+        }
+      },
+      "kf11": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Anterior chamber thermal convection verified"
+        }
+      },
+      "kf12": {
+        "attempt1": {
+          "verdict": "KABUL",
+          "score": 7,
+          "reason": "Final resolving payoff verified"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+credentials*.json
+client_secret*.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.log
+
+# Python Environments
+venv/
+.venv/
+env/
+
+# IDEs & Editor caches
+.idea/
+.vscode/
+.codex/
+.codex-backups/
+.claude/
+.cursor/
+*.swp
+*~
+
+# Pipeline outputs & temporary generation artifacts
+out/
+output/
+tmp/
+scratch/
+production_20s/
+production_3blocks/
+ref_frames/
+FlowCDPProfile/
+_t_q/
+
+# SQLite databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# Video binaries
+*.mp4
+*.webm
+*.avi
+*.mov
+*.mkv
+
+# Scraped raw data & local reference media
+reference.mp4
+ref_audio.wav
+ref_audio.webm
+ref_defne_*
+videos.json
+shorts.json
+channel_info.json
+ref_meta.json
+voices_resp.json
+summary_script_out.json
+channel_info_parsed.txt
+videos_parsed.txt
+file_summaries.txt
+adrs_out.txt
+pytest_output.txt
+audit_and_sync_output.txt
+scratch_*
+_stream.txt
+_timing.txt
+_timing2.txt
+_verify.txt
+_one_run.txt
+_gen_log.txt
+_resume_log.txt
+_flow_bones.txt
+*.vtt
+thumb*.webp

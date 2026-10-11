@@ -1,0 +1,194 @@
+{
+  "topic": "Why octopuses have three hearts but can die of a broken one",
+  "lang": "en",
+  "narration": "Three hearts should make you unkillable. That's the assumption about octopuses: built-in backup pumps, pure redundancy. In reality, two hearts only serve the gills, and the main one stops beating every time it swims. Their blood runs on copper, which carries oxygen poorly, so the body needs constant high pressure; swimming overloads the main heart, and it stalls. After she lays eggs, a gland floods her with self-destruct hormones; she stops eating, and her heart slowly quits. Three hearts, and she still dies of a broken one.",
+  "word_count": 87,
+  "beats": [
+    {
+      "index": 1,
+      "role": "myth",
+      "text": "Three hearts should make you unkillable. That's the assumption about octopuses: built-in backup pumps, pure redundancy.",
+      "emphasis": [
+        "hearts",
+        "unkillable"
+      ]
+    },
+    {
+      "index": 2,
+      "role": "twist",
+      "text": "In reality, two hearts only serve the gills, and the main one stops beating every time it swims.",
+      "emphasis": [
+        "gills",
+        "stops",
+        "swims"
+      ]
+    },
+    {
+      "index": 3,
+      "role": "mechanism_a",
+      "text": "Their blood runs on copper, which carries oxygen poorly, so the body needs constant high pressure; swimming overloads the main heart, and it stalls.",
+      "emphasis": [
+        "copper",
+        "pressure",
+        "stalls"
+      ]
+    },
+    {
+      "index": 4,
+      "role": "mechanism_b",
+      "text": "After she lays eggs, a gland floods her with self-destruct hormones; she stops eating, and her heart slowly quits.",
+      "emphasis": [
+        "hormones",
+        "heart",
+        "quits"
+      ]
+    },
+    {
+      "index": 5,
+      "role": "kicker",
+      "text": "Three hearts, and she still dies of a broken one.",
+      "emphasis": [
+        "broken"
+      ]
+    }
+  ],
+  "shots": [
+    {
+      "block": 1,
+      "t_start": 0.0,
+      "t_end": 4.0,
+      "subject_id": "reef_octopus",
+      "start_image_prompt": "Wide establishing frame of a deep Pacific reef at dusk: a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes rests centered on a moss-covered volcanic rock ledge, arms draped loosely over the stone edge; faint god rays slant down through teal water, plankton motes drift in thick volumetric haze, soft coral silhouettes blur in the far background; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, warm golden key light from upper left, deep cobalt-blue shadow fill, cinematic rim light, dark neutral backdrop, Octane render look, 9:16 vertical composition; clean cinematic frame, no annotations, no text, no watermark.",
+      "end_image_prompt": "Medium shot on the same reef: a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes, its rounded mantle dome filling the upper-right third of the frame while one amber eye catches the key light at frame left; the mantle skin shows a faint rhythmic bulge; a glowing neon-green arrow is baked into the right edge of the frame, pointing left directly at the upper-right mantle region; teal volumetric haze, drifting plankton motes; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "motion_prompt": "the octopus ripples its rust-red skin as its arms shift slowly across the mossy ledge, slow creeping push-in, subtle floating handheld camera",
+      "chain_from_prev": false,
+      "subject_description": "a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes",
+      "journey_phase": "establish",
+      "scale": "wide",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "center",
+      "end_target_quadrant": "center"
+    },
+    {
+      "block": 2,
+      "t_start": 4.0,
+      "t_end": 8.0,
+      "subject_id": "reef_octopus",
+      "start_image_prompt": "Medium shot on the same reef: a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes, its rounded mantle dome filling the upper-right third of the frame while one amber eye catches the key light at frame left; the mantle skin shows a faint rhythmic bulge; a glowing neon-green arrow is baked into the right edge of the frame, pointing left directly at the upper-right mantle region; teal volumetric haze, drifting plankton motes; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "end_image_prompt": "Extreme close-up of the mantle wall of a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes: wet pebbled rust-red skin stretches across the full frame, thin pale-blue vessels shimmering beneath the translucent subsurface-scattering surface, micro water droplets catching specular highlights; a glowing neon-green arrow is baked into the lower-center of the frame, pointing straight up at the exact spot on the skin where a faint heartbeat bulges; glossy stylized-realistic 3D render, PBR materials, warm golden key light raking across the skin texture, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "motion_prompt": "the mantle wall swells on a slow indrawn breath, the skin stretching taut over a faint heartbeat, microscopic zoom-in, cross-section shift, focus pull",
+      "chain_from_prev": true,
+      "subject_description": "a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes",
+      "journey_phase": "descend",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "upper_center",
+      "end_target_quadrant": "lower_center"
+    },
+    {
+      "block": 3,
+      "t_start": 8.0,
+      "t_end": 12.0,
+      "subject_id": "reef_octopus",
+      "start_image_prompt": "Extreme close-up of the mantle wall of a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes: wet pebbled rust-red skin stretches across the full frame, thin pale-blue vessels shimmering beneath the translucent subsurface-scattering surface, micro water droplets catching specular highlights; a glowing neon-green arrow is baked into the lower-center of the frame, pointing straight up at the exact spot on the skin where a faint heartbeat bulges; glossy stylized-realistic 3D render, PBR materials, warm golden key light raking across the skin texture, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "end_image_prompt": "Macro anatomical cross-section inside the opened mantle cavity, the outer skin peeled back like a glossy hatch at the frame edges: three glossy octopus hearts, two smaller branchial hearts flanking one larger central systemic heart, translucent wet muscle glowing with blue blood, seated upper-left, upper-right, and lower-right of the cavity, thin branching vessels weaving between them and pale-blue fluid luminous inside each chamber; a glowing neon-green arrow is baked into the bottom-right corner of the frame, pointing at the larger central systemic heart; wet glossy tissue with heavy subsurface scattering, PBR materials, warm golden key light from above, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze inside the cavity, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "motion_prompt": "the mantle skin peels open into a glossy cross-section, uncovering three wet hearts beating in sequence, slow pull-back reveal, shifting light",
+      "chain_from_prev": true,
+      "subject_description": "a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes",
+      "journey_phase": "descend",
+      "scale": "close",
+      "asset_refs": [],
+      "transition_hint": "cross_section",
+      "start_target_quadrant": "lower_center",
+      "end_target_quadrant": "bottom_right"
+    },
+    {
+      "block": 4,
+      "t_start": 12.0,
+      "t_end": 16.0,
+      "subject_id": "octopus_hearts",
+      "start_image_prompt": "Macro anatomical cross-section inside the opened mantle cavity, the outer skin peeled back like a glossy hatch at the frame edges: three glossy octopus hearts, two smaller branchial hearts flanking one larger central systemic heart, translucent wet muscle glowing with blue blood, seated upper-left, upper-right, and lower-right of the cavity, thin branching vessels weaving between them and pale-blue fluid luminous inside each chamber; a glowing neon-green arrow is baked into the bottom-right corner of the frame, pointing at the larger central systemic heart; wet glossy tissue with heavy subsurface scattering, PBR materials, warm golden key light from above, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze inside the cavity, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "end_image_prompt": "Micro-scale view inside the outflow vessel of the systemic heart: pale-blue hemocyanin protein molecules shaped like tiny glowing lanterns drifting in clear plasma, dozens of them tumbling slowly between translucent pink vessel walls with visible layered muscle fiber, soft depth of field, suspended micro-particles glittering in a cool volumetric glow; a glowing neon-green arrow is baked into the top-left corner of the frame, pointing at a dense cluster of the blue lantern-shaped molecules; glossy stylized-realistic 3D render, smooth subsurface scattering, PBR materials, warm golden key light bleeding through the vessel wall, deep cobalt-blue shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "motion_prompt": "the systemic heart contracts hard, squeezing one pulse of blue blood into its outflow vessel, low angle camera pan, macro depth of field",
+      "chain_from_prev": false,
+      "subject_description": "three glossy octopus hearts, two smaller branchial hearts flanking one larger central systemic heart, translucent wet muscle glowing with blue blood",
+      "journey_phase": "explore",
+      "scale": "macro",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "bottom_right",
+      "end_target_quadrant": "top_left"
+    },
+    {
+      "block": 5,
+      "t_start": 16.0,
+      "t_end": 20.0,
+      "subject_id": "hemocyanin_blood",
+      "start_image_prompt": "Micro-scale view inside the outflow vessel of the systemic heart: pale-blue hemocyanin protein molecules shaped like tiny glowing lanterns drifting in clear plasma, dozens of them tumbling slowly between translucent pink vessel walls with visible layered muscle fiber, soft depth of field, suspended micro-particles glittering in a cool volumetric glow; a glowing neon-green arrow is baked into the top-left corner of the frame, pointing at a dense cluster of the blue lantern-shaped molecules; glossy stylized-realistic 3D render, smooth subsurface scattering, PBR materials, warm golden key light bleeding through the vessel wall, deep cobalt-blue shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition; the only annotation is the neon-green arrow, no text, no watermark.",
+      "end_image_prompt": "Macro view of the central systemic heart, a translucent fist-sized muscular sac glowing faint blue from within, caught frozen mid-stall: the sac hangs half-contracted and motionless, pale-blue blood cells suspended dead-still inside its chamber and inside the exiting vessel, suspended droplets hanging in the cavity fluid; a jagged red trajectory line is baked along the bottom-left of the frame, tracing the blood flow path out of the heart and snapping off abruptly mid-vessel where the flow dies; dimming blue glow, wet glossy muscle with subsurface scattering, PBR materials, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; the only annotation is the red trajectory line, no text, no watermark, a neon-green annotation arrow pointing at the focal structure",
+      "motion_prompt": "the drifting blue molecules slow to a dead stop as the vessel pressure vanishes, slow orbit rotation, diagnostic lighting change",
+      "chain_from_prev": false,
+      "subject_description": "pale-blue hemocyanin protein molecules shaped like tiny glowing lanterns drifting in clear plasma",
+      "journey_phase": "explore",
+      "scale": "micro",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "top_left",
+      "end_target_quadrant": "bottom_left"
+    },
+    {
+      "block": 6,
+      "t_start": 20.0,
+      "t_end": 24.0,
+      "subject_id": "systemic_heart",
+      "start_image_prompt": "Macro view of the central systemic heart, a translucent fist-sized muscular sac glowing faint blue from within, caught frozen mid-stall: the sac hangs half-contracted and motionless, pale-blue blood cells suspended dead-still inside its chamber and inside the exiting vessel, suspended droplets hanging in the cavity fluid; a jagged red trajectory line is baked along the bottom-left of the frame, tracing the blood flow path out of the heart and snapping off abruptly mid-vessel where the flow dies; dimming blue glow, wet glossy muscle with subsurface scattering, PBR materials, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; the only annotation is the red trajectory line, no text, no watermark.",
+      "end_image_prompt": "Medium shot inside a dark rocky den: a pale octopus mother curled protectively around hanging strings of pearly eggs in a dark rocky den, her skin drained to ashen gray, mantle sunken, eyes dull and half-closed, arms looped limply around the swaying egg clusters; a jagged red trajectory line is baked into the top-left of the frame, arcing from between her eyes down toward her still mantle; one cold shaft of light cuts through the den opening, fine sediment floating in it; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, dim cool key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; the only annotation is the red trajectory line, no text, no watermark.",
+      "motion_prompt": "the sagging stalled heart morphs into a mother curled tightly around her swaying egg strings, slow push-in and dramatic focus pull, cinematic rim light",
+      "chain_from_prev": false,
+      "subject_description": "the central systemic heart, a translucent fist-sized muscular sac glowing faint blue from within",
+      "journey_phase": "reveal",
+      "scale": "macro",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "bottom_left",
+      "end_target_quadrant": "top_left"
+    },
+    {
+      "block": 7,
+      "t_start": 24.0,
+      "t_end": 28.0,
+      "subject_id": "brooding_mother",
+      "start_image_prompt": "Medium shot inside a dark rocky den: a pale octopus mother curled protectively around hanging strings of pearly eggs in a dark rocky den, her skin drained to ashen gray, mantle sunken, eyes dull and half-closed, arms looped limply around the swaying egg clusters; a jagged red trajectory line is baked into the top-left of the frame, arcing from between her eyes down toward her still mantle; one cold shaft of light cuts through the den opening, fine sediment floating in it; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, dim cool key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; the only annotation is the red trajectory line, no text, no watermark.",
+      "end_image_prompt": "Medium shot back on the open reef ledge: a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes pushes off the moss-covered volcanic rock, one arm extended forward and skin flushing deep saturated red with renewed color, mantle lifted and alert; soft god rays slant through teal water, plankton motes drift in volumetric haze; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, warm golden key light from upper left, deep cobalt-blue shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition; clean cinematic frame, no annotations, no text, no watermark.",
+      "motion_prompt": "a swaying pearly egg string dissolves into the outstretched arm of a living octopus pushing off the reef rock, slow creeping push-in, subtle floating handheld camera",
+      "chain_from_prev": false,
+      "subject_description": "a pale octopus mother curled protectively around hanging strings of pearly eggs in a dark rocky den",
+      "journey_phase": "reveal",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "top_left",
+      "end_target_quadrant": "upper_center"
+    },
+    {
+      "block": 8,
+      "t_start": 28.0,
+      "t_end": 32.0,
+      "subject_id": "reef_octopus",
+      "start_image_prompt": "Medium shot back on the open reef ledge: a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes pushes off the moss-covered volcanic rock, one arm extended forward and skin flushing deep saturated red with renewed color, mantle lifted and alert; soft god rays slant through teal water, plankton motes drift in volumetric haze; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, warm golden key light from upper left, deep cobalt-blue shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition; clean cinematic frame, no annotations, no text, no watermark.",
+      "end_image_prompt": "Wide resolving frame of the reef at dusk: a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes crawls arm over arm into the dark mouth of its rocky den at frame center, arms flowing like liquid over the stones, the reef glowing softly around it with sponges and coral silhouettes; long sunbeams from the surface, thick plankton haze; glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition; clean cinematic frame, no annotations, no text, no watermark.",
+      "motion_prompt": "the octopus crawls arm over arm across the ledge and pours itself into its dark den, microscopic zoom-in, cross-section shift, focus pull",
+      "chain_from_prev": false,
+      "subject_description": "a giant Pacific octopus with rust-red bumpy skin, pale suckered arms, and calm amber eyes",
+      "journey_phase": "resolve",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "none",
+      "start_target_quadrant": "center",
+      "end_target_quadrant": "center"
+    }
+  ],
+  "global_negative": "text, caption, subtitle, watermark, logo, signature, UI, interface, open mouth, talking, lip movement, speech, teeth, extra limbs, deformed anatomy, duplicated subject, collage, split screen, blurry, low quality, jpeg artifacts, oversaturated, flat lighting"
+}

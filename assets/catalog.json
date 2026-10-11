@@ -1,0 +1,461 @@
+{
+  "assets": [
+    {
+      "id": "young_man_chest",
+      "type": "character",
+      "description": "A lean young man in his mid-twenties, short black hair, calm neutral face with closed mouth, bare chest, olive skin, standing upright in a dark charcoal void lit by a single cold rim light from the upper left",
+      "tags": [
+        "human"
+      ],
+      "image_path": "",
+      "aspect_ratio": "2:3",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "chest_cutaway_heart",
+      "type": "character",
+      "description": "An anatomical cutaway of a human chest revealing a deep red 3D-rendered heart nested between pale ribs, wet glossy surface, coronary arteries branching across it, dark clinical background",
+      "tags": [
+        "human",
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "2:3",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "ventricle_wall_slice",
+      "type": "prop",
+      "description": "A macro cross-section slab of ventricle muscle wall, dense parallel bands of dark red cardiac fibers packed with capillaries, glossy translucent surface, clinical volumetric lighting",
+      "tags": [
+        "anatomy",
+        "object"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "cardiomyocyte_cell",
+      "type": "prop",
+      "description": "A single elongated cardiomyocyte, striped sarcomere bands running along its length, one large central nucleus, dense clusters of golden mitochondria packed between the stripes, translucent membrane, suspended in dark plasma",
+      "tags": [
+        "anatomy",
+        "object"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "locked_nucleus",
+      "type": "prop",
+      "description": "The nucleus of a heart muscle cell, a translucent grey-blue sphere with tightly coiled chromosomes frozen in place, no spindle fibers, surrounded by golden mitochondria pressing against its wall",
+      "tags": [
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "dividing_tumor_cell",
+      "type": "prop",
+      "description": "A pale rounded epithelial cell caught mid-division, its membrane pinching in the middle, chromosomes torn apart by spindle fibers, spawning a bulging cluster of malformed daughter cells, wet translucent surface in dark plasma",
+      "tags": [
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "scarred_heart_wall",
+      "type": "prop",
+      "description": "A macro section of heart muscle wall where a patch of dark red fibers has been replaced by pale grey-white fibrous scar tissue, hard edged and lifeless against the glossy living muscle around it",
+      "tags": [
+        "anatomy",
+        "object"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-28T12:36:12",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "rib_marrow_cutaway",
+      "type": "character",
+      "description": "a macro cross-section of a single human rib sliced lengthwise, its hard pale-white cortical shell hinged open, the cavity filled with glossy deep-crimson marrow glistening like molten gel, fine bone struts lacing through it, wet translucent surfaces, dark clinical background",
+      "tags": [
+        "human",
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "2:3",
+      "damage_states": [],
+      "created_at": "2026-08-30T22:44:23",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "marrow_stem_cell",
+      "type": "prop",
+      "description": "a plump translucent hematopoietic stem cell with a large violet nucleus, caught mid-division, its membrane pinching at the waist, flanked by clusters of small concave crimson blood discs glowing like embers, suspended in dark plasma",
+      "tags": [
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-30T22:44:23",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "red_blood_cell_stream",
+      "type": "prop",
+      "description": "a dense stream of glossy concave crimson blood cells, each shimmering with metallic highlights like droplets of liquid iron, pouring through a translucent vessel opening, dark background",
+      "tags": [
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-30T22:44:23",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "hemoglobin_iron_cluster",
+      "type": "prop",
+      "description": "a single glossy hemoglobin protein, four crimson heme groups folded into its ruby surface, each heme gripping one bright orange glowing iron atom like a tiny coal, translucent molecular sheen, suspended in dark plasma",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-30T22:50:04",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "astronaut_moon",
+      "type": "environment",
+      "description": "an Apollo astronaut in a white pressurized A7L spacesuit with a gold-tinted reflective visor, backpack life-support box, and white lunar overshoes",
+      "tags": [
+        "space"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-08-31T12:56:06",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lunar_bootprint",
+      "type": "prop",
+      "description": "a single astronaut bootprint pressed into grey lunar regolith, its corrugated tread ridges razor-sharp, each ridge casting a hard black shadow",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-31T12:56:06",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lunar_dust_grain",
+      "type": "prop",
+      "description": "jagged glassy lunar dust grains, sharp-edged shards of grey-brown volcanic glass with unweathered splintered surfaces",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-31T12:56:06",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "micrometeorite_impact",
+      "type": "prop",
+      "description": "a micro-scale micrometeorite impact frozen mid-strike, a pinhead-sized glassy projectile half-buried in grey regolith with a crown of shattered dust shards suspended motionless around the tiny crater lip",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-08-31T15:18:42",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "artemis_rocket",
+      "type": "environment",
+      "description": "A tall white and orange Space Launch System rocket standing upright on a launch pad, four engines clustered at its base, vertical stabilizer fins, exposed to open sky",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-02T13:47:47",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "rs25_engine",
+      "type": "prop",
+      "description": "A single RS-25 rocket engine nozzle, a large bell-shaped nozzle with tightly wound cooling tubes running its surface, mounted at the base of a rocket",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-02T13:47:47",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "combustion_waveform",
+      "type": "environment",
+      "description": "A glowing waveform readout of recorded rocket combustion noise, jagged amber lines pulsing across a dark control-room style panel embedded inside the engine housing",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-02T13:47:47",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "shock_diamond_cell",
+      "type": "prop",
+      "description": "a single cone-shaped shock diamond cell inside a rocket exhaust plume, glowing white-hot core surrounded by translucent bluish exhaust gas, sharp faceted diamond outline",
+      "tags": [
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-02T14:52:46",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lighthouse_exterior",
+      "type": "environment",
+      "description": "A tall white and red striped lighthouse tower standing alone on a rocky empty island, lantern room glass dome on top, ocean surrounding it",
+      "tags": [
+        "nature"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-02T17:05:35",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lighthouse_lantern_room",
+      "type": "environment",
+      "description": "The glass lantern room at the top of the lighthouse housing a large rotating Fresnel lens and bulb assembly",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-02T17:05:35",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "solar_battery_unit",
+      "type": "prop",
+      "description": "A sealed rectangular solar panel array mounted on the lighthouse roof wired down into a bank of stacked grey batteries in a weatherproof case",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-02T17:05:35",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "photoresistor_circuit",
+      "type": "environment",
+      "description": "A small photoresistor sensor module mounted beside a relay switch and circuit board inside the lantern room housing",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-02T17:05:35",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lightning_ground_strike",
+      "type": "prop",
+      "description": "An overhead macro view of sandy soil surface with a lightning-scorch mark—a carbonized branching channel running vertically downward into the earth, its edges singed black, with a neon-green arrow pointing at the scar from the upper right quadrant of frame",
+      "tags": [
+        "space",
+        "object"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-03T09:27:36",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "soil_conductivity_cross_section",
+      "type": "prop",
+      "description": "A vertical cross-section diagram slice through soil showing the lightning path as a glowing blue-white conductive channel branching downward, with surrounding soil graded in electrical conductivity color from warm red (high) near the channel to cool blue (low) at the edges, labeled with neon-green crosshairs at the point of deepest resistance drop",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-03T09:27:36",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "repeated_strike_scarring",
+      "type": "prop",
+      "description": "A macro cross-section of earth showing three successive lightning paths carved into the same soil column: the deepest oldest scar is pale grey-white and fossilized; the middle scar is darker grey with glassy edges; the newest strike is a glowing blue-white channel still radiating heat. A red trajectory line traces the newest path from top to bottom through all three scars.",
+      "tags": [
+        "space",
+        "object"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-03T09:27:36",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "tall_conductive_structure",
+      "type": "environment",
+      "description": "A vertical architectural cross-section of a tall metal lightning rod mounted on the roof of a building, showing the internal copper conductor core running down through the exterior copper cladding, with electrical current visualization flowing as blue-white arcs around and into the rod from the sky above, grounding into dark earth below",
+      "tags": [
+        "space",
+        "object"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-03T09:27:36",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "body_electrical_conductivity",
+      "type": "character",
+      "description": "A full-body anatomical cutaway of a lean young man showing electrical conductivity layers: outer skin as a thin insulating layer (pale), muscle tissue beneath glowing in warm orange-red (high conductivity), dense organs and blood vessels in deep red (highest conductivity), with electrical field visualization as blue-white concentric energy lines flowing through the body's conductive core",
+      "tags": [
+        "human",
+        "anatomy"
+      ],
+      "image_path": "",
+      "aspect_ratio": "2:3",
+      "damage_states": [],
+      "created_at": "2026-09-03T09:27:36",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lighthouse_tower_interior",
+      "type": "prop",
+      "description": "Cast-iron gas storage tanks inside stone lighthouse basement.",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-05T14:48:37",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "attached_gas_valve",
+      "type": "prop",
+      "description": "Brass diaphragm regulator valve mounted along central supply conduit.",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-05T14:48:37",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lantern_room_assembly",
+      "type": "environment",
+      "description": "Gas burner firing inside multi-tiered glass Fresnel lens.",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "9:16",
+      "damage_states": [],
+      "created_at": "2026-09-05T14:48:37",
+      "usage_count": 0,
+      "last_used": ""
+    },
+    {
+      "id": "lighthouse_twilight_exterior",
+      "type": "prop",
+      "description": "Red-and-white lighthouse projecting focused beam over dark sea.",
+      "tags": [
+        "general"
+      ],
+      "image_path": "",
+      "aspect_ratio": "1:1",
+      "damage_states": [],
+      "created_at": "2026-09-05T14:48:37",
+      "usage_count": 0,
+      "last_used": ""
+    }
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "topic": "Your bones are secretly liquid metal factories",
+  "lang": "en",
+  "narration": "Your bones seem completely dead. Solid, lifeless scaffolding that just holds your body upright against gravity. But inside those hard walls, your bones are quietly running factories that pump liquid metal into your blood. Inside the spongy core, stem cells build hemoglobin around single iron atoms, releasing millions of red blood cells every second. Each cell carries nearly a billion iron atoms, and the iron inside your body could forge one small nail. The hardest part of you makes the metal in your blood.",
+  "word_count": 84,
+  "beats": [
+    {
+      "index": 1,
+      "role": "myth",
+      "text": "Your bones seem completely dead. Solid, lifeless scaffolding that just holds your body upright against gravity.",
+      "emphasis": [
+        "bones",
+        "dead",
+        "scaffolding"
+      ]
+    },
+    {
+      "index": 2,
+      "role": "twist",
+      "text": "But inside those hard walls, your bones are quietly running factories that pump liquid metal into your blood.",
+      "emphasis": [
+        "factories",
+        "liquid",
+        "metal"
+      ]
+    },
+    {
+      "index": 3,
+      "role": "mechanism_a",
+      "text": "Inside the spongy core, stem cells build hemoglobin around single iron atoms, releasing millions of red blood cells every second.",
+      "emphasis": [
+        "hemoglobin",
+        "iron",
+        "millions"
+      ]
+    },
+    {
+      "index": 4,
+      "role": "mechanism_b",
+      "text": "Each cell carries nearly a billion iron atoms, and the iron inside your body could forge one small nail.",
+      "emphasis": [
+        "billion",
+        "nail"
+      ]
+    },
+    {
+      "index": 5,
+      "role": "kicker",
+      "text": "The hardest part of you makes the metal in your blood.",
+      "emphasis": [
+        "hardest",
+        "metal"
+      ]
+    }
+  ],
+  "shots": [
+    {
+      "block": 1,
+      "t_start": 0.0,
+      "t_end": 4.0,
+      "subject_id": "anchor_man",
+      "start_image_prompt": "Full-body wide shot of a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression, centered in a dark neutral charcoal studio void, feet planted, warm golden key light from upper left, deep cobalt-blue shadow fill, cinematic rim light tracing his silhouette, faint volumetric haze, glossy PBR materials, Octane render look, clean frame with no graphics or annotations, 9:16 vertical composition",
+      "end_image_prompt": "Medium shot framed waist-to-thigh of a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression, his skin and clothing now rendered translucent like frosted glass, revealing the ivory-white femur bone glowing warm underneath the tissue, a flat neon-green arrow graphic floating at the lower-center of frame pointing up at the femur head, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, glossy PBR materials, Octane render look, 9:16 vertical composition",
+      "motion_prompt": "the man's skin and clothing turn translucent as his femur glows into view beneath the tissue, slow creeping push-in, subtle floating handheld camera",
+      "chain_from_prev": false,
+      "subject_description": "a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression",
+      "journey_phase": "establish",
+      "scale": "wide",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "center",
+      "end_target_quadrant": "center"
+    },
+    {
+      "block": 2,
+      "t_start": 4.0,
+      "t_end": 8.0,
+      "subject_id": "anchor_man",
+      "start_image_prompt": "Medium shot framed waist-to-thigh of a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression, his skin and clothing now rendered translucent like frosted glass, revealing the ivory-white femur bone glowing warm underneath the tissue, a flat neon-green arrow graphic floating at the lower-center of frame pointing up at the femur head, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, glossy PBR materials, Octane render look, 9:16 vertical composition",
+      "end_image_prompt": "Macro cross-section of a cross-sectioned human femur head with a glossy ivory cortical bone shell cracked open along a clean seam, its interior a honeycomb of trabecular bone struts filled with glistening dark-red marrow pockets, wet specular highlights on the marrow surface, thin film of moisture on the bone, a flat neon-green arrow graphic in the upper-right of frame pointing down into one glowing marrow cavity, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, hyper-detailed PBR materials, Octane render look, 9:16 vertical composition",
+      "motion_prompt": "the femur head cracks open along a clean seam, exposing a glistening honeycomb of dark marrow, microscopic zoom-in, cross-section shift, focus pull",
+      "chain_from_prev": true,
+      "subject_description": "a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression",
+      "journey_phase": "descend",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "cross_section",
+      "start_target_quadrant": "lower_center",
+      "end_target_quadrant": "top_right"
+    },
+    {
+      "block": 3,
+      "t_start": 8.0,
+      "t_end": 12.0,
+      "subject_id": "femur_marrow",
+      "start_image_prompt": "Macro cross-section of a cross-sectioned human femur head with a glossy ivory cortical bone shell cracked open along a clean seam, its interior a honeycomb of trabecular bone struts filled with glistening dark-red marrow pockets, wet specular highlights on the marrow surface, thin film of moisture on the bone, a flat neon-green arrow graphic in the upper-right of frame pointing down into one glowing marrow cavity, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, hyper-detailed PBR materials, Octane render look, 9:16 vertical composition",
+      "end_image_prompt": "Microscopic view inside a marrow cavity showing a pale translucent hematopoietic stem cell with a soft violet nucleus pinching in two, one daughter cell flushing crimson as hemoglobin accumulates inside it, embedded in warm red gel-like marrow tissue, surrounding stroma rendered as soft glowing amber strands, shallow depth of field, a flat neon-green arrow graphic at the lower-left of frame pointing at the dividing cell, warm golden key light, deep cobalt-blue shadow fill, volumetric haze, glossy subsurface-scattering shaders, Octane render look, 9:16 vertical composition",
+      "motion_prompt": "a pale stem cell pinches in two while its daughter cell floods crimson with fresh hemoglobin, slow pull-back reveal, shifting light",
+      "chain_from_prev": false,
+      "subject_description": "a cross-sectioned human femur head with a glossy ivory cortical bone shell cracked open along a clean seam, its interior a honeycomb of trabecular bone struts filled with glistening dark-red marrow pockets",
+      "journey_phase": "explore",
+      "scale": "macro",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "top_right",
+      "end_target_quadrant": "bottom_left"
+    },
+    {
+      "block": 4,
+      "t_start": 12.0,
+      "t_end": 16.0,
+      "subject_id": "marrow_stem_cell",
+      "start_image_prompt": "Microscopic view inside a marrow cavity showing a pale translucent hematopoietic stem cell with a soft violet nucleus pinching in two, one daughter cell flushing crimson as hemoglobin accumulates inside it, embedded in warm red gel-like marrow tissue, surrounding stroma rendered as soft glowing amber strands, shallow depth of field, a flat neon-green arrow graphic at the lower-left of frame pointing at the dividing cell, warm golden key light, deep cobalt-blue shadow fill, volumetric haze, glossy subsurface-scattering shaders, Octane render look, 9:16 vertical composition",
+      "end_image_prompt": "Nano-scale view of a single hemoglobin protein complex of four folded deep-crimson globin ribbon chains wrapped around a central heme ring that locks one glowing molten-orange iron atom at its core, the iron atom radiating a small warm glow, drifting translucent protein haze and floating micro-particles around it, a flat neon-green arrow graphic at the upper-left of frame pointing directly at the glowing iron atom, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, hyper-detailed molecular PBR shaders, Octane render look, 9:16 vertical composition",
+      "motion_prompt": "four globin chains fold shut over a heme ring as it locks onto a glowing iron atom, low angle camera pan, macro depth of field",
+      "chain_from_prev": false,
+      "subject_description": "a pale translucent hematopoietic stem cell with a soft violet nucleus pinching in two, one daughter cell flushing crimson as hemoglobin accumulates inside it, embedded in warm red gel-like marrow tissue",
+      "journey_phase": "explore",
+      "scale": "micro",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "bottom_left",
+      "end_target_quadrant": "top_left"
+    },
+    {
+      "block": 5,
+      "t_start": 16.0,
+      "t_end": 20.0,
+      "subject_id": "hemoglobin_iron",
+      "start_image_prompt": "Nano-scale view of a single hemoglobin protein complex of four folded deep-crimson globin ribbon chains wrapped around a central heme ring that locks one glowing molten-orange iron atom at its core, the iron atom radiating a small warm glow, drifting translucent protein haze and floating micro-particles around it, a flat neon-green arrow graphic at the upper-left of frame pointing directly at the glowing iron atom, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, hyper-detailed molecular PBR shaders, Octane render look, 9:16 vertical composition",
+      "end_image_prompt": "Microscopic view inside a blood vessel: a torrent of glossy biconcave red blood cells with wet specular highlights surging through a translucent pink vessel tunnel toward the viewer, hundreds of cells stacked into the hazy distance conveying massive flow, vessel wall rendered as smooth glistening tissue, a bold red trajectory line sweeping along the lower-right of frame following the direction of the cell flow, warm golden key light, deep cobalt-blue shadow fill, volumetric haze, glossy subsurface-scattering shaders, Octane render look, 9:16 vertical composition, a neon-green annotation arrow pointing at the focal structure",
+      "motion_prompt": "millions of glossy red blood cells burst from the marrow wall and surge down the vessel, slow orbit rotation, diagnostic lighting change",
+      "chain_from_prev": false,
+      "subject_description": "a single hemoglobin protein complex of four folded deep-crimson globin ribbon chains wrapped around a central heme ring that locks one glowing molten-orange iron atom at its core",
+      "journey_phase": "explore",
+      "scale": "nano",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "top_left",
+      "end_target_quadrant": "bottom_right"
+    },
+    {
+      "block": 6,
+      "t_start": 20.0,
+      "t_end": 24.0,
+      "subject_id": "red_blood_cell_stream",
+      "start_image_prompt": "Microscopic view inside a blood vessel: a torrent of glossy biconcave red blood cells with wet specular highlights surging through a translucent pink vessel tunnel toward the viewer, hundreds of cells stacked into the hazy distance conveying massive flow, vessel wall rendered as smooth glistening tissue, a bold red trajectory line sweeping along the lower-right of frame following the direction of the cell flow, warm golden key light, deep cobalt-blue shadow fill, volumetric haze, glossy subsurface-scattering shaders, Octane render look, 9:16 vertical composition",
+      "end_image_prompt": "Macro shot of a small hand-forged iron nail floating upright in a dark void, its core glowing molten orange, its edges cooling to charcoal gray, tiny sparks drifting off its pitted metallic surface, faint heat shimmer above the nail head, a red trajectory line arcing upward through the upper-center of frame pointing at the nail, warm golden key light glinting off the metal, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, hyper-detailed PBR metal shader, Octane render look, 9:16 vertical composition",
+      "motion_prompt": "iron atoms stream out of the passing blood cells and fuse into a small glowing forged nail, slow push-in and dramatic focus pull, cinematic rim light",
+      "chain_from_prev": false,
+      "subject_description": "a torrent of glossy biconcave red blood cells with wet specular highlights surging through a translucent pink vessel tunnel",
+      "journey_phase": "reveal",
+      "scale": "micro",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "bottom_right",
+      "end_target_quadrant": "upper_center"
+    },
+    {
+      "block": 7,
+      "t_start": 24.0,
+      "t_end": 28.0,
+      "subject_id": "molten_iron_nail",
+      "start_image_prompt": "Macro shot of a small hand-forged iron nail floating upright in a dark void, its core glowing molten orange, its edges cooling to charcoal gray, tiny sparks drifting off its pitted metallic surface, faint heat shimmer above the nail head, a red trajectory line arcing upward through the upper-center of frame pointing at the nail, warm golden key light glinting off the metal, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, hyper-detailed PBR metal shader, Octane render look, 9:16 vertical composition",
+      "end_image_prompt": "Medium shot of a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression, fully opaque again, a single tiny orange spark sinking into his hip as a faint warm glow under the skin of his thigh fades out, warm golden key light from upper left, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, glossy PBR materials, Octane render look, clean frame with no graphics or annotations, 9:16 vertical composition, a red trajectory line marking the force direction",
+      "motion_prompt": "the nail dissolves into a single orange spark that arcs back into the man's hip, slow creeping push-in, subtle floating handheld camera",
+      "chain_from_prev": false,
+      "subject_description": "a small hand-forged iron nail floating upright in a dark void, its core glowing molten orange, its edges cooling to charcoal gray, tiny sparks drifting off its pitted metallic surface",
+      "journey_phase": "reveal",
+      "scale": "macro",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "upper_center",
+      "end_target_quadrant": "upper_center"
+    },
+    {
+      "block": 8,
+      "t_start": 28.0,
+      "t_end": 32.0,
+      "subject_id": "anchor_man",
+      "start_image_prompt": "Medium shot of a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression, fully opaque again, a single tiny orange spark sinking into his hip as a faint warm glow under the skin of his thigh fades out, warm golden key light from upper left, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, glossy PBR materials, Octane render look, clean frame with no graphics or annotations, 9:16 vertical composition",
+      "end_image_prompt": "Full-body wide shot of a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression, now tapping two fingers of one hand against his thigh where the femur sits, head tilted slightly with a faint closed-mouth knowing smile, centered in the dark studio void, warm golden key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, glossy PBR materials, Octane render look, clean frame with no graphics or annotations, 9:16 vertical composition",
+      "motion_prompt": "the man taps two fingers against his thigh with a faint closed-mouth knowing smile, microscopic zoom-in, cross-section shift, focus pull",
+      "chain_from_prev": false,
+      "subject_description": "a stylized-realistic 3D man in his mid-30s with smooth subsurface-scattering skin, short dark hair, a plain heather-gray t-shirt and dark slim pants, standing relaxed with arms at his sides, mouth closed, calm neutral expression",
+      "journey_phase": "resolve",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "none",
+      "start_target_quadrant": "center",
+      "end_target_quadrant": "center"
+    }
+  ],
+  "global_negative": "text, caption, subtitle, watermark, logo, signature, UI, interface, open mouth, talking, lip movement, speech, teeth, extra limbs, deformed anatomy, duplicated subject, collage, split screen, blurry, low quality, jpeg artifacts, oversaturated, flat lighting"
+}

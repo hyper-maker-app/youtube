@@ -1,0 +1,22 @@
+# Cursor Rules - YouTube Shorts Automation
+
+Follow `PROJECT_CONTEXT.md`, `AGENTS.md`, and `WALKTHROUGH.md` as authoritative references.
+Consult `DECISIONS.md` (ADR log), `DURUM.md` (status), and `WALKTHROUGH.md` (release log) before proposing changes.
+
+## Core Rules
+1. Provider-native plan: 6–13 x 4.0s blocks locked from measured voice duration. Never alter a resumed plan.
+2. FFmpeg invariants: Do not change `gte(time,t0)*lt(time,t1)` gates or `clip(...,0,dim-(dim/zoom))` crop clamps in `editor.py`.
+3. Visuals & Audio: No spoken characters, no lip-sync, no moving mouths. All renders 9:16. Lower-middle zone is caption-safe.
+4. Security: No secrets in code; read all config from `.env` and maintain `.env.example`.
+5. Benchmark POV, Underwater Continuity & Flow Agent Invariants (ADR-037, ADR-038, ADR-039): Match 1-fps reference POV, warm tan/beige interior palette, bare forearm/wardrobe lock (no sleeves/watch), sealed-cabin plunge physics (water rises outside windshield), cool-blue underwater lighting lock with dark blue water outside side windows, solid 3D volumetric force arrows (never hollow 2D outlines), safe static keyframe phrasing (`drives toward a calm blue lake`), Flow Agent `http://127.0.0.1:8001` isolation (never daemonize `flow-windows.exe bridge`), `FLOW_IMAGE_MODEL=beluga` stability, `FLOW_RECAPTCHA=http` broker bypass, upward swimming POV egress, and circular door mechanical cutaways with waterlogged electronics.
+6. 16:9 Longform Time-Traveler Nova Mode & Model A Hybrid Background Factory (ADR-040, ADR-042, ADR-043): Two production formats supported: (A) 16:9 Widescreen Longform documentary (`--format longform`, `LONGFORM_MODE=true`) starring 28yo female chronological time-traveler & explorer "Nova" with locked facial features (hazel eyes, freckles, bone structure), signature temporal chronometer wrist artifact, era wardrobe camouflage, and Model A Hybrid compilation (`LONGFORM_HYBRID_MODE=true`): 3 key A-Roll scenes (10-15%) animated via Google Flow CDP port 9223 (`chrome_flow.bat`), and 85-90% B-Roll archaeological mystery footage rendered via high-res 2.5D Ken Burns Pan/Zoom montages, accompanied by Deepgram natural pacing narration (1.0x) and 40 Hz deep-bass `epic_curiosity` audio bed; (B) 9:16 Shorts mode (`--format short`). Video and image generation runs 100% in the background via Playwright CDP (`IMAGE_PROVIDER=playwright_flow`, `VIDEO_PROVIDER=playwright_flow`, port `9223`) started once via `chrome_flow.bat`, minting real browser reCAPTCHA Enterprise tokens (2500+ chars) and syncing live cookies over `ws://127.0.0.1:9222` to `flow-windows.exe` with zero OS mouse movement and zero window focus stealing while user plays CS2.
+
+
+## Decision Memory Mandate
+- Check `DECISIONS.md` before changing styles or architecture.
+- If an idea failed previously (`ABANDONED`), do not repeat it.
+- If a user rejects or cancels an attempted change, automatically document the reason in `DECISIONS.md`.
+
+## Automatic Maintenance (Zero User Effort)
+- Never ask the user to run sync or audit commands.
+- Automatically execute `python scripts/audit_and_sync.py` after code changes to ensure all contracts pass.

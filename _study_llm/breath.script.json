@@ -1,0 +1,191 @@
+{
+  "topic": "Why you can hold your breath longer the second time",
+  "lang": "en",
+  "narration": "Your lungs lie to you. Most people think that burning urge to breathe means oxygen is running out. It doesn't. That urge is triggered by carbon dioxide, and your first attempt flushes it out of your blood. When you hold your breath, carbon dioxide piles up, turning your blood acidic, and sensors in your brainstem sound the alarm. So round two starts with carbon dioxide already low, while your spleen squeezes out extra red blood cells. You can black out before that alarm ever sounds.",
+  "word_count": 85,
+  "beats": [
+    {
+      "index": 1,
+      "role": "myth",
+      "text": "Your lungs lie to you. Most people think that burning urge to breathe means oxygen is running out.",
+      "emphasis": [
+        "lungs",
+        "lie"
+      ]
+    },
+    {
+      "index": 2,
+      "role": "twist",
+      "text": "It doesn't. That urge is triggered by carbon dioxide, and your first attempt flushes it out of your blood.",
+      "emphasis": [
+        "carbon",
+        "dioxide"
+      ]
+    },
+    {
+      "index": 3,
+      "role": "mechanism_a",
+      "text": "When you hold your breath, carbon dioxide piles up, turning your blood acidic, and sensors in your brainstem sound the alarm.",
+      "emphasis": [
+        "acidic",
+        "brainstem"
+      ]
+    },
+    {
+      "index": 4,
+      "role": "mechanism_b",
+      "text": "So round two starts with carbon dioxide already low, while your spleen squeezes out extra red blood cells.",
+      "emphasis": [
+        "spleen",
+        "squeezes"
+      ]
+    },
+    {
+      "index": 5,
+      "role": "kicker",
+      "text": "You can black out before that alarm ever sounds.",
+      "emphasis": [
+        "alarm"
+      ]
+    }
+  ],
+  "shots": [
+    {
+      "block": 1,
+      "t_start": 0.0,
+      "t_end": 4.0,
+      "subject_id": "breath_hold_diver",
+      "start_image_prompt": "Cinematic wide 9:16 vertical shot of a stylized 3D young man with smooth caramel skin, short dark wet hair, and teal swim trunks, suspended upright in dark teal open water, cheeks puffed tight with held air, arms loose at his sides, eyes serenely closed. Soft god rays knife down from the bright surface far above, fine particles drift inside the beams, tiny bubbles cling to his forearms, dark featureless depths below. Glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, cool teal key light from above, deep cobalt-blue shadow fill, pale cinematic rim light tracing his shoulders, volumetric haze, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Medium 9:16 vertical shot framing a stylized 3D young man with smooth caramel skin, short dark wet hair, and teal swim trunks from collarbones to crown, suspended in dark teal open water, cheeks ballooned full of held air, a faint warm flush blooming across his cheekbones, throat muscles taut, eyes calmly closed, micro-bubbles trembling at his nostrils but not escaping. God-ray shafts rake across his face from the upper left, suspended particles glittering. Glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, cool teal key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "motion_prompt": "his chest slowly swells on the held breath, shoulders rising a few centimeters, slow creeping push-in, subtle floating handheld camera",
+      "chain_from_prev": false,
+      "subject_description": "a stylized 3D young man with smooth caramel skin, short dark wet hair, and teal swim trunks, suspended upright in dark teal open water, cheeks puffed tight with held air",
+      "journey_phase": "establish",
+      "scale": "wide",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "center",
+      "end_target_quadrant": "center"
+    },
+    {
+      "block": 2,
+      "t_start": 4.0,
+      "t_end": 8.0,
+      "subject_id": "breath_hold_diver",
+      "start_image_prompt": "Medium 9:16 vertical shot framing a stylized 3D young man with smooth caramel skin, short dark wet hair, and teal swim trunks from collarbones to crown, suspended in dark teal open water, cheeks ballooned full of held air, a faint warm flush blooming across his cheekbones, throat muscles taut, eyes calmly closed, micro-bubbles trembling at his nostrils but not escaping. God-ray shafts rake across his face from the upper left, suspended particles glittering. Glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, cool teal key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Close-up 9:16 vertical shot of the same stylized 3D young man, his chest now rendered translucent like smoked amber glass, revealing a glossy ribcage cradling two inflated pink lungs with visible branching bronchi; the apex of the right lung glows with a soft inner light. Dark teal water and faint god rays show through the translucent skin. A bold neon-green arrow floats in the upper-right quadrant of the frame, angled down-left, its arrowhead touching the glowing apex of the right lung. Glossy stylized-realistic 3D render, subsurface-scattering tissue, wet specular highlights on the ribs, warm golden key light inside the chest cavity, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "motion_prompt": "his chest wall turns translucent, revealing both lungs inflating beneath the ribs, microscopic zoom-in, cross-section shift, focus pull",
+      "chain_from_prev": true,
+      "subject_description": "a stylized 3D young man with smooth caramel skin, short dark wet hair, and teal swim trunks, suspended upright in dark teal open water, cheeks puffed tight with held air",
+      "journey_phase": "establish",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "cross_section",
+      "start_target_quadrant": "center",
+      "end_target_quadrant": "center"
+    },
+    {
+      "block": 3,
+      "t_start": 8.0,
+      "t_end": 12.0,
+      "subject_id": "breath_hold_diver",
+      "start_image_prompt": "Close-up 9:16 vertical shot of the same stylized 3D young man, his chest now rendered translucent like smoked amber glass, revealing a glossy ribcage cradling two inflated pink lungs with visible branching bronchi; the apex of the right lung glows with a soft inner light. Dark teal water and faint god rays show through the translucent skin. A bold neon-green arrow floats in the upper-right quadrant of the frame, angled down-left, its arrowhead touching the glowing apex of the right lung. Glossy stylized-realistic 3D render, subsurface-scattering tissue, wet specular highlights on the ribs, warm golden key light inside the chest cavity, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Extreme macro 9:16 vertical shot of a grape-like cluster of translucent pink alveoli, each a delicate thin-walled sac with a soft inner glow, wrapped in a dense web of glossy crimson capillaries; the central alveolus is stretched taut mid-swell, and pale grey carbon dioxide spheres are seeping through its wet membrane into the capillary stream. A bold neon-green arrow sits in the lower-right quadrant, pointing up-left at the exact capillary wall where the spheres cross. Glossy stylized-realistic 3D render, subsurface-scattering membranes, PBR materials, warm golden key light, deep crimson shadow fill, cinematic rim light on each sac, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "motion_prompt": "one central alveolus swells taut, pressing its membrane against the capillary web, slow pull-back reveal, shifting light",
+      "chain_from_prev": true,
+      "subject_description": "the same stylized 3D young man, his chest now rendered translucent like smoked amber glass, revealing a glossy ribcage cradling two inflated pink lungs with branching bronchi",
+      "journey_phase": "descend",
+      "scale": "close",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "top_right",
+      "end_target_quadrant": "bottom_right"
+    },
+    {
+      "block": 4,
+      "t_start": 12.0,
+      "t_end": 16.0,
+      "subject_id": "alveolus_cluster",
+      "start_image_prompt": "Extreme macro 9:16 vertical shot of a grape-like cluster of translucent pink alveoli, each a delicate thin-walled sac with a soft inner glow, wrapped in a dense web of glossy crimson capillaries; the central alveolus is stretched taut mid-swell, and pale grey carbon dioxide spheres are seeping through its wet membrane into the capillary stream. A bold neon-green arrow sits in the lower-right quadrant, pointing up-left at the exact capillary wall where the spheres cross. Glossy stylized-realistic 3D render, subsurface-scattering membranes, PBR materials, warm golden key light, deep crimson shadow fill, cinematic rim light on each sac, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Micro-scale 9:16 vertical shot inside the interior of a capillary: a tunnel of amber-tinted plasma walled with smooth endothelial cells, plump red blood cells tumbling in slow single file with wet glossy dimples, and a drifting cloud of pale grey carbon dioxide molecules weaving between them; the plasma at the frame edges darkens to a murkier amber. A bold neon-green arrow in the upper-left quadrant points down-right at the densest knot of carbon dioxide molecules. Glossy stylized-realistic 3D render, subsurface-scattering cell membranes, PBR materials, soft volumetric light bleeding through the vessel wall, deep amber shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "motion_prompt": "pale carbon dioxide molecules drift between the tumbling red blood cells, low angle camera pan, macro depth of field",
+      "chain_from_prev": false,
+      "subject_description": "a grape-like cluster of translucent pink alveoli, each a delicate thin-walled sac with a soft inner glow, wrapped in a dense web of glossy crimson capillaries",
+      "journey_phase": "explore",
+      "scale": "macro",
+      "asset_refs": [],
+      "transition_hint": "zoom_in",
+      "start_target_quadrant": "bottom_right",
+      "end_target_quadrant": "top_left"
+    },
+    {
+      "block": 5,
+      "t_start": 16.0,
+      "t_end": 20.0,
+      "subject_id": "blood_capillary_interior",
+      "start_image_prompt": "Micro-scale 9:16 vertical shot inside the interior of a capillary: a tunnel of amber-tinted plasma walled with smooth endothelial cells, plump red blood cells tumbling in slow single file with wet glossy dimples, and a drifting cloud of pale grey carbon dioxide molecules weaving between them; the plasma at the frame edges darkens to a murkier amber. A bold neon-green arrow in the upper-left quadrant points down-right at the densest knot of carbon dioxide molecules. Glossy stylized-realistic 3D render, subsurface-scattering cell membranes, PBR materials, soft volumetric light bleeding through the vessel wall, deep amber shadow fill, cinematic rim light, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Micro-scale 9:16 vertical shot of a cluster of glossy slate-blue brainstem neurons bathing in pale cerebrospinal fluid, dendrites branching like coral; one central chemoreceptor neuron fires strobing electric-blue pulses that ripple down its axon, tiny acidic sparks glowing where the fluid meets the membrane. A bold neon-green arrow in the lower-right quadrant points up-left at the firing neuron. Glossy stylized-realistic 3D render, subsurface-scattering neural tissue, PBR materials, cool blue key light, deep indigo shadow fill, cinematic rim light on the dendrite tips, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "motion_prompt": "one chemoreceptor neuron fires strobing electric-blue pulses down its axon, slow orbit rotation, diagnostic lighting change",
+      "chain_from_prev": false,
+      "subject_description": "the interior of a capillary: a tunnel of amber-tinted plasma walled with smooth endothelial cells, plump red blood cells tumbling in slow single file, and a drifting cloud of pale grey carbon dioxide molecules weaving between them",
+      "journey_phase": "explore",
+      "scale": "micro",
+      "asset_refs": [],
+      "transition_hint": "match_cut",
+      "start_target_quadrant": "top_left",
+      "end_target_quadrant": "bottom_right"
+    },
+    {
+      "block": 6,
+      "t_start": 20.0,
+      "t_end": 24.0,
+      "subject_id": "brainstem_chemoreceptor",
+      "start_image_prompt": "Micro-scale 9:16 vertical shot of a cluster of glossy slate-blue brainstem neurons bathing in pale cerebrospinal fluid, dendrites branching like coral; one central chemoreceptor neuron fires strobing electric-blue pulses that ripple down its axon, tiny acidic sparks glowing where the fluid meets the membrane. A bold neon-green arrow in the lower-right quadrant points up-left at the firing neuron. Glossy stylized-realistic 3D render, subsurface-scattering neural tissue, PBR materials, cool blue key light, deep indigo shadow fill, cinematic rim light on the dendrite tips, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Macro 9:16 vertical shot of a glossy deep-crimson bean-shaped spleen in cross-section, its fibrous capsule dimpled inward mid-squeeze like a wrung sponge, red pulp chambers visibly compressed, and a pressurized jet of red blood cells erupting from the hilum in a slow fountain. A red trajectory line is drawn along the arc of the escaping cells, sweeping from the spleen's hilum upward toward a vein exiting the frame in the upper-right quadrant. Glossy stylized-realistic 3D render, wet specular highlights on the capsule, subsurface-scattering pulp, PBR materials, warm crimson key light, deep maroon shadow fill, cinematic rim light, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark, a neon-green annotation arrow pointing at the focal structure",
+      "motion_prompt": "the spleen's capsule contracts in a slow wringing squeeze, slow push-in and dramatic focus pull, cinematic rim light",
+      "chain_from_prev": false,
+      "subject_description": "a cluster of glossy slate-blue brainstem neurons bathing in pale cerebrospinal fluid, dendrites branching like coral, one central chemoreceptor neuron firing strobing electric-blue pulses down its axon",
+      "journey_phase": "explore",
+      "scale": "micro",
+      "asset_refs": [],
+      "transition_hint": "whip",
+      "start_target_quadrant": "bottom_right",
+      "end_target_quadrant": "top_right"
+    },
+    {
+      "block": 7,
+      "t_start": 24.0,
+      "t_end": 28.0,
+      "subject_id": "spleen_organ",
+      "start_image_prompt": "Macro 9:16 vertical shot of a glossy deep-crimson bean-shaped spleen in cross-section, its fibrous capsule dimpled inward mid-squeeze like a wrung sponge, red pulp chambers visibly compressed, and a pressurized jet of red blood cells erupting from the hilum in a slow fountain. A red trajectory line is drawn along the arc of the escaping cells, sweeping from the spleen's hilum upward toward a vein exiting the frame in the upper-right quadrant. Glossy stylized-realistic 3D render, wet specular highlights on the capsule, subsurface-scattering pulp, PBR materials, warm crimson key light, deep maroon shadow fill, cinematic rim light, volumetric haze, Octane render look, dark neutral backdrop, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Medium 9:16 vertical shot of the same stylized 3D young man suspended in dark teal water, his full torso rendered translucent in soft cutaway: glossy ribs, pink lungs up top, and the deep-crimson spleen glowing brightly in the lower-left abdomen. A red trajectory line arcs from the glowing spleen upward along the left side of the torso toward the heart, tracing the path of the released blood cells, the line's bright origin node sitting squarely in the lower-left quadrant. God-ray shafts pass behind the ribcage, particles drifting. Glossy stylized-realistic 3D render, subsurface-scattering tissue, PBR materials, cool teal key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "motion_prompt": "a pressurized jet of red blood cells erupts from the spleen's hilum, slow creeping push-in, subtle floating handheld camera",
+      "chain_from_prev": false,
+      "subject_description": "a glossy deep-crimson bean-shaped spleen in cross-section, its fibrous capsule dimpled inward mid-squeeze like a wrung sponge, red pulp chambers compressed, a pressurized jet of red blood cells erupting from its hilum",
+      "journey_phase": "reveal",
+      "scale": "macro",
+      "asset_refs": [],
+      "transition_hint": "zoom_out",
+      "start_target_quadrant": "top_right",
+      "end_target_quadrant": "lower_center"
+    },
+    {
+      "block": 8,
+      "t_start": 28.0,
+      "t_end": 32.0,
+      "subject_id": "breath_hold_diver",
+      "start_image_prompt": "Medium 9:16 vertical shot of the same stylized 3D young man suspended in dark teal water, his full torso rendered translucent in soft cutaway: glossy ribs, pink lungs up top, and the deep-crimson spleen glowing brightly in the lower-left abdomen. A red trajectory line arcs from the glowing spleen upward along the left side of the torso toward the heart, tracing the path of the released blood cells, the line's bright origin node sitting squarely in the lower-left quadrant. God-ray shafts pass behind the ribcage, particles drifting. Glossy stylized-realistic 3D render, subsurface-scattering tissue, PBR materials, cool teal key light, deep cobalt-blue shadow fill, cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition, no text, no watermark.",
+      "end_image_prompt": "Cinematic wide 9:16 vertical shot of the same stylized 3D young man with smooth caramel skin, short dark wet hair, and teal swim trunks, finally exhaling in dark teal open water: cheeks deflating, a jubilant silver column of bubbles spiraling upward from his lips toward the bright surface, his face broken into a relieved grin, one hand raised in a thumbs-up, body gently rotating. God rays flare through the rising bubble column, particles glittering, dark featureless depths below. Glossy stylized-realistic 3D render, smooth subsurface-scattering skin, PBR materials, cool teal key light from above, deep cobalt-blue shadow fill, pale cinematic rim light, volumetric haze, Octane render look, 9:16 vertical composition, clean frame, no text, no watermark, a red trajectory line marking the force direction",
+      "motion_prompt": "the diver exhales a jubilant silver column of bubbles, microscopic zoom-in, cross-section shift, focus pull",
+      "chain_from_prev": false,
+      "subject_description": "the same stylized 3D young man, his full torso rendered translucent in soft cutaway, pink lungs up top and the deep-crimson spleen glowing brightly in the lower-left abdomen",
+      "journey_phase": "reveal",
+      "scale": "medium",
+      "asset_refs": [],
+      "transition_hint": "none",
+      "start_target_quadrant": "lower_center",
+      "end_target_quadrant": "upper_center"
+    }
+  ],
+  "global_negative": "text, caption, subtitle, watermark, logo, signature, UI, interface, open mouth, talking, lip movement, speech, teeth, extra limbs, deformed anatomy, duplicated subject, collage, split screen, blurry, low quality, jpeg artifacts, oversaturated, flat lighting"
+}
