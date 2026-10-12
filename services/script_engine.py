@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from difflib import SequenceMatcher
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -1856,6 +1857,7 @@ def annotate_words(beats: list[Beat], words: list[dict[str, Any]]) -> list[dict[
                 single_word_emphasis.add(part.casefold())
 
     beat_tokens: list[tuple[str, str, str, str]] = []
+    canonical_tokens: list[str] = []
     for beat in beats:
         raw_role = str(getattr(beat, "role", "") or "default").strip()
         role_low = raw_role.casefold()
@@ -1868,11 +1870,69 @@ def annotate_words(beats: list[Beat], words: list[dict[str, Any]]) -> list[dict[
         else:
             speaker = "nova"
             speaker_label = getattr(config, "EXPLORER_CHARACTER_NAME", "Nova") or "Nova"
-        toks = re.findall(r"[\w']+", str(beat.text or "").casefold(), flags=re.UNICODE)
+        display_tokens = re.findall(r"[\w']+(?:-[\w']+)*[,;.!?…—:]?", str(beat.text or ""), flags=re.UNICODE)
+        toks = [re.sub(r"[^\w']", "", token.casefold(), flags=re.UNICODE) for token in display_tokens]
         if not toks:
             toks = [""]
-        for tok in toks:
+        for tok, display_token in zip(toks, display_tokens):
             beat_tokens.append((tok, raw_role, speaker, speaker_label))
+            canonical_tokens.append(display_token)
+
+    # TTS word timing is useful even when the provider's phonetic transcript mangles
+    # a proper noun. Align that transcript back to the authored narration, and use the
+    # script spelling/punctuation wherever a word occupies the same spoken position.
+    # Timings remain provider-native; only their display text is canonicalized.
+    if canonical_tokens and words:
+        raw_tokens = [
+            re.sub(r"[^\w']", "", str(word.get("text") or "").casefold(), flags=re.UNICODE)
+            for word in words
+        ]
+        n, m = len(canonical_tokens), len(raw_tokens)
+        insertion_cost = 0.85
+        table = [[0.0] * (m + 1) for _ in range(n + 1)]
+        back = [[""] * (m + 1) for _ in range(n + 1)]
+        for i in range(1, n + 1):
+            table[i][0], back[i][0] = i * insertion_cost, "delete_script"
+        for j in range(1, m + 1):
+            table[0][j], back[0][j] = j * insertion_cost, "keep_audio"
+        for i in range(1, n + 1):
+            expected = re.sub(r"[^\w']", "", canonical_tokens[i - 1].casefold(), flags=re.UNICODE)
+            for j in range(1, m + 1):
+                heard = raw_tokens[j - 1]
+                if expected == heard and expected:
+                    substitute_cost = 0.0
+                else:
+                    similarity = SequenceMatcher(None, expected, heard).ratio() if expected and heard else 0.0
+                    substitute_cost = 0.55 + (1.0 - similarity) * 0.45
+                choices = (
+                    (table[i - 1][j - 1] + substitute_cost, "align"),
+                    (table[i - 1][j] + insertion_cost, "delete_script"),
+                    (table[i][j - 1] + insertion_cost, "keep_audio"),
+                )
+                table[i][j], back[i][j] = min(choices, key=lambda item: item[0])
+        aligned: dict[int, int] = {}
+        i, j = n, m
+        while i or j:
+            step = back[i][j]
+            if step == "align":
+                aligned[j - 1] = i - 1
+                i -= 1
+                j -= 1
+            elif step == "delete_script":
+                i -= 1
+            else:
+                j -= 1
+        canonical_words: list[dict[str, Any]] = []
+        for idx, word in enumerate(words):
+            token_idx = aligned.get(idx)
+            if token_idx is None:
+                canonical_words.append(word)
+                continue
+            normalized_word = dict(word)
+            normalized_word["text"] = canonical_tokens[token_idx]
+            normalized_word["source"] = canonical_tokens[token_idx]
+            canonical_words.append(normalized_word)
+        words = canonical_words
 
     annotated: list[dict[str, Any]] = []
     cursor = 0

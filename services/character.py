@@ -440,7 +440,8 @@ def compile_character_shot_prompt(
         framing = (
             "Medium close-up eye-level documentary framing with complete head, hair, and shoulders fully inside frame "
             "(generous headroom above crown of head, NEVER crop forehead or top of head), "
-            "host speaking naturally to audience, subtle mouth articulation, warm engaged gaze"
+            "host observing the scene with a warm, engaged gaze and a neutral closed mouth; communicate through eye direction and restrained gestures, "
+            "with no visible dialogue or lip movement because narration remains voiceover"
         )
     elif camera_style == "vlog_selfie_reaction":
         framing = (

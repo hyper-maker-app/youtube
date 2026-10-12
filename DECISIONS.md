@@ -590,3 +590,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: For longform B-roll, make explicitly authored people mandatory visible subjects at readable scale; present voiceover captions without visible-speaker labels or decorative automatic branding.
 
 ---
+
+### [ADR-055] Abandon the 12 October Gallipoli corrected video provider attempt
+- **Tarih**: 2026-10-12
+- **Durum**: `ABANDONED`
+- **Talep / Fikir**: Match the 18 March 1915 reference passage by producing a one-minute, fifteen-shot Gallipoli sequence centered on the coastal gun crew, an on-location field interview, the loading/firing cycle, and the fleet's losses.
+- **Yapılan İş / Sonuç**: Replaced the fixed 15-shot Gallipoli summary with the gun-crew story arc and canonicalized timed captions back to the authored narration. The Flow route failed while generating the first environment image and wrote a handoff. A separate explicit Vertex Veo plus Nano Banana run then failed at its first image request with a generic ClientError. No corrected video was rendered.
+- **İptal / Kabul Gerekçesi**: Neither configured image provider produced the required first storyboard assets in this session. The Flow handoff does not expose a specific recovery reason; the Vertex adapter exposed only the ClientError type. Continuing would require provider/account state or a usable generation service.
+- **Kalıcı Kural / Ders**: Preserve the corrected script and locked 15-by-4-second plan, keep provider selection explicit, and resume after an authorized image-generation route is available. Do not substitute providers silently or claim a video was produced when no visual assets were generated.
+
+---

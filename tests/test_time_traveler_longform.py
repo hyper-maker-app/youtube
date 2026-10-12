@@ -482,6 +482,44 @@ def test_longform_voiceover_captions_omit_speaker_labels_and_keep_era_stamp():
     assert "arrived" in ass_text and "built" in ass_text
 
 
+def test_annotate_words_restores_authored_spelling_and_punctuation():
+    from services.script_engine import annotate_words
+
+    beats = [Beat(index=1, text="The battleship Bouvet sank.", role="host_nova", emphasis=["Bouvet"])]
+    timed_words = [
+        {"text": "the", "start": 0.0, "end": 0.2},
+        {"text": "battleship", "start": 0.2, "end": 0.7},
+        {"text": "bouvette", "start": 0.7, "end": 1.0},
+        {"text": "sank", "start": 1.0, "end": 1.3},
+    ]
+
+    annotated = annotate_words(beats, timed_words)
+
+    assert [word["text"] for word in annotated] == ["The", "battleship", "Bouvet", "sank."]
+    assert annotated[2]["source"] == "Bouvet"
+
+
+def test_fifteen_shot_gallipoli_outline_follows_gunner_story_arc():
+    from services.screenplay import generate_dynamic_screenplay
+    import pipeline
+
+    timeline = pipeline.provider_timeline(blocks=15)
+    script = generate_dynamic_screenplay(
+        "Inside the Ottoman Gun Crew at Gallipoli",
+        timeline,
+        target_blocks=15,
+    )
+
+    assert len(script.beats) == len(script.shots) == 15
+    assert script.beats[2].text == "I meet an Ottoman gunner beside his artillery crew."
+    assert "shell" in script.beats[4].text.casefold()
+    assert "fires" in script.beats[7].text.casefold()
+    assert "Bouvet" in script.beats[12].text
+    assert "withdraw" in script.beats[14].text.casefold() or "retreat" in script.beats[14].text.casefold()
+    assert "closed mouths" in script.shots[2].motion_prompt.casefold()
+    assert script.shots[2].subject_id == "host_nova"
+
+
 def test_longform_gallipoli_era_stamp_uses_world_war_i_not_antiquity():
     import captions
 
