@@ -222,13 +222,14 @@ def test_world_war_one_screenplay_keeps_authored_proof():
     script = generate_dynamic_screenplay("1915 The Battle of Gallipoli", target_blocks=15)
     assert "chronometer" in script.shots[0].proof_on_screen.lower()
     assert "allied battleships" in script.shots[0].proof_on_screen.lower()
-    assert "nusret" in script.shots[1].proof_on_screen.lower()
-    assert "sailors haul a contact mine" in script.shots[1].start_image_prompt.lower()
-    assert not any("zero people" in item for item in script.shots[1].quality_critical)
-    keyframe_prompt = compile_keyframe_prompt(script.shots[1], "start", mode=EXPLORER).lower()
-    motion_prompt = optimize_for_flow(script.shots[1], mode=EXPLORER)["video_prompt"].lower()
-    assert "mandatory authored human subjects" in keyframe_prompt
-    assert "clearly visible throughout" in motion_prompt
+    assert "coastal battery" in script.shots[1].proof_on_screen.lower()
+    assert "shell" in script.shots[4].proof_on_screen.lower()
+    assert "bouvet" in script.shots[12].proof_on_screen.lower()
+    assert not any("zero people" in item for item in script.shots[2].quality_critical)
+    keyframe_prompt = compile_keyframe_prompt(script.shots[2], "start", mode=EXPLORER).lower()
+    motion_prompt = optimize_for_flow(script.shots[2], mode=EXPLORER)["video_prompt"].lower()
+    assert "they must be clearly visible performing that action" in keyframe_prompt
+    assert "named people remain clearly visible throughout" in motion_prompt
     assert "object-only view" in motion_prompt
 
 

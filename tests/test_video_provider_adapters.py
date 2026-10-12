@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import tempfile
 import unittest
@@ -37,6 +38,57 @@ class _RecordingFlow:
 
 
 class VideoProviderAdapterTests(unittest.TestCase):
+    def test_playwright_flow_pins_saved_account_to_live_browser_cookies(self) -> None:
+        from services.playwright_flow_client import match_saved_account_bundle
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            intended = root / "account_current.json"
+            other = root / "account_other.json"
+            intended.write_text(json.dumps({
+                "project_id": "project-current",
+                "cookies": [
+                    {"name": "OSID", "value": "current-osid"},
+                    {"name": "__Secure-1PSID", "value": "current-psid"},
+                ],
+            }), encoding="utf-8")
+            other.write_text(json.dumps({
+                "project_id": "project-other",
+                "cookies": [
+                    {"name": "OSID", "value": "other-osid"},
+                    {"name": "__Secure-1PSID", "value": "other-psid"},
+                ],
+            }), encoding="utf-8")
+
+            match = match_saved_account_bundle([
+                {"name": "OSID", "value": "current-osid"},
+                {"name": "__Secure-1PSID", "value": "current-psid"},
+            ], [other, intended])
+
+            self.assertIsNotNone(match)
+            self.assertEqual(match[0], intended)
+            self.assertEqual(match[1]["project_id"], "project-current")
+
+    def test_playwright_flow_refuses_ambiguous_or_weak_account_matches(self) -> None:
+        from services.playwright_flow_client import match_saved_account_bundle
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            first = root / "account_first.json"
+            second = root / "account_second.json"
+            payload = {"cookies": [
+                {"name": "OSID", "value": "shared"},
+                {"name": "__Secure-1PSID", "value": "same"},
+            ]}
+            first.write_text(json.dumps(payload), encoding="utf-8")
+            second.write_text(json.dumps(payload), encoding="utf-8")
+            live = [
+                {"name": "OSID", "value": "shared"},
+                {"name": "__Secure-1PSID", "value": "same"},
+            ]
+            self.assertIsNone(match_saved_account_bundle(live, [first, second]))
+            self.assertIsNone(match_saved_account_bundle([live[0]], [first]))
+
     def test_vertex_sanitizer_replaces_whole_words_and_caps_prompt(self) -> None:
         prompt = "Cancer blood needle puncture wound cut " + ("continuity " * 100)
         actual = VertexVeoProvider.sanitize_prompt(prompt)

@@ -116,8 +116,8 @@ def test_dynamic_screenplay_generation_and_flexible_durations():
     assert len(a_roll_shots) >= 1
 
 
-def test_gallipoli_one_minute_flow_fallback_has_fifteen_topic_specific_native_shots():
-    """A one-minute Flow plan must stay on Gallipoli facts and 4-second clips."""
+def test_gallipoli_one_minute_flow_fallback_tracks_gunner_story_in_native_shots():
+    """A one-minute Flow plan keeps the gun-crew arc on its continuous battery location."""
     import pipeline
 
     timeline = pipeline.provider_timeline(blocks=15)
@@ -129,11 +129,12 @@ def test_gallipoli_one_minute_flow_fallback_has_fifteen_topic_specific_native_sh
     assert script.timeline.block_count == 15
     assert script.timeline.total_duration == 60.0
     assert all(shot.duration == 4.0 for shot in script.shots)
-    assert len({shot.location_id for shot in script.shots}) == 15
+    assert len({shot.location_id for shot in script.shots}) == 13
     assert "stonework" not in " ".join(beat.text for beat in script.beats).casefold()
-    assert any("Nusret" in beat.text for beat in script.beats)
+    assert "I meet an Ottoman gunner beside his artillery crew." == script.beats[2].text
+    assert script.shots[2].location_id == script.shots[3].location_id
     assert any("Bouvet" in beat.text for beat in script.beats)
-    assert any("25 April" in beat.text for beat in script.beats)
+    assert "retreat" in script.beats[14].text.casefold()
 
 
 def test_flow_roster_assessment_failure_writes_sanitized_resume_handoff(tmp_path):

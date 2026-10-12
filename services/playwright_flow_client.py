@@ -25,6 +25,52 @@ CHROME_EXE = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 DEFAULT_FLOW_URL = "https://flow.google.com"
 RECAPTCHA_HOST_URL = "https://flow.google.com/recaptcha-host"
 RECAPTCHA_SITE_KEY = "6LdsFiUsAAAAAIjVDZcuLhaHiDn5nnHVXVRQGeMV"
+FLOW_AUTH_COOKIE_NAMES = {
+    "OSID", "__Secure-OSID", "__Secure-1PSID", "__Secure-3PSID", "SID", "SAPISID",
+}
+
+
+def match_saved_account_bundle(
+    live_cookies: list[dict[str, Any]],
+    account_files: list[str | Path],
+) -> tuple[Path, dict[str, Any]] | None:
+    """Identify the saved Flow account that belongs to this live browser profile.
+
+    Multiple browser profiles can connect to the local Flow bridge. Match auth cookies
+    in memory and return only a unique, strong match; cookie values are never logged.
+    """
+    live = {
+        str(cookie.get("name")): str(cookie.get("value"))
+        for cookie in live_cookies
+        if cookie.get("name") in FLOW_AUTH_COOKIE_NAMES and cookie.get("value")
+    }
+    if len(live) < 2:
+        return None
+
+    ranked: list[tuple[int, Path, dict[str, Any]]] = []
+    for raw_path in account_files:
+        path = Path(raw_path)
+        try:
+            bundle = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        saved = {
+            str(cookie.get("name")): str(cookie.get("value"))
+            for cookie in bundle.get("cookies", [])
+            if cookie.get("name") in FLOW_AUTH_COOKIE_NAMES and cookie.get("value")
+        }
+        score = sum(1 for name, value in live.items() if saved.get(name) == value)
+        if score >= 2:
+            ranked.append((score, path, bundle))
+
+    if not ranked:
+        return None
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    best_score = ranked[0][0]
+    best = [item for item in ranked if item[0] == best_score]
+    if len(best) != 1:
+        return None
+    return best[0][1], best[0][2]
 
 
 class PlaywrightFlowClient:
@@ -47,6 +93,8 @@ class PlaywrightFlowClient:
         self._captcha_page: Page | None = None
         self._last_mint_time: float = 0.0
         self._last_mint_token: str = ""
+        self._active_account_path: Path | None = None
+        self._active_account_bundle: dict[str, Any] = {}
         self._lock = asyncio.Lock()
 
     async def _jitter(self, min_s: float = 1.5, max_s: float = 4.0) -> None:
@@ -173,6 +221,21 @@ class PlaywrightFlowClient:
             has_live_osid = any(c.get("name") in ("OSID", "__Secure-OSID") for c in existing)
             if not has_live_osid:
                 await self._inject_saved_cookies()
+
+            live_cookies = await self.context.cookies(["https://flow.google.com", "https://google.com"])
+            account_files = glob.glob(COOKIES_GLOB)
+            matched = match_saved_account_bundle(live_cookies, account_files)
+            if matched:
+                self._active_account_path, self._active_account_bundle = matched
+                logger.info("[PLAYWRIGHT CDP] Pinned Flow account to the active Chrome session.")
+            elif len(account_files) == 1:
+                self._active_account_path = Path(account_files[0])
+                self._active_account_bundle = self._load_saved_account_bundle()
+            elif account_files:
+                raise RuntimeError(
+                    "Could not uniquely match the active Chrome Flow session to a saved account; "
+                    "generation stopped to avoid using another browser profile."
+                )
 
         # Prepare dedicated https://flow.google.com/recaptcha-host tab for real browser token minting
         for p in self.context.pages:
@@ -315,7 +378,7 @@ class PlaywrightFlowClient:
 
     async def _bridge_responder_loop(self, stop_event: asyncio.Event) -> None:
         """Connect to flow-windows.exe's ws://127.0.0.1:9222 server and serve real CDP captcha + session."""
-        bundle = self._load_saved_account_bundle()
+        bundle = self._active_account_bundle or self._load_saved_account_bundle()
         project_id = bundle.get("project_id") or "7bb5b1c3-0801-4b7e-9d05-39cfaa77dbc9"
         if self.context:
             for p in self.context.pages:
@@ -522,6 +585,12 @@ class PlaywrightFlowClient:
                         if Path(ref).is_file():
                             ref_arg = self._resolve_flow_media_id(Path(ref)) or str(Path(ref).resolve())
                             cmd.extend(["-reference", ref_arg])
+
+        if self._active_account_path:
+            cmd.extend(["-cookies", str(self._active_account_path)])
+        active_project_id = self._active_account_bundle.get("project_id")
+        if active_project_id:
+            cmd.extend(["-project-id", str(active_project_id)])
 
         stop_event = asyncio.Event()
         responder_task = asyncio.create_task(self._bridge_responder_loop(stop_event))

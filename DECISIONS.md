@@ -600,3 +600,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Preserve the corrected script and locked 15-by-4-second plan, keep provider selection explicit, and resume after an authorized image-generation route is available. Do not substitute providers silently or claim a video was produced when no visual assets were generated.
 
 ---
+
+### [ADR-056] Pin Flow CLI account to the active CDP profile
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Ensure Google Flow generations use the account and project authenticated in the project's chrome_flow.bat profile when multiple Flow browser profiles are connected.
+- **Yapılan İş / Sonuç**: PlaywrightFlowClient now matches active CDP authentication cookies to a unique saved Flow account and passes its cookie file and project ID explicitly to image and video CLI commands. Live port 9223 matched the account used by the successful Gallipoli run. Adapter tests passed.
+- **İptal / Kabul Gerekçesi**: The Flow Agent log showed two attached profiles and warned that concurrent sessions could route requests to the wrong account/project; the resulting generation attempt returned a batchexecute 400.
+- **Kalıcı Kural / Ders**: Pin each Flow CLI call to the uniquely matched authenticated CDP account and project. Keep cookie values out of logs and stop visibly if the browser session cannot be matched unambiguously.
+
+---
