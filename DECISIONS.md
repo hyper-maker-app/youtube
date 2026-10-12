@@ -630,3 +630,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Do not place two clauses in a 4-second A-roll. Keep the hook to 'You think this rod stops lightning?' and move the rest to narrator B-roll; reject any clip whose ASR word end exceeds its actual media duration.
 
 ---
+
+### [ADR-059] Reject delayed midpoint Flow dialogue timing
+- **Tarih**: 2026-10-12
+- **Durum**: `ABANDONED`
+- **Talep / Fikir**: Generate a short Nova A-roll line that explains the continuous conductor path and looks synchronized in a 4-second clip.
+- **Yapılan İş / Sonuç**: Deepgram Nova3 recognized 'See the current follow one path' exactly, but first speech began at 1.84 seconds and ended at 3.84 seconds in a 4.01-second clip, leaving a long visible silent gesture before speaking.
+- **İptal / Kabul Gerekçesi**: Opening and midpoint speech must start naturally with the visible articulation; an almost two-second delay makes the character appear disconnected from the narration.
+- **Kalıcı Kural / Ders**: Reject A-roll clips with more than 0.5 seconds of unexplained pre-speech silence. Re-prompt with direct-to-camera speech beginning on the first frame, minimal pre-speech action, and a short line; verify mouth frames and ASR timestamps together.
+
+---
