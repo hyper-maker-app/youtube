@@ -620,3 +620,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: For this longform run, override the no-speaking short-mode rule only in authored Nova A-roll; require exact transcript/timing checks and a 1 FPS face review for all three speech shots. Keep Flow account/provider explicit and do not bypass security challenges.
 
 ---
+
+### [ADR-058] Reject the overlong opening dialogue in the 4-second Flow A-roll
+- **Tarih**: 2026-10-12
+- **Durum**: `ABANDONED`
+- **Talep / Fikir**: Generate Nova’s opening hook with a short on-camera line in one 4-second Flow clip.
+- **Yapılan İş / Sonuç**: Deepgram Nova3 transcribed the final word 'go' from 'You think this rod stops lightning? Watch where the current goes.' at 3.92-4.08 seconds, exceeding the 4.01-second video boundary.
+- **İptal / Kabul Gerekçesi**: The audio tail is cut and violates the lip-sync sentence-boundary gate.
+- **Kalıcı Kural / Ders**: Do not place two clauses in a 4-second A-roll. Keep the hook to 'You think this rod stops lightning?' and move the rest to narrator B-roll; reject any clip whose ASR word end exceeds its actual media duration.
+
+---
