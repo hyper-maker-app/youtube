@@ -680,3 +680,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Always verify speech pace <= 180 TR / <= 220 EN words for 22 blocks and <= 125 TR / <= 160 EN words for 15 blocks; never allow ancient timber in WWI artillery prompts; preserve existing curated arcs when adding extended sequences
 
 ---
+
+### [ADR-064] Multi-Agent Verified Story-Weaver Engine and Deepgram Flux Voice Roster Architecture
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Sentezlenen 4 referans GitHub projesi (`ai-playbooks`, `KKenny0/script-weaver`, `HiAPIAI`) doğrultusunda evrensel 5-aşamalı Story-Weaver motoru inşa etmek, basmakalıp `GENERIC_SENSORY_PATTERNS` şablonlarını kaldırmak ve Deepgram Flux çoklu ses havuzunu (4 erkek, 5 kadın) sıralı rotasyon ve Entity Voice Lock ile devreye almak.
+- **Yapılan İş / Sonuç**: `services/story_weaver.py`, `services/visual_locks.py`, `services/voice_roster.py` modülleri AST-clean olarak oluşturuldu; `services/screenplay.py` içindeki fallback şablonları StoryWeaver ile değiştirildi; `providers/voice/deepgram_aura.py` içine `VoiceAssigner`, `/v2/speak` URL ayrımı, 48kHz örnekleme ve retry eklendi; Gallipoli/Pompeii curated beat'leri korundu; 2 yeni test dosyası ile toplam 257 test %100 geçti; 2 bağımsız alt-ajan denetiminden kusursuz onay alındı.
+- **İptal / Kabul Gerekçesi**: Tüm tarihsel konularda zengin, dramatik ve anakronizm-kalkanlı senaryolar üretirken, yardımcı karakterlerin sesini video boyunca sabit tutarak (Entity Lock) broadcast kalitesini güvenceye alır.
+- **Kalıcı Kural / Ders**: Story-Weaver içinde 5-aşamalı dramatik akış (Arrival Hook, Context, Rising Investigation, Turning Point, Legacy) ve 4 görsel kilit zorunludur; WWI/modern sahneler antik ahşap kaldıraç enjeksiyonundan muaf tutulmalıdır; Flux modelleri `/v2/speak`, Aura modelleri `/v1/speak` rotasını kullanmalıdır; ses atamaları video boyunca Entity Lock ile korunmalıdır.
+
+---

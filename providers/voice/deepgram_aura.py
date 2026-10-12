@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +15,7 @@ from ._utils import narration_text, write_words
 
 
 class DeepgramAuraProvider(BaseVoiceProvider):
-    """Synthesize MP3 with Aura, then align that exact MP3 through Deepgram Listen."""
+    """Synthesize MP3 with Aura/Flux, then align that exact MP3 through Deepgram Listen."""
 
     def __init__(
         self,
@@ -22,6 +24,8 @@ class DeepgramAuraProvider(BaseVoiceProvider):
         base_url: str | None = None,
         voice_model: str | None = None,
         transcribe_model: str | None = None,
+        enable_flux_roster: bool | None = None,
+        initial_locks: dict[str, str] | None = None,
     ) -> None:
         self.api_key = api_key or os.getenv("DEEPGRAM_API_KEY")
         self.base_url = (base_url or os.getenv("DEEPGRAM_BASE_URL") or "").rstrip("/")
@@ -44,6 +48,21 @@ class DeepgramAuraProvider(BaseVoiceProvider):
                 self.tts_speed = float(env_speed)
         else:
             self.tts_speed = 1.0 if is_longform else 1.12
+
+        # Initialize Flux Multi-Voice Roster if requested or configured
+        flux_flag = enable_flux_roster if enable_flux_roster is not None else (
+            str(os.getenv("DEEPGRAM_FLUX_ROSTER", "")).casefold() in {"1", "true", "yes"}
+        )
+        if flux_flag:
+            from services.voice_roster import VoiceAssigner
+
+            self._voice_assigner: VoiceAssigner | None = VoiceAssigner(
+                primary_voice=self.voice_model,
+                initial_locks=initial_locks,
+            )
+        else:
+            self._voice_assigner = None
+
         missing = [
             name
             for name, value in (
@@ -59,7 +78,16 @@ class DeepgramAuraProvider(BaseVoiceProvider):
                 "deepgram provider requires: " + ", ".join(missing) + ". Configure them in .env."
             )
 
+    def _speak_url(self, voice_model: str) -> str:
+        """Select Deepgram /speak endpoint version based on model prefix and root URL."""
+        root_url = re.sub(r"/v\d+/?$", "", self.base_url)
+        if "flux" in str(voice_model).casefold():
+            return f"{root_url}/v2/speak"
+        return f"{root_url}/v1/speak"
+
     def _voice_for_beat(self, beat: Any) -> str:
+        if self._voice_assigner is not None:
+            return self._voice_assigner.assign_voice(beat)
         role = str(getattr(beat, "role", "default") or "default").strip().casefold()
         if role.startswith(("witness", "historical_witness", "interviewee")):
             return self.witness_voice_model
@@ -74,8 +102,7 @@ class DeepgramAuraProvider(BaseVoiceProvider):
         if self.tts_speed and self.tts_speed != 1.0:
             base_params["speed"] = self.tts_speed
         # Deepgram /speak endpoint has a 2000 character limit per request (HTTP 413).
-        # Group consecutive beats by speaker voice (Nova female voice vs Historical Witness male voice)
-        # while keeping each chunk <= 1500 characters.
+        # Group consecutive beats by speaker voice while keeping each chunk <= 1500 characters.
         chunks: list[tuple[str, str]] = []
         current_chunk: list[str] = []
         current_voice: str = self.voice_model
@@ -103,15 +130,24 @@ class DeepgramAuraProvider(BaseVoiceProvider):
         audio_parts: list[bytes] = []
         async with httpx.AsyncClient(timeout=httpx.Timeout(180.0)) as client:
             for chunk_voice, chunk_text in chunks:
-                synth_params = {**base_params, "model": chunk_voice}
-                synth = await client.post(
-                    f"{self.base_url}/speak",
-                    params=synth_params,
-                    headers={**headers, "Content-Type": "application/json"},
-                    json={"text": chunk_text},
-                )
-                if synth.status_code >= 400:
-                    raise ProviderError(f"deepgram synthesis failed with HTTP {synth.status_code}")
+                synth_params = {**base_params, "model": chunk_voice, "sample_rate": 48000}
+                speak_url = self._speak_url(chunk_voice)
+                synth = None
+                for attempt in range(3):
+                    synth = await client.post(
+                        speak_url,
+                        params=synth_params,
+                        headers={**headers, "Content-Type": "application/json"},
+                        json={"text": chunk_text},
+                    )
+                    if synth.status_code in (429, 503) and attempt < 2:
+                        await asyncio.sleep(1.0 * (2 ** attempt))
+                        continue
+                    break
+
+                if synth is None or synth.status_code >= 400:
+                    status = synth.status_code if synth is not None else "timeout"
+                    raise ProviderError(f"deepgram synthesis failed with HTTP {status}")
                 if not synth.content:
                     raise ProviderError("deepgram synthesis returned an empty audio payload")
                 audio_parts.append(synth.content)
@@ -129,9 +165,12 @@ class DeepgramAuraProvider(BaseVoiceProvider):
             raise ProviderError(f"deepgram word alignment failed with HTTP {transcript.status_code}")
         words = self._words_from_response(transcript.json())
         duration = max((word["end"] for word in words), default=0.0)
+        extra_meta: dict[str, Any] = {}
+        if self._voice_assigner is not None:
+            extra_meta["locked_voices"] = self._voice_assigner.get_locked_voices()
         write_words(
             out_path, words, provider="deepgram", voice_id=self.voice_model,
-            lang=lang, duration=duration, source="deepgram_listen",
+            lang=lang, duration=duration, source="deepgram_listen", **extra_meta,
         )
         return {"vo_path": out_path, "duration": duration, "words": words}
 

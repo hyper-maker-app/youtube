@@ -34,6 +34,7 @@ from services.prompt_compiler import (
     format_multi_shot_prompt,
 )
 from services.script_engine import Beat, Script, Shot
+from services.story_weaver import StoryWeaver
 from timeline import TimelinePlan
 
 
@@ -85,59 +86,23 @@ def generate_dynamic_screenplay(
             ))
             curated_shot_map[b_idx] = c_beat
     else:
-        # Dynamic sensory generation (Script-Weaver pattern without repetitive robotic boilerplate)
-        base_phases = sheet.narrative_beats or []
-        num_phases = len(base_phases)
-        GENERIC_SENSORY_PATTERNS = [
-            "Stepping past the outer threshold, {mat_text} creates an imposing barrier against the horizon.",
-            "Examining the stone face up close, {sen_text} reveals the sheer labor behind each block.",
-            "The physical craftsmanship is striking: {mat_text} fitted together with astonishing precision.",
-            "Sunlight cuts across the weathered surface, where {sen_text} emphasizes deep ancient grooves.",
-            "Running a hand along the bedrock seam, {mat_text} demonstrates advanced prehistoric planning.",
-            "Deep inside the perimeter, {sen_text} reverberates through the enduring stone architecture.",
-        ]
-
-        for i in range(total_blocks):
-            beat_idx = i + 1
-            phase_obj = base_phases[min(num_phases - 1, int(i * num_phases / max(1, total_blocks)))]
-            role_info = classify_shot_role(beat_idx, total_blocks)
-
-            if role_info.get("is_witness_interview"):
-                slot = int(role_info.get("witness_slot") or 1)
-                witness = w1 if slot == 1 else w2
-                role = f"witness:{witness['name']} ({witness['era_label']})"
-                text = (
-                    f"{sheet.verified_facts[slot - 1] if len(sheet.verified_facts) >= slot else 'We carved these stones to honor our ancestors.'} "
-                    "Every angle was shaped with deep purpose."
-                )
-                emphasis = ["carved", "honor", "ancestors"]
-            elif role_info.get("is_speaking_avatar"):
-                role = "host_nova"
-                if beat_idx == 1:
-                    text = f"I arrived at {sheet.location_name or topic}, where ancient stonework defies modern explanations."
-                    emphasis = ["arrived", "ancient stonework"]
-                elif beat_idx == total_blocks:
-                    text = f"Before my temporal chronometer returns me to the present, one truth is clear: the brilliance of {sheet.location_name} lives on."
-                    emphasis = ["chronometer", "brilliance", "lives on"]
-                else:
-                    text = f"Standing inside this inner chamber, the acoustic resonance through the {sheet.architecture_and_materials[0] if sheet.architecture_and_materials else 'megalith'} is unmistakable."
-                    emphasis = ["acoustic resonance", "chamber"]
-            else:
-                role = "narrator"
-                materials = sheet.architecture_and_materials
-                mat_text = materials[i % len(materials)] if materials else "monolithic stone blocks"
-                sensory = sheet.sensory_details
-                sen_text = sensory[i % len(sensory)] if sensory else "atmospheric light"
-                pattern = GENERIC_SENSORY_PATTERNS[i % len(GENERIC_SENSORY_PATTERNS)]
-                text = pattern.format(mat_text=mat_text, sen_text=sen_text)
-                emphasis = [mat_text.split()[-1] if mat_text else "stone", "craftsmanship"]
-
+        # Dynamic sensory generation using StoryWeaver (5-phase dramatic flow + 4 visual locks)
+        weaver = StoryWeaver(
+            truth_sheet=sheet,
+            character=character,
+            total_blocks=total_blocks,
+            lang=lang,
+        )
+        woven_beats = weaver.weave()
+        for i, w_beat in enumerate(woven_beats):
+            b_idx = i + 1
             beats.append(Beat(
-                index=beat_idx,
-                text=text,
-                role=role,
-                emphasis=emphasis,
+                index=b_idx,
+                text=w_beat["text"],
+                role=w_beat.get("role", "narrator"),
+                emphasis=list(w_beat.get("emphasis", ["ancient", "monument"])),
             ))
+            curated_shot_map[b_idx] = w_beat
 
     # 2. Assign flexible durations (6.0s - 15.0s for longform documentary pacing)
     # Default documentary blocks are 8.0s - 12.0s rather than 4s Shorts fragments
