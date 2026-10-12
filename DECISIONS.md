@@ -610,3 +610,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Pin each Flow CLI call to the uniquely matched authenticated CDP account and project. Keep cookie values out of logs and stop visibly if the browser session cannot be matched unambiguously.
 
 ---
+
+### [ADR-057] Selective native-audio Flow lip sync for the lightning protection documentary
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: The user requires visible speech with real mouth motion and alignment to speech in a new longform video, overriding this run’s conflicting closed-mouth/ADR-002 short-mode constraint while preserving the selected chrome_flow.bat Flow account.
+- **Yapılan İş / Sonuç**: Tested four 4-second 16:9 Flow Omni 1.1 Flash clips with Nova3 ASR and 1 FPS visual review; samples 2 and 4 matched their intended words and visible speaking/rest poses. Select three brief Nova on-camera lines for the opening, mechanism turn, and closing; use Deepgram Hera narration for B-roll scenes.
+- **İptal / Kabul Gerekçesi**: Flow’s UI-native speech audio and lip motion are generated together, avoiding a separate identity-altering lip-sync pass. Short, separated A-roll keeps facial identity and continuity auditable while narration carries the sourced mechanism.
+- **Kalıcı Kural / Ders**: For this longform run, override the no-speaking short-mode rule only in authored Nova A-roll; require exact transcript/timing checks and a 1 FPS face review for all three speech shots. Keep Flow account/provider explicit and do not bypass security challenges.
+
+---
