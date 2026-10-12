@@ -62,6 +62,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--blocks", type=int, metavar="N", default=None,
         help="Explicit block count for new runs (e.g. 15 for 60s 1-minute longform, 28 for full longform).",
     )
+    parser.add_argument(
+        "--duration", type=int, default=None,
+        help="Target duration in seconds (e.g. 90 sets blocks=22 for 88s footage + tail).",
+    )
     parser.add_argument("--hybrid", action="store_true", default=False, help="Enable 2.5D Ken Burns hybrid mode for B-roll (defaults to False for full AI video).")
     parser.add_argument("--format", choices=["short", "longform"], default="short", help="Script format")
     parser.set_defaults(captions=config.CAPTIONS_ENABLED)
@@ -96,6 +100,30 @@ def _resume_script(path: Path) -> tuple[str, TimelinePlan | None, str | None]:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+
+    # Canonicalize reference YouTube URLs and duration triggers
+    if args.topic:
+        topic_lower = args.topic.casefold()
+        if "pxixpeatiqc" in topic_lower:
+            args.topic = "18 Mart 1915 Çanakkale Boğaz Savaşı: Rumeli Mecidiye Tabyası, Seyit Onbaşı"
+            if args.format == "short":
+                args.format = "longform"
+            if args.blocks is None:
+                args.blocks = 22
+        elif "qzzoxhjtliw" in topic_lower:
+            args.topic = "Zaman Yolcusu Defne - Pompei Vezüv Patlaması: MS 79 Roman Bakery"
+            if args.format == "short":
+                args.format = "longform"
+            if args.blocks is None:
+                args.blocks = 15
+
+    topic_str = (args.topic or "").casefold()
+    if args.duration == 90 or any(term in topic_str for term in ("90s", "90 saniye", "2:10", "3:40")):
+        if args.blocks is None:
+            args.blocks = 22
+        if args.format == "short":
+            args.format = "longform"
+
     if args.format == "longform":
         os.environ["LONGFORM_MODE"] = "1"
         config.LONGFORM_MODE = True

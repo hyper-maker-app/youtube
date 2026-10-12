@@ -97,8 +97,10 @@ def apply_movement_lock(motion_prompt: str) -> str:
     return cleaned
 
 
-def apply_ancient_equipment_rule(prompt: str) -> str:
-    """Ban modern mechanical triggers and substitute explicit human and timber mechanics."""
+def apply_ancient_equipment_rule(prompt: str, era: str = "default") -> str:
+    """Ban modern mechanical triggers and substitute explicit human and timber mechanics for ancient eras."""
+    if str(era or "default").casefold() in ("world_war_i", "modern"):
+        return prompt
     cleaned = prompt
     found_modern = False
     for term in _MODERN_MECHANICAL_TRIGGERS:
@@ -152,7 +154,7 @@ def compile_longform_broll_prompt(
     )
     if action_description.strip():
         base += f" Clearly depict the authored historical action: {action_description.strip()}"
-        if re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women|artillerymen)\b", action_description, re.I):
+        if re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women|artillerymen|seyit|onba[sş][ıi]|ali|officers?|commanders?|bakers?|citizens?|people)\b", action_description, re.I):
             base += (
                 " The named people are mandatory visible subjects in the foreground or middle distance, "
                 "with enough scale to read their coordinated hand and body actions while the historical setting remains identifiable. "
@@ -162,21 +164,21 @@ def compile_longform_broll_prompt(
             base += " Show the specifically authored hand action clearly, attached to a period-correct sleeve; do not invent a face or additional person."
 
     # Authentic Headwear & Clothing Lock
-    has_people = bool(re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women|artillerymen)\b", f"{scene_description} {action_description}", re.I))
-    if has_people:
-        if (truth_sheet and truth_sheet.era == "world_war_i") or re.search(r"\b(1915|gallipoli|canakkale|çanakkale|dardanelles|ottoman)\b", f"{scene_description} {action_description}", re.I):
-            base += " Headwear must be authentic khaki cloth kabalak (Enveriye) folded sun-hats; strictly NO red fez, NO fez hat, NO red felt hats."
-        elif (truth_sheet and truth_sheet.era == "greco_roman") or re.search(r"\b(rome|roman|pompeii|pompei|greece|greek)\b", f"{scene_description} {action_description}", re.I):
-            base += " Wardrobe must be authentic Roman wool tunics; strictly NO medieval armor, NO modern glasses or watches."
+    era_val = truth_sheet.era if truth_sheet else "default"
+    text_corpus_headwear = f"{scene_description} {action_description}".casefold()
+    if era_val == "world_war_i" or re.search(r"\b(1915|gallipoli|canakkale|çanakkale|dardanelles|ottoman|seyit|onba[sş][ıi]|mecidiye)\b", text_corpus_headwear):
+        base += " Headwear must be authentic khaki cloth kabalak (Enveriye) folded sun-hats; strictly NO red fez, NO fez hat, NO red felt hats."
+    elif era_val == "greco_roman" or re.search(r"\b(rome|roman|pompeii|pompei|greece|greek|vesuvius|vezüv)\b", text_corpus_headwear):
+        base += " Wardrobe must be authentic Roman wool tunics; strictly NO medieval armor, NO modern glasses or watches."
 
     # Prop consistency lock
     text_corpus = f"{scene_description} {proof_target} {action_description}".casefold()
     if re.search(r"\b(cannon|gun|artillery|battery|breech|shell|krupp)\b", text_corpus) and (
-        re.search(r"\b(1915|gallipoli|canakkale|çanakkale|dardanelles|ottoman)\b", text_corpus) or (truth_sheet and truth_sheet.era == "world_war_i")
+        re.search(r"\b(1915|gallipoli|canakkale|çanakkale|dardanelles|ottoman)\b", text_corpus) or era_val == "world_war_i"
     ):
         base += " Prop Invariant: Heavy 28cm Krupp coastal fortress gun on fixed steel traversing turntable mount in sunken stone embrasure, massive rifled steel barrel, NOT a field gun, NOT wooden wheels."
     elif re.search(r"\b(bakery|oven|pistrinum|mill)\b", text_corpus) and (
-        re.search(r"\b(pompeii|pompei|roman|rome)\b", text_corpus) or (truth_sheet and truth_sheet.era == "greco_roman")
+        re.search(r"\b(pompeii|pompei|roman|rome)\b", text_corpus) or era_val == "greco_roman"
     ):
         base += " Prop Invariant: Authentic Roman brick domed baking oven and hourglass-shaped volcanic basalt lava stone grain mills (pistrinum), authentic 79 AD Roman architecture."
     elif re.search(r"\b(vesuvius|vezuv|volcano)\b", text_corpus):
@@ -190,7 +192,8 @@ def compile_longform_broll_prompt(
         "Pure photographic 35mm cinema only without written words."
     )
 
-    base = apply_ancient_equipment_rule(base)
+    if era_val != "world_war_i":
+        base = apply_ancient_equipment_rule(base, era=era_val)
     if truth_sheet:
         for forbidden in truth_sheet.prohibited_anachronisms[:6]:
             if forbidden.lower() not in base.lower():
@@ -205,18 +208,24 @@ def format_veo_cinematography_prompt(
     historical_atmosphere: str = "authentic prehistoric archaeological atmosphere",
     camera_vector: str = "slow cinematic dolly in",
     fps: str = "24fps",
+    era: str = "default",
 ) -> str:
     """Format prompt adhering strictly to Dowwie & Google Veo Cinematography ordering:
     
     [Shot Type] + [Subject & purposeful labor] + [Lighting: golden hour, volumetric dust] + [Historical Atmosphere] + [Camera vector: slow dolly in, 24fps]
     """
     st = (shot_type or "Cinematic medium tracking shot").strip().rstrip(",. ")
-    subj = apply_ancient_equipment_rule(subject_labor.strip().rstrip(",. "))
+    if era != "world_war_i":
+        subj = apply_ancient_equipment_rule(subject_labor.strip().rstrip(",. "), era=era)
+    else:
+        subj = subject_labor.strip().rstrip(",. ")
     subj = apply_movement_lock(subj).rstrip(". ")
     light = (lighting or "golden hour sunlight, volumetric dust motes dancing in air").strip().rstrip(",. ")
     atm = (historical_atmosphere or "authentic historical documentary atmosphere").strip().rstrip(",. ")
     vec = (camera_vector or "slow cinematic dolly in").strip().rstrip(",. ")
     
     prompt = f"{st}, {subj}, {light}, {atm}, {vec}, {fps} motion blur, 35mm photorealistic documentary cinema."
-    return apply_ancient_equipment_rule(prompt)
+    if era != "world_war_i":
+        return apply_ancient_equipment_rule(prompt, era=era)
+    return prompt
 

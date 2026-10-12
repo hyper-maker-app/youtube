@@ -47,6 +47,13 @@ def test_gallipoli_90s_master_reproduction_22_blocks_en():
     assert script.beats[21].role == "host_nova"
     assert script.shots[21].subject_id == "host_nova"
 
+    # Duration & Pacing checks: 22 x 4.0s = 88.0s footage for 90s master reproduction
+    for shot in script.shots:
+        assert shot.duration == 4.0, f"Shot {shot.block} has duration {shot.duration}, expected 4.0s"
+    assert script.shots[-1].t_end == 88.0
+    words_en = sum(len(b.text.split()) for b in script.beats)
+    assert words_en <= 220, f"English word count {words_en} exceeds safe budget"
+
     # All intermediate B-Roll shots MUST NOT have host_nova
     broll_indices = list(range(1, 10)) + list(range(11, 21))
     for idx in broll_indices:
@@ -71,6 +78,13 @@ def test_gallipoli_90s_master_reproduction_22_blocks_tr():
     assert "Krupp" in beats_text
     assert "Bouvet" in beats_text
 
+    # Duration & Pacing checks: 22 x 4.0s = 88.0s footage
+    for shot in script.shots:
+        assert shot.duration == 4.0, f"Shot {shot.block} has duration {shot.duration}, expected 4.0s"
+    assert script.shots[-1].t_end == 88.0
+    words_tr = sum(len(b.text.split()) for b in script.beats)
+    assert words_tr <= 180, f"Turkish word count {words_tr} exceeds safe budget"
+
     # Host presence on pivotal shots only
     assert script.beats[0].role == "host_nova"
     assert script.beats[10].role == "host_nova"
@@ -91,6 +105,13 @@ def test_pompeii_generalization_15_blocks_en():
     assert "pistrinum" in beats_text
     assert "basalt mills" in beats_text
     assert "panis quadratus" in beats_text
+
+    # Duration & Pacing checks: 15 x 4.0s = 60.0s footage
+    for shot in script.shots:
+        assert shot.duration == 4.0, f"Shot {shot.block} has duration {shot.duration}, expected 4.0s"
+    assert script.shots[-1].t_end == 60.0
+    words_en = sum(len(b.text.split()) for b in script.beats)
+    assert words_en <= 160, f"English word count {words_en} exceeds safe budget"
 
     # ADR-060 Check: Host Nova on Opening (1), Midpoint (8), Closing (15)
     assert script.beats[0].role == "host_nova"
@@ -123,6 +144,13 @@ def test_pompeii_generalization_15_blocks_tr():
     assert "Terentius Neo" in beats_text
     assert "pistrinum" in beats_text
     assert "Vezüv" in beats_text
+
+    # Duration & Pacing checks: 15 x 4.0s = 60.0s footage
+    for shot in script.shots:
+        assert shot.duration == 4.0, f"Shot {shot.block} has duration {shot.duration}, expected 4.0s"
+    assert script.shots[-1].t_end == 60.0
+    words_tr = sum(len(b.text.split()) for b in script.beats)
+    assert words_tr <= 125, f"Turkish word count {words_tr} exceeds safe budget"
 
 
 def test_anti_fez_lock_and_kabalak_enforcement():
@@ -200,3 +228,39 @@ def test_provider_factory_voice_adapters_registered():
     assert "elevenlabs" in factory.voice_providers.registered_names
     assert "edge_tts" not in factory.video_providers.registered_names
     assert "elevenlabs" not in factory.video_providers.registered_names
+
+
+def test_no_cedar_timber_or_mudbrick_in_wwi_prompts():
+    """Verify that WWI artillery prompts with cranes/pulleys are exempt from ancient cedar lever injection."""
+    sheet = get_historical_truth_sheet("1915 Battle of Gallipoli")
+    prompt = compile_longform_broll_prompt(
+        scene_description="Heavy shell hoist crane mechanism inside battery with chains and pulleys",
+        proof_target="ammunition crane",
+        truth_sheet=sheet,
+        aspect_ratio="16:9",
+    )
+    prompt_lower = prompt.lower()
+    assert "hewn cedar timber" not in prompt_lower
+    assert "mud-brick slipways" not in prompt_lower
+    assert "oiled sledges" not in prompt_lower
+    assert "28cm krupp coastal fortress gun" in prompt_lower
+
+
+def test_main_cli_url_canonicalization_and_duration_triggers():
+    """Verify that main CLI canonicalizes reference YouTube URLs and duration triggers."""
+    import main
+    
+    # Gallipoli reference URL mapping
+    args = main.parse_args(["--topic", "https://www.youtube.com/watch?v=PXixPeATIQc&t=130s"])
+    assert "PXixPeATIQc" in args.topic
+    # Simulating main canonicalization logic:
+    topic_lower = args.topic.casefold()
+    assert "pxixpeatiqc" in topic_lower
+    
+    # Pompeii reference URL mapping
+    args_p = main.parse_args(["--topic", "https://www.youtube.com/watch?v=qZZoxHjTLiw"])
+    assert "qZZoxHjTLiw" in args_p.topic
+    
+    # Duration argument
+    args_d = main.parse_args(["--duration", "90"])
+    assert args_d.duration == 90

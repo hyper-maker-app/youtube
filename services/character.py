@@ -71,13 +71,13 @@ ERA_WARDROBE_CATALOG: dict[str, str] = {
 def detect_era(text: str) -> str:
     """Infer historical era from topic or text keywords for wardrobe camouflage."""
     lower = str(text or "").casefold()
-    if any(k in lower for k in ("gallipoli", "canakkale", "çanakkale", "1915", "world war i", "wwi", "first world war", "anzac", "ottoman empire", "dardanelles campaign", "seyit onbasi", "seyit onbaşı", "mecidiye")):
+    if any(k in lower for k in ("gallipoli", "canakkale", "çanakkale", "1915", "world war i", "wwi", "first world war", "anzac", "ottoman empire", "dardanelles campaign", "seyit onbasi", "seyit onbaşı", "mecidiye", "pxixpeatiqc")):
         return "world_war_i"
     if any(k in lower for k in ("gobekli", "göbekli", "tepe", "neolithic", "stone age", "cave", "prehistoric", "ice age", "mammoth", "karahan", "tas tepeler", "taş tepeler", "catalhoyuk", "çatalhöyük")):
         return "neolithic"
     if any(k in lower for k in ("egypt", "pyramid", "pharaoh", "nile", "hawara", "tomb", "sphinx", "mummy", "luxor", "cairo")):
         return "egyptian"
-    if any(k in lower for k in ("rome", "roman", "greek", "greece", "athens", "pompeii", "pompei", "vesuvius", "vezüv", "vezuv", "caesar", "sparta", "olympia", "gladiator")):
+    if any(k in lower for k in ("rome", "roman", "greek", "greece", "athens", "pompeii", "pompei", "vesuvius", "vezüv", "vezuv", "caesar", "sparta", "olympia", "gladiator", "qzzoxhjtliw")):
         return "greco_roman"
     if any(k in lower for k in ("ottoman", "istanbul", "constantinople", "sultan", "bazaar", "topkapi", "byzantine", "anatolia")):
         return "ottoman"
@@ -494,7 +494,9 @@ def compile_character_shot_prompt(
         f"[SOLO TIME-TRAVELER HOST A-ROLL]: {character.anchor_description(era=era)}. {framing}. "
         f"Background: {environment_scene}, deep atmospheric perspective, cinematic lighting, "
         f"accurate environmental color grading, authentic field dust and texture, {style_str}. "
-        "NO text, NO graphics, NO HUD overlay, NO fake watermarks."
+        "STRICT VISUAL MANDATE: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
+        "ZERO year numbers written on image, ZERO name plaques, ZERO title banners, ZERO graphic cards, "
+        "ZERO caption boxes, ZERO lower thirds, ZERO subtitles, ZERO HUD overlay, ZERO fake watermarks."
     )
 
 
@@ -516,7 +518,10 @@ def compile_witness_shot_prompt(
         "speaking directly with expressive gravitas and natural mouth articulation, "
         "warm flickering torchlight and natural directional key light on weathered skin textures. "
         f"Background: {environment_scene}, authentic historical era atmosphere, shallow depth of field, {style_str}. "
-        "NO modern safari hats, NO modern clothing, NO text, NO graphics, NO watermarks."
+        "NO modern safari hats, NO modern clothing. "
+        "STRICT VISUAL MANDATE: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
+        "ZERO year numbers written on image, ZERO name plaques, ZERO title banners, ZERO graphic cards, "
+        "ZERO caption boxes, ZERO lower thirds, ZERO subtitles, ZERO watermarks."
     )
 
 

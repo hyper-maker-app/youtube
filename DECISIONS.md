@@ -670,3 +670,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Enforce ADR-060 strictly by isolating host Nova to 3 pivotal shots; lock period headwear and mechanical props; never attenuate voice in amix
 
 ---
+
+### [ADR-063] Word count calibration, WWI timber isolation, and 15-block gunner outline regression fix
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Calibrate word count budgets for 22-block Gallipoli and 15-block Pompeii, prevent ancient timber/mudbrick injection in WWI prompts, and preserve 15-block gunner story arc
+- **Yapılan İş / Sonuç**: Calibrated Gallipoli to 170 TR / 190 EN words and Pompeii to 109 TR / 142 EN words; isolated ancient levers/timber in prompt compiler; preserved 15-block gunner story arc; all 235 tests pass with 0 regressions
+- **İptal / Kabul Gerekçesi**: Ensures voiceover fits comfortably inside 4.0s block envelopes without rushing or overflow, prevents anachronistic construction props in twentieth-century battlefields, and maintains test suite contract
+- **Kalıcı Kural / Ders**: Always verify speech pace <= 180 TR / <= 220 EN words for 22 blocks and <= 125 TR / <= 160 EN words for 15 blocks; never allow ancient timber in WWI artillery prompts; preserve existing curated arcs when adding extended sequences
+
+---

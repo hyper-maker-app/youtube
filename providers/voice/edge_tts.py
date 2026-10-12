@@ -39,7 +39,7 @@ class EdgeTTSProvider(BaseVoiceProvider):
 
         return aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver())
 
-    async def _synthesize(self, text: str, rate: int, pitch: str) -> tuple[bytes, list[dict[str, Any]]]:
+    async def _synthesize(self, text: str, rate: int, pitch: str, voice: str | None = None) -> tuple[bytes, list[dict[str, Any]]]:
         try:
             import edge_tts
         except ImportError as exc:  # pragma: no cover - declared in requirements.txt
@@ -47,10 +47,11 @@ class EdgeTTSProvider(BaseVoiceProvider):
 
         audio = bytearray()
         words: list[dict[str, Any]] = []
+        target_voice = voice or self.voice
         try:
             communication = edge_tts.Communicate(
                 text,
-                voice=self.voice,
+                voice=target_voice,
                 rate=self._rate_str(rate),
                 pitch=pitch,
                 boundary="WordBoundary",
@@ -74,12 +75,13 @@ class EdgeTTSProvider(BaseVoiceProvider):
         return bytes(audio), words
 
     async def _synth_beats(
-        self, beats: list[object], audio_dir: Path, adjustment: int
+        self, beats: list[object], audio_dir: Path, adjustment: int, lang: str = "en"
     ) -> tuple[list[Path], list[list[dict[str, Any]]], list[float], list[dict[str, Any]]]:
         paths: list[Path] = []
         boundaries: list[list[dict[str, Any]]] = []
         durations: list[float] = []
         details: list[dict[str, Any]] = []
+        is_tr = (lang or "").strip().casefold() == "tr"
         for ordinal, beat in enumerate(beats, start=1):
             text = str(beat_value(beat, "text", "")).strip()
             if not text:
@@ -88,7 +90,11 @@ class EdgeTTSProvider(BaseVoiceProvider):
             profile = config.beat_voice(role)
             rate = self._clamp_rate(profile["rate"], adjustment)
             pitch = str(profile["pitch"])
-            audio, words = await self._synthesize(text, rate, pitch)
+            if is_tr:
+                target_voice = "tr-TR-EmelNeural" if role.casefold() in {"host_nova", "nova"} else config.lang_profile("tr")["voice"]
+            else:
+                target_voice = self.voice
+            audio, words = await self._synthesize(text, rate, pitch, voice=target_voice)
             index = int(beat_value(beat, "index", ordinal))
             part = audio_dir / f"vo_b{index:02d}.mp3"
             part.write_bytes(audio)
@@ -105,6 +111,7 @@ class EdgeTTSProvider(BaseVoiceProvider):
                 "pitch": pitch,
                 "pause_after": float(profile["pause_after"]),
                 "duration": round(float(duration), 3),
+                "voice": target_voice,
             })
         return paths, boundaries, durations, details
 
@@ -132,7 +139,7 @@ class EdgeTTSProvider(BaseVoiceProvider):
         out_path.parent.mkdir(parents=True, exist_ok=True)
         pauses = [float(config.beat_voice(str(beat_value(beat, "role", "default")))["pause_after"]) for beat in beats]
         pauses[-1] = 0.0
-        paths, boundaries, durations, details = await self._synth_beats(beats, out_path.parent, 0)
+        paths, boundaries, durations, details = await self._synth_beats(beats, out_path.parent, 0, lang=lang)
 
         # The adapter preserves the authored beat prosody. It does not ask another voice
         # provider to recover an overrun; the bounded single re-synthesis only adjusts
@@ -142,7 +149,7 @@ class EdgeTTSProvider(BaseVoiceProvider):
         budget = config.speech_budget_seconds(sum(durations) + sum(pauses) + config.BEAT_LEAD_SILENCE)
         if speech > budget:
             adjustment = min(config.EDGE_RATE_MAX_PCT, max(1, round((speech / budget - 1.0) * 100)))
-            paths, boundaries, durations, details = await self._synth_beats(beats, out_path.parent, adjustment)
+            paths, boundaries, durations, details = await self._synth_beats(beats, out_path.parent, adjustment, lang=lang)
             speech = sum(durations)
 
         try:
@@ -155,8 +162,9 @@ class EdgeTTSProvider(BaseVoiceProvider):
         if duration is None or duration <= 0:
             raise ProviderError("edge_tts output has no measurable duration")
         words = self._rebase_boundaries(boundaries, durations, pauses)
+        active_voice = config.lang_profile("tr")["voice"] if (lang or "").casefold() == "tr" else self.voice
         write_words(
-            out_path, words, provider="edge_tts", voice_id=self.voice, lang=lang,
+            out_path, words, provider="edge_tts", voice_id=active_voice, lang=lang,
             duration=duration, source="edge_wordboundary", speech_duration=round(speech, 3),
             rate_adjustment=self._rate_str(adjustment), beats=details,
         )
