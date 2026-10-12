@@ -650,3 +650,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: For this story use Nova only in three explicit on-camera host shots. Generate mechanism B-roll without people, faces, silhouettes, hands or mannequins, and repeat one precise model-house and glass-dome anchor across B-roll prompts.
 
 ---
+
+### [ADR-061] Accept clean people-free B-roll and assemble final 60s lightning protection documentary
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Assemble clean 60-second longform documentary for why lightning rods protect buildings using regenerated people-free B-roll.
+- **Yapılan İş / Sonuç**: Updated script.json with clean v2 clips, assembled full 60s final.mp4 with 15 video and 16 audio streams, verified 1-FPS contact sheet with 0 incidental faces, passed all MCP loudness (-14.4 LUFS) and stability (100) checks.
+- **İptal / Kabul Gerekçesi**: Eliminates visual confusion from random generated humans, stabilizes documentary model house continuity, and delivers broadcast-compliant vertical/widescreen standards.
+- **Kalıcı Kural / Ders**: Lock strict people-free negative constraints on mechanism B-roll while preserving host presence exclusively in authored A-roll; verify 1-FPS contact sheets before declaring complete.
+
+---
