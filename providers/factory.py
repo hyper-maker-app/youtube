@@ -129,6 +129,20 @@ def _register_voice_adapter(name: str) -> None:
                 "DEEPGRAM_TRANSCRIBE_MODEL",
             ),
         )
+    elif selected == "edge_tts" and selected not in voice_providers.registered_names:
+        from .voice.edge_tts import EdgeTTSProvider
+
+        voice_providers.register("edge_tts", EdgeTTSProvider, required_env=("EDGE_TTS_VOICE",))
+    elif selected == "elevenlabs" and selected not in voice_providers.registered_names:
+        from .voice.elevenlabs import ElevenLabsProvider
+
+        voice_providers.register(
+            "elevenlabs", ElevenLabsProvider,
+            required_env=(
+                "ELEVENLABS_API_KEY", "ELEVENLABS_BASE_URL", "ELEVENLABS_VOICE_ID",
+                "ELEVENLABS_MODEL",
+            ),
+        )
 
 
 def _register_image_adapter(name: str) -> None:
@@ -179,20 +193,6 @@ def _register_video_adapter(name: str) -> None:
         from .video.motion_engine import MotionEngineProvider
 
         video_providers.register(selected, MotionEngineProvider)
-    elif selected == "edge_tts" and selected not in voice_providers.registered_names:
-        from .voice.edge_tts import EdgeTTSProvider
-
-        voice_providers.register("edge_tts", EdgeTTSProvider, required_env=("EDGE_TTS_VOICE",))
-    elif selected == "elevenlabs" and selected not in voice_providers.registered_names:
-        from .voice.elevenlabs import ElevenLabsProvider
-
-        voice_providers.register(
-            "elevenlabs", ElevenLabsProvider,
-            required_env=(
-                "ELEVENLABS_API_KEY", "ELEVENLABS_BASE_URL", "ELEVENLABS_VOICE_ID",
-                "ELEVENLABS_MODEL",
-            ),
-        )
 
 
 def _register_sfx_adapter(name: str) -> None:

@@ -55,14 +55,21 @@ def apply_clothing_lock(prompt: str, era: str = "default") -> str:
     elif era_lower == "neolithic":
         fabric_anchor = "tailored deerskin and hand-woven flax tunic bound with animal sinew and prehistoric bone pins"
     elif era_lower == "greco_roman":
-        fabric_anchor = "draped natural combed wool chiton and woven himation mantle fastened with bronze fibulae"
+        fabric_anchor = (
+            "draped natural combed wool chiton or authentic Roman wool tunica and woven himation mantle fastened with bronze fibulae; "
+            "strictly NO medieval armor, NO sunglasses, NO wristwatches"
+        )
     elif era_lower == "ottoman":
         fabric_anchor = "tailored wool kaftan over silk-woven entari with period sash and leather traveling footwear"
     elif era_lower == "world_war_i":
         if re.search(r"\bnova\b", cleaned, re.IGNORECASE):
             fabric_anchor = "period-plausible ankle-length charcoal wool skirt, high-neck unbleached linen blouse, heavy olive wool field coat with hand-stitched seams and small brass buttons, leather ankle boots; no synthetic fabrics or modern tactical gear"
         else:
-            fabric_anchor = "1915-era heavy woven wool service tunic with period-correct cut, hand-stitched seams, brass buttons, puttees, and worn leather boots; no synthetic fabric or modern tactical gear"
+            fabric_anchor = (
+                "1915-era Ottoman khaki wool service tunic with period-correct cut, authentic khaki cloth kabalak (Enveriye) folded sun-hat, "
+                "hand-stitched seams, brass buttons, puttees, and worn leather boots; strictly NO red fez, NO fez hat, NO red felt hats, "
+                "no synthetic fabric or modern tactical gear"
+            )
     else:
         fabric_anchor = "authentic hand-woven linen tunic with natural vegetable-dye threading and leather fastenings"
 
@@ -145,7 +152,7 @@ def compile_longform_broll_prompt(
     )
     if action_description.strip():
         base += f" Clearly depict the authored historical action: {action_description.strip()}"
-        if re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women)\b", action_description, re.I):
+        if re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women|artillerymen)\b", action_description, re.I):
             base += (
                 " The named people are mandatory visible subjects in the foreground or middle distance, "
                 "with enough scale to read their coordinated hand and body actions while the historical setting remains identifiable. "
@@ -153,9 +160,39 @@ def compile_longform_broll_prompt(
             )
         elif re.search(r"\bhands?\b", action_description, re.I):
             base += " Show the specifically authored hand action clearly, attached to a period-correct sleeve; do not invent a face or additional person."
+
+    # Authentic Headwear & Clothing Lock
+    has_people = bool(re.search(r"\b(sailors?|seamen|crewmen|crew|gunners?|soldiers?|troops?|rowers?|workers?|men|women|artillerymen)\b", f"{scene_description} {action_description}", re.I))
+    if has_people:
+        if (truth_sheet and truth_sheet.era == "world_war_i") or re.search(r"\b(1915|gallipoli|canakkale|çanakkale|dardanelles|ottoman)\b", f"{scene_description} {action_description}", re.I):
+            base += " Headwear must be authentic khaki cloth kabalak (Enveriye) folded sun-hats; strictly NO red fez, NO fez hat, NO red felt hats."
+        elif (truth_sheet and truth_sheet.era == "greco_roman") or re.search(r"\b(rome|roman|pompeii|pompei|greece|greek)\b", f"{scene_description} {action_description}", re.I):
+            base += " Wardrobe must be authentic Roman wool tunics; strictly NO medieval armor, NO modern glasses or watches."
+
+    # Prop consistency lock
+    text_corpus = f"{scene_description} {proof_target} {action_description}".casefold()
+    if re.search(r"\b(cannon|gun|artillery|battery|breech|shell|krupp)\b", text_corpus) and (
+        re.search(r"\b(1915|gallipoli|canakkale|çanakkale|dardanelles|ottoman)\b", text_corpus) or (truth_sheet and truth_sheet.era == "world_war_i")
+    ):
+        base += " Prop Invariant: Heavy 28cm Krupp coastal fortress gun on fixed steel traversing turntable mount in sunken stone embrasure, massive rifled steel barrel, NOT a field gun, NOT wooden wheels."
+    elif re.search(r"\b(bakery|oven|pistrinum|mill)\b", text_corpus) and (
+        re.search(r"\b(pompeii|pompei|roman|rome)\b", text_corpus) or (truth_sheet and truth_sheet.era == "greco_roman")
+    ):
+        base += " Prop Invariant: Authentic Roman brick domed baking oven and hourglass-shaped volcanic basalt lava stone grain mills (pistrinum), authentic 79 AD Roman architecture."
+    elif re.search(r"\b(vesuvius|vezuv|volcano)\b", text_corpus):
+        base += " Prop Invariant: Mount Vesuvius looming on the horizon with dark ash and steam fumaroles rising into the sky."
+
+    # Universal Zero-Text & Zero-Watermark Shield
+    base += (
+        " STRICT VISUAL MANDATE: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
+        "ZERO year numbers written on image, ZERO name plaques, ZERO title banners, ZERO graphic cards, "
+        "ZERO caption boxes, ZERO lower thirds, ZERO subtitles, ZERO watermarks. "
+        "Pure photographic 35mm cinema only without written words."
+    )
+
     base = apply_ancient_equipment_rule(base)
     if truth_sheet:
-        for forbidden in truth_sheet.prohibited_anachronisms[:4]:
+        for forbidden in truth_sheet.prohibited_anachronisms[:6]:
             if forbidden.lower() not in base.lower():
                 base = f"{base.rstrip('. ')}, NO {forbidden}."
     return apply_movement_lock(base)

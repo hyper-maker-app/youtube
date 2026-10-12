@@ -206,8 +206,10 @@ _ANTI_TEXT_SHIELD = (
 )
 
 _LONGFORM_TEXT_SHIELD = (
-    "No readable text, labels, generated captions, diagrams, graphics, logos, or watermarks. "
-    "Keep maps and documents visually period-authentic with markings too small to read."
+    "ABSOLUTE PROHIBITION: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
+    "ZERO year numbers, ZERO name plaques, ZERO title banners, ZERO graphic cards, "
+    "ZERO caption boxes, ZERO lower thirds, ZERO subtitles, ZERO watermarks. "
+    "Pure photographic documentary cinema only without written words."
 )
 
 _ROSTER_ANTI_TEXT_SUFFIX = (

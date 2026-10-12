@@ -60,6 +60,8 @@ _CURATED_ERA_KNOWLEDGE: dict[str, dict[str, Any]] = {
         "architecture_and_materials": [
             "early twentieth-century steel-hulled battleships, coal smoke, and period naval fittings",
             "Ottoman coastal batteries with period artillery, earthworks, and stone revetments",
+            "Ottoman khaki wool service uniform with authentic khaki cloth kabalak (Enveriye) folded sun-hat, leather bandoliers, webbing, puttees, and worn leather boots",
+            "heavy 28cm Krupp coastal fortress gun on fixed steel traversing turntable mount in sunken stone embrasure with sandbag revetments (NOT field cannon, NOT wooden wheels)",
             "wooden mine-laying vessel Nusret with hemp rigging and tethered contact mines",
             "wool field coats, webbing, leather boots, and period steel helmets where historically appropriate",
             "wooden landing boats, canvas field gear, paper charts, and brass navigation instruments",
@@ -70,7 +72,26 @@ _CURATED_ERA_KNOWLEDGE: dict[str, dict[str, Any]] = {
             "wind pulling at wool coats as dark water moves around anchored mines",
             "wood creaking, hemp lines tightening, and waves striking a small vessel's hull",
         ],
-        "prohibited_anachronisms": ["modern ships", "radar", "radio communications equipment after the period shown", "modern camouflage", "nylon rope", "plastic", "modern aircraft", "modern labels or readable generated text"],
+        "prohibited_anachronisms": [
+            "red fez", "tassel fez", "red felt hat", "civilian fez", "fez cap",
+            "wooden spoked field cannon", "modern ships", "radar",
+            "radio communications equipment after the period shown", "modern camouflage",
+            "nylon rope", "plastic", "modern aircraft", "modern labels or readable generated text",
+        ],
+        "historical_figures": [
+            {
+                "id": "witness_seyit_onbasi",
+                "name": "Corporal Seyit (Seyit Onbaşı)",
+                "era_label": "18 March 1915 — Mecidiye Bastion, Gallipoli",
+                "appearance": "26-year-old broad-shouldered muscular Anatolian artillery corporal Seyit Çabuk, dust-streaked intense face, dark mustache, authentic 1915 Ottoman khaki wool service tunic, khaki cloth kabalak (Enveriye) folded sun-hat, leather ammunition belt, worn boots; strictly NO red fez, NO fez hat; beside 28cm Krupp coastal gun",
+            },
+            {
+                "id": "witness_nihat_bey",
+                "name": "Captain Nihat Bey",
+                "era_label": "18 March 1915 — Mecidiye Battery",
+                "appearance": "35-year-old Ottoman artillery officer, dignified focused face, mustache, authentic 1915 officer khaki tunic with collar tabs, khaki cloth kabalak hat; strictly NO red fez",
+            },
+        ],
         "verified_facts": [
             "Nusret laid a line of 26 mines in Erenköy Bay on 8 March 1915.",
             "The Allied fleet attacked the Dardanelles on 18 March 1915; Bouvet, Irresistible, and Ocean were lost, and Inflexible was damaged.",
@@ -279,6 +300,8 @@ _CURATED_ERA_KNOWLEDGE: dict[str, dict[str, Any]] = {
         "architecture_and_materials": [
             "pozzolanic hydraulic volcanic ash concrete and fired terracotta brick coursing",
             "monolithic fluted pentelic marble and travertine colonnades with Corinthian capitals",
+            "ancient Roman brick domed baking oven and hourglass-shaped volcanic basalt lava stone grain mills (pistrinum)",
+            "Mount Vesuvius looming on the horizon with dark ash and steam fumaroles rising into the sky",
             "hypocaust underfloor radiant heating flues and lead/terracotta water aqueducts",
             "draped hand-spun wool chitons, himations, and togas fastened with bronze fibulae",
             "groma surveying cross-staves, bronze water-levels (chorobates), and wax diptych tablets",
@@ -290,12 +313,28 @@ _CURATED_ERA_KNOWLEDGE: dict[str, dict[str, Any]] = {
             "tactile coolness of smooth marble revetment slabs under fingertip inspection",
         ],
         "prohibited_anachronisms": [
-            "modern steel cables", "electric bulbs", "sunglasses", "synthetic textiles",
-            "printed books", "wristwatches", "modern asphalt", "plastic containers",
+            "medieval plate armor", "red fez", "modern steel cables", "electric bulbs",
+            "sunglasses", "synthetic textiles", "printed books", "wristwatches",
+            "modern asphalt", "plastic containers", "printed labels or readable generated text",
+        ],
+        "historical_figures": [
+            {
+                "id": "witness_pompeii_baker",
+                "name": "Master Baker Terentius Neo",
+                "era_label": "79 AD — Pompeii, Roman Empire",
+                "appearance": "40-year-old Roman baker and pistrinum owner in Pompeii, weathered olive-skinned Mediterranean male face, short dark curls, light dusting of flour on cheeks, wearing authentic Roman unbleached wool tunica with rope belt, leather worker sandals, holding a wooden baker's peel beside a circular lava-stone grain mill and brick oven; strictly NO medieval armor, NO sunglasses, NO wristwatches",
+            },
+            {
+                "id": "witness_roman_engineer",
+                "name": "Master Engineer Marcus Vitruvius",
+                "era_label": "25 BC — Roman Empire",
+                "appearance": "52-year-old Roman imperial civil engineer and architect, stern weathered Mediterranean male face, short cropped gray hair, wearing authentic wool tunic and off-white toga praetexta with bronze fibula, holding a Roman groma surveying rod and wax parchment scroll",
+            },
         ],
         "verified_facts": [
             "Roman hydraulic concrete grew stronger over centuries due to saltwater reactions with aluminum tobermorite crystals.",
             "Vitruvius established the classical architectural triad of firmitas (strength), utilitas (utility), and venustas (beauty).",
+            "In 79 AD, the catastrophic eruption of Mount Vesuvius buried the Roman cities of Pompeii and Herculaneum under meters of volcanic ash.",
         ],
     },
     "ottoman": {

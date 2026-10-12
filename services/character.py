@@ -71,13 +71,13 @@ ERA_WARDROBE_CATALOG: dict[str, str] = {
 def detect_era(text: str) -> str:
     """Infer historical era from topic or text keywords for wardrobe camouflage."""
     lower = str(text or "").casefold()
-    if any(k in lower for k in ("gallipoli", "canakkale", "çanakkale", "1915", "world war i", "wwi", "first world war", "anzac", "ottoman empire", "dardanelles campaign")):
+    if any(k in lower for k in ("gallipoli", "canakkale", "çanakkale", "1915", "world war i", "wwi", "first world war", "anzac", "ottoman empire", "dardanelles campaign", "seyit onbasi", "seyit onbaşı", "mecidiye")):
         return "world_war_i"
     if any(k in lower for k in ("gobekli", "göbekli", "tepe", "neolithic", "stone age", "cave", "prehistoric", "ice age", "mammoth", "karahan", "tas tepeler", "taş tepeler", "catalhoyuk", "çatalhöyük")):
         return "neolithic"
     if any(k in lower for k in ("egypt", "pyramid", "pharaoh", "nile", "hawara", "tomb", "sphinx", "mummy", "luxor", "cairo")):
         return "egyptian"
-    if any(k in lower for k in ("rome", "roman", "greek", "greece", "athens", "pompeii", "caesar", "sparta", "olympia", "gladiator")):
+    if any(k in lower for k in ("rome", "roman", "greek", "greece", "athens", "pompeii", "pompei", "vesuvius", "vezüv", "vezuv", "caesar", "sparta", "olympia", "gladiator")):
         return "greco_roman"
     if any(k in lower for k in ("ottoman", "istanbul", "constantinople", "sultan", "bazaar", "topkapi", "byzantine", "anatolia")):
         return "ottoman"
@@ -137,6 +137,44 @@ ERA_WITNESS_CATALOG: dict[str, list[dict[str, str]]] = {
             "appearance": (
                 "48-year-old Greek geographer and eyewitness traveler, full trimmed beard, deep-set observant eyes, "
                 "wearing woven linen chiton and weathered travel cloak, holding an ancient parchment codex"
+            ),
+        },
+        {
+            "id": "witness_pompeii_baker",
+            "name": "Master Baker Terentius Neo",
+            "era_label": "79 AD — Pompeii, Roman Empire",
+            "location_stamp": "PISTRINUM, POMPEII — 79 AD",
+            "appearance": (
+                "40-year-old Roman baker and pistrinum owner in Pompeii, weathered olive-skinned Mediterranean male face, "
+                "short dark curls, light dusting of flour on cheeks, wearing authentic Roman unbleached wool tunica with rope belt, "
+                "leather worker sandals, holding a wooden baker's peel beside a circular lava-stone grain mill and brick oven; "
+                "strictly NO medieval armor, NO sunglasses, NO wristwatches"
+            ),
+        },
+    ],
+    "world_war_i": [
+        {
+            "id": "witness_seyit_onbasi",
+            "name": "Corporal Seyit (Seyit Onbaşı)",
+            "era_label": "18 March 1915 — Mecidiye Bastion, Gallipoli",
+            "location_stamp": "RUMELİ MECİDİYE BASTION, ÇANAKKALE — 18 MARCH 1915",
+            "appearance": (
+                "26-year-old broad-shouldered muscular Ottoman artillery corporal Seyit Çabuk, "
+                "weathered Anatolian male face covered in powder soot and sweat, determined intense eyes, thick dark mustache, "
+                "wearing authentic 1915 Ottoman khaki wool service uniform, khaki cloth kabalak (Enveriye) folded sun-hat, "
+                "leather ammunition belt and worn field boots; strictly NO red fez, NO fez hat; "
+                "holding artillery rammer and grease cloth beside the 28cm Krupp coastal gun"
+            ),
+        },
+        {
+            "id": "witness_battery_commander",
+            "name": "Battery Commander Captain Nihat Bey",
+            "era_label": "18 March 1915 — Mecidiye Bastion",
+            "location_stamp": "DARDANELLES SHORE BATTERY — 1915",
+            "appearance": (
+                "35-year-old Ottoman artillery officer, dignified focused face with field mustache, soot on cheek, "
+                "wearing authentic 1915 Ottoman officer khaki wool field tunic with collar insignia, khaki cloth kabalak sun-hat, "
+                "leather map case and brass binoculars; strictly NO red fez, NO red felt hat"
             ),
         },
     ],

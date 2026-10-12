@@ -24,6 +24,7 @@ from services.character import (
     get_active_character,
     get_era_witness,
 )
+from services.curated_beats import get_gallipoli_curated_beats, get_pompeii_curated_beats
 from services.historical_research import HistoricalTruthSheet, get_historical_truth_sheet
 from services.prompt_compiler import (
     apply_ancient_equipment_rule,
@@ -54,236 +55,10 @@ def generate_dynamic_screenplay(
     total_blocks = target_blocks or (timeline.block_count if timeline and timeline.block_count >= 5 else 8)
     
     curated = list(getattr(sheet, "curated_beats", []) or [])
-    if era == "world_war_i" and any(term in topic.casefold() for term in ("gallipoli", "canakkale", "çanakkale", "dardanelles")):
-        curated = [
-            {
-                "text": "At dawn on 18 March 1915, I watch Allied battleships enter the Dardanelles, expecting gunfire to open the route toward Constantinople.",
-                "role": "host_nova", "emphasis": ["18 March 1915", "Dardanelles"], "scale": "wide",
-                "scene": "Nova arrives at the Gallipoli shore at dawn, 18 March 1915; period wool field coat and brass chronometer on her left wrist, Allied battleships entering the distant strait.",
-                "proof": "Allied battleships entering the Dardanelles on 18 March 1915",
-                "action": "Nova steps against the coastal wind and unfolds a field map as the fleet advances; her coat and hair move naturally, camera glides from her shoulder toward the strait with strong layered parallax.",
-                "lighting": "golden dawn beneath heavy coastal cloud",
-                "location_id": "gallipoli_1915_shore_dawn",
-            },
-            {
-                "text": "The Ottoman minelayer Nusret laid twenty-six mines in Erenköy Bay on 8 March, hidden beneath a dark, choppy surface.",
-                "role": "narrator", "emphasis": ["Nusret", "twenty-six mines"], "scale": "medium",
-                "scene": "The Ottoman minelayer Nusret laying a line of twenty-six contact mines in Erenköy Bay on the night of 8 March 1915; authentic early twentieth-century vessel and naval crew.",
-                "proof": "Nusret and its mine-laying operation in Erenköy Bay",
-                "action": "Nusret moves through black water as sailors haul one contact mine over the rail and lower it with period rigging; rope strains, wake ripples, deck lamps flicker, and the camera tracks beside the hull.",
-                "lighting": "cold moonlight with warm deck lanterns",
-                "location_id": "erenkoy_bay_1915_night",
-            },
-            {
-                "text": "Ottoman coastal batteries answered with smoke and thunder as crews loaded shells, reset their guns, and fired across the strait.",
-                "role": "narrator", "emphasis": ["coastal batteries", "fired"], "scale": "close",
-                "scene": "Ottoman coastal artillery battery at the Dardanelles on 18 March 1915; period heavy gun, wool-uniformed artillery crew, sandbags and powder smoke.",
-                "proof": "An Ottoman artillery crew loading and firing a period coastal gun",
-                "action": "Crewmen haul a shell, load the breech, traverse the gun and fire once; recoil jolts the barrel as powder smoke rolls past, camera tracks laterally across sandbags to reveal depth.",
-                "lighting": "chiaroscuro daylight filtered through powder smoke",
-                "location_id": "dardanelles_battery_1915",
-            },
-            {
-                "text": "The French battleship Bouvet struck a mine and capsized; Irresistible and Ocean were also lost during the retreat.",
-                "role": "narrator", "emphasis": ["Bouvet", "mine"], "scale": "wide",
-                "scene": "The French battleship Bouvet in the Dardanelles on 18 March 1915, historically grounded pre-dreadnought silhouette on rough gray water, non-graphic depiction.",
-                "proof": "Bouvet listing and capsizing after striking a mine",
-                "action": "Bouvet takes a mine blast along the hull, lists sharply and capsizes as waves surge over the deck; distant ships alter course, camera tracks low across moving water with visible parallax.",
-                "lighting": "cold storm light with brief orange blast illumination",
-                "location_id": "dardanelles_bouvet_1915",
-            },
-            {
-                "text": "The Allied fleet withdrew. The failed sea passage did not end the campaign; troops landed on Gallipoli on 25 April 1915.",
-                "role": "narrator", "emphasis": ["withdrew", "25 April 1915"], "scale": "medium",
-                "scene": "A damaged Allied warship withdrawing from the Dardanelles after the failed naval assault; smoke trails past the rocky peninsula, authentic 1915 silhouettes.",
-                "proof": "The fleet turning away from the Dardanelles after the failed passage",
-                "action": "The damaged ship turns away under its own power as smaller period vessels maneuver through choppy water to assist; smoke drifts downwind while the camera lifts gently from the wake toward the retreating fleet.",
-                "lighting": "muted late-afternoon light with smoke haze",
-                "location_id": "dardanelles_retreat_1915",
-            },
-            {
-                "text": "The struggle shifted from sea to shore and endured months, leaving a legacy remembered in Turkey, Australia, New Zealand, and Britain.",
-                "role": "narrator", "emphasis": ["sea to shore", "legacy"], "scale": "wide",
-                "scene": "Nova walks the Gallipoli shoreline at evening, same face, chestnut hair, left-wrist brass chronometer and 1915 wool-and-linen camouflage; the Dardanelles opens behind her.",
-                "proof": "The Gallipoli peninsula and the sea-to-land campaign shift",
-                "action": "Nova folds her map and walks along the wind-beaten shore; waves cross the rocks and clouds move over the strait as the camera tracks backward to reveal the peninsula in layered depth.",
-                "lighting": "soft overcast evening light, reflective and restrained",
-                "location_id": "gallipoli_1915_shore_evening",
-                "character_reference": True,
-            },
-        ]
-        # A one-minute native Flow test uses fifteen four-second clips.  Keep a
-        # topic-specific shot for every clip; sampling the six-beat short outline
-        # used to fall through to unrelated generic archaeology copy at this size.
-        if total_blocks >= 15:
-            curated = [{'text': 'I have stepped onto Gallipoli as warships enter the strait.',
-  'role': 'host_nova',
-  'emphasis': ['stepped onto Gallipoli', 'warships'],
-  'scale': 'wide',
-  'scene': 'Nova arrives on the Gallipoli shore on 18 March 1915, Allied battleships advancing into the narrow Dardanelles; period wool coat and '
-           'brass chronometer on her left wrist.',
-  'proof': 'Allied battleships entering the Dardanelles on 18 March 1915',
-  'action': 'Nova steps out of salt spray and turns toward the distant ships; her coat and hair move in the coastal wind, camera follows her gaze to '
-            'the strait.',
-  'lighting': 'gray dawn beneath smoke-heavy coastal cloud',
-  'location_id': 'gallipoli_battery_story_hook',
-  'character_reference': True},
- {'text': 'Their shells crash around the battery; smoke hides the water.',
-  'role': 'narrator',
-  'emphasis': ['shells crash', 'smoke'],
-  'scale': 'wide',
-  'scene': 'Allied battleship guns bombard an Ottoman shore battery on 18 March 1915; shell splashes rise beyond the stone position and dark powder '
-           'smoke crosses the channel.',
-  'proof': 'Naval bombardment of an Ottoman coastal battery during the 18 March attack',
-  'action': 'A distant shell strikes the hillside beyond the battery, throwing up dust as smoke drifts across the gun position; camera tracks from '
-            'shaking sandbags toward the obscured water.',
-  'lighting': 'smoke-diffused cold daylight',
-  'location_id': 'dardanelles_battery_under_fire'},
- {'text': 'I meet an Ottoman gunner beside his artillery crew.',
-  'role': 'host_nova',
-  'visual_role': 'field_interview',
-  'emphasis': ['Ottoman gunner', 'crew'],
-  'scale': 'medium',
-  'scene': 'Nova, matching her established face and Ottoman-era wool-and-linen camouflage with brass chronometer, meets a tired Ottoman coastal '
-           'gunner beside his 1915 artillery crew and heavy gun.',
-  'proof': 'A time-traveler host meeting an Ottoman coastal gun crew at its battery',
-  'action': 'Nova leans in to ask the gunner a question with a small hand gesture; he answers without speaking by pointing toward the next shell. '
-            'Both keep neutral closed mouths; no audible dialogue or lip movement.',
-  'lighting': 'warm firelight through powder smoke',
-  'location_id': 'dardanelles_gunner_interview',
-  'character_reference': True},
- {'text': 'He nods toward the next round. The crew begins hauling.',
-  'role': 'narrator',
-  'emphasis': ['next round', 'hauling'],
-  'scale': 'medium',
-  'scene': 'At the same Dardanelles battery, an Ottoman gun crew prepares another artillery round while Nova watches from the side; period-correct '
-           'wool uniforms and sandbagged gun position.',
-  'proof': 'The crew moving the next artillery round toward the gun',
-  'action': 'The gunner signals toward a shell and two crewmen step in, grip it together, and begin hauling it over the rough battery floor; Nova '
-            'watches beside them.',
-  'lighting': 'smoke-softened daylight with warm ember highlights',
-  'location_id': 'dardanelles_gunner_interview',
-  'character_reference': True},
- {'text': 'They grip the shell and lift it together.',
-  'role': 'narrator',
-  'emphasis': ['grip the shell', 'together'],
-  'scale': 'close',
-  'scene': 'Close documentary view of Ottoman artillerymen lifting a heavy period shell between them inside a Dardanelles shore battery, wool '
-           'sleeves, leather gloves and gun carriage visible.',
-  'proof': 'Several artillerymen coordinating to lift one heavy shell',
-  'action': 'Three crewmen brace their boots and raise the shell in a coordinated lift; camera moves beside their hands and the round without losing '
-            'the men performing the work.',
-  'lighting': 'directional daylight through powder haze',
-  'location_id': 'dardanelles_shell_lift'},
- {'text': 'One steadies it as another aligns the breech.',
-  'role': 'narrator',
-  'emphasis': ['steadies', 'breech'],
-  'scale': 'close',
-  'scene': 'Ottoman artillery crew hand-guiding a shell toward the breech of a heavy 1915 coastal gun, exact mechanical scale and period gun '
-           'carriage.',
-  'proof': 'The shell aligned with the open breech of the coastal gun',
-  'action': 'One gunner steadies the shell while a second aligns it with the open breech; hands guide the round forward in one careful motion, '
-            'camera pushes in at shoulder height.',
-  'lighting': 'cool reflected daylight and deep gunmetal shadows',
-  'location_id': 'dardanelles_breech_load'},
- {'text': 'They ram it home, then swing the gun seaward.',
-  'role': 'narrator',
-  'emphasis': ['ram it home', 'seaward'],
-  'scale': 'medium',
-  'scene': 'A period Ottoman coastal artillery piece traversing toward the Allied fleet, crew at the breech and hand wheels, smoke and stone '
-           'revetment behind.',
-  'proof': 'The loaded Ottoman coastal gun being aimed toward the strait',
-  'action': 'The crew secures the breech, then turns the gun toward the channel using the traversing wheels; camera tracks the barrel across the '
-            'battery toward the fleet.',
-  'lighting': 'gray daylight broken by powder smoke',
-  'location_id': 'dardanelles_gun_traverse'},
- {'text': 'The cannon fires; the blast shakes the stone position.',
-  'role': 'narrator',
-  'emphasis': ['cannon fires', 'blast'],
-  'scale': 'wide',
-  'scene': 'Ottoman shore gun firing once toward the Allied fleet from its stone battery on 18 March 1915; visible crew, recoil, and powder smoke.',
-  'proof': 'A coastal gun firing from an Ottoman battery during the naval assault',
-  'action': 'The cannon fires once, recoiling along its carriage as the crew braces and dense powder smoke rolls over the stone position; camera '
-            'jolts subtly with the blast.',
-  'lighting': 'brief hot muzzle flash in cold smoke',
-  'location_id': 'dardanelles_gun_firing'},
- {'text': 'I ask how long they can keep firing.',
-  'role': 'host_nova',
-  'visual_role': 'field_interview',
-  'emphasis': ['keep firing'],
-  'scale': 'medium',
-  'scene': 'Nova and the same Ottoman gunner beside the same coastal gun, brief side-on field interview framed through drifting powder smoke; both '
-           'in consistent period setting.',
-  'proof': 'The field interview returns to the same gunner and active battery',
-  'action': 'Nova gestures toward the gun and asks a question without speaking on camera; the gunner answers only with a determined nod and turns '
-            'toward his crew, mouths neutral and closed.',
-  'lighting': 'soft amber light through a thinning veil of smoke',
-  'location_id': 'dardanelles_gunner_interview',
-  'character_reference': True},
- {'text': 'No pause: the next shell is already moving forward.',
-  'role': 'narrator',
-  'emphasis': ['no pause', 'next shell'],
-  'scale': 'medium',
-  'scene': "The same Ottoman gun crew immediately preparing a second shell while the first shot's smoke still hangs over the battery.",
-  'proof': 'The crew beginning the next loading cycle before the smoke clears',
-  'action': 'Crewmen carry another round from the ammunition stack toward the open breech as the gunner checks the position; keep the movement '
-            'continuous and purposeful.',
-  'lighting': 'dusty daylight with residual powder haze',
-  'location_id': 'dardanelles_next_round'},
- {'text': 'Beyond the battery, minesweepers probe the channel.',
-  'role': 'narrator',
-  'emphasis': ['minesweepers', 'channel'],
-  'scale': 'wide',
-  'scene': 'Small period minesweeping trawlers work ahead of the Allied battleships in the Dardanelles on 18 March 1915, under fire from shore '
-           'batteries.',
-  'proof': 'Minesweeping vessels working ahead of the Allied fleet',
-  'action': 'A trawler pulls sweep gear through choppy water while nearby shells splash and crewmen haul taut lines; camera tracks low along the '
-            'moving wake.',
-  'lighting': 'flat gray daylight and drifting gun smoke',
-  'location_id': 'dardanelles_minesweepers_under_fire'},
- {'text': 'Ottoman shore guns fire as the fleet pushes on.',
-  'role': 'narrator',
-  'emphasis': ['shore guns', 'fleet pushes on'],
-  'scale': 'wide',
-  'scene': 'Allied battleships continue through the Dardanelles while Ottoman coastal guns fire from the rocky shore, 18 March 1915.',
-  'proof': 'The Allied fleet advancing under fire from shore batteries',
-  'action': 'Battleships move forward as a shore gun flashes and water bursts near a trawler; smoke streams with the wind while the camera pans from '
-            'battery to fleet.',
-  'lighting': 'cold, smoke-filtered afternoon daylight',
-  'location_id': 'dardanelles_fleet_under_fire'},
- {'text': 'Then the French battleship Bouvet strikes a mine.',
-  'role': 'narrator',
-  'emphasis': ['Bouvet', 'strikes a mine'],
-  'scale': 'wide',
-  'scene': 'The French battleship Bouvet in the Dardanelles on 18 March 1915, period pre-dreadnought silhouette on rough gray water.',
-  'proof': 'Bouvet struck by a mine during the 18 March naval assault',
-  'action': "A mine detonates beside Bouvet's hull; the ship shudders and begins to list as water surges across its deck, camera sweeps over the "
-            'disturbed surface.',
-  'lighting': 'cold daylight through blast smoke',
-  'location_id': 'dardanelles_bouvet_strike'},
- {'text': 'It sinks; two other ships are abandoned, another damaged.',
-  'role': 'narrator',
-  'emphasis': ['two other ships', 'another damaged'],
-  'scale': 'wide',
-  'scene': 'A distant historical tableau of Allied fleet losses on 18 March 1915: one sinking ship, rescue boats beside an abandoned battleship, and '
-           'another damaged vessel withdrawing.',
-  'proof': 'Bouvet, Irresistible, and Ocean lost; Inflexible damaged in the 18 March attack',
-  'action': 'Rescue boats pull sailors from the water beside a disabled ship as another damaged battleship turns away through smoke; keep ships '
-            'distinct and the action non-graphic.',
-  'lighting': 'late afternoon haze over rough water',
-  'location_id': 'dardanelles_fleet_losses'},
- {'text': 'By evening the fleet retreats. The sea attack has failed.',
-  'role': 'host_nova',
-  'emphasis': ['fleet retreats', 'attack has failed'],
-  'scale': 'wide',
-  'scene': 'Nova stands on the Gallipoli shore at dusk watching the surviving Allied fleet withdraw from the Dardanelles; same face, wool-and-linen '
-           'period camouflage and left-wrist brass chronometer.',
-  'proof': 'The Allied fleet withdrawing from the Dardanelles at evening',
-  'action': 'Nova lowers a field map and watches the ships turn toward open water; wind pulls at her coat as the camera moves from her shoulder to '
-            'the receding formation.',
-  'lighting': 'restrained dusk light with smoke fading into the horizon',
-  'location_id': 'gallipoli_fleet_retreat',
-  'character_reference': True}]
+    if era == "world_war_i" and any(term in topic.casefold() for term in ("gallipoli", "canakkale", "çanakkale", "dardanelles", "seyit", "mecidiye")):
+        curated = get_gallipoli_curated_beats(total_blocks, lang=lang, topic=topic)
+    elif any(term in topic.casefold() for term in ("pompeii", "pompei", "vezüv", "vesuvius")):
+        curated = get_pompeii_curated_beats(total_blocks, lang=lang)
 
     # 1. Generate dynamic beats
     beats: list[Beat] = []
@@ -348,7 +123,7 @@ def generate_dynamic_screenplay(
                     text = f"Standing inside this inner chamber, the acoustic resonance through the {sheet.architecture_and_materials[0] if sheet.architecture_and_materials else 'megalith'} is unmistakable."
                     emphasis = ["acoustic resonance", "chamber"]
             else:
-                role = "host_nova"
+                role = "narrator"
                 materials = sheet.architecture_and_materials
                 mat_text = materials[i % len(materials)] if materials else "monolithic stone blocks"
                 sensory = sheet.sensory_details

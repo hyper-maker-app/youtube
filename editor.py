@@ -667,17 +667,17 @@ def build_audio_filter(
         stmts.append(f"[mus][vo2]sidechaincompress=threshold={config.DUCK_THRESHOLD}:ratio={config.DUCK_RATIO}:attack={config.DUCK_ATTACK}:release={config.DUCK_RELEASE}[duck]")
         stmts.append(f"[{soundscape_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,aloop=loop=-1:size=2e+09,volume=0.22[amb]")
         stmts.append(f"[amb][vo3]sidechaincompress=threshold=0.04:ratio=6:attack=10:release=350[duck_amb]")
-        stmts.append("[vo1][duck][duck_amb]amix=inputs=3:duration=first:dropout_transition=0[base]")
+        stmts.append("[vo1][duck][duck_amb]amix=inputs=3:duration=first:dropout_transition=0:normalize=0[base]")
     elif music_index is not None:
         stmts.append(f"[{vo_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,apad,asplit=2[vo1][vo2]")
         stmts.append(f"[{music_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,aloop=loop=-1:size=2e+09,volume={config.MUSIC_VOLUME}[mus]")
         stmts.append(f"[mus][vo2]sidechaincompress=threshold={config.DUCK_THRESHOLD}:ratio={config.DUCK_RATIO}:attack={config.DUCK_ATTACK}:release={config.DUCK_RELEASE}[duck]")
-        stmts.append("[vo1][duck]amix=inputs=2:duration=first:dropout_transition=0[base]")
+        stmts.append("[vo1][duck]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[base]")
     elif soundscape_index is not None:
         stmts.append(f"[{vo_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,apad,asplit=2[vo1][vo2]")
         stmts.append(f"[{soundscape_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,aloop=loop=-1:size=2e+09,volume=0.25[amb]")
         stmts.append(f"[amb][vo2]sidechaincompress=threshold=0.04:ratio=6:attack=10:release=350[duck_amb]")
-        stmts.append("[vo1][duck_amb]amix=inputs=2:duration=first:dropout_transition=0[base]")
+        stmts.append("[vo1][duck_amb]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[base]")
     else:
         stmts.append(f"[{vo_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,apad[base]")
     labels = ["[base]"]

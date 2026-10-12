@@ -660,3 +660,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Lock strict people-free negative constraints on mechanism B-roll while preserving host presence exclusively in authored A-roll; verify 1-FPS contact sheets before declaring complete.
 
 ---
+
+### [ADR-062] Gallipoli 90s Benchmark Reproduction, Pompeii Generalization, and 6 Systemic Fixes
+- **Tarih**: 2026-10-12
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Reproduce 90s Gallipoli benchmark (2:10-3:40) and generalize to Pompeii while fixing fez, prop morphing, text cards, host B-roll intrusion, loudness, and voice factory registration
+- **Yapılan İş / Sonuç**: Created curated arcs in services/curated_beats.py for 22-block Gallipoli and 15-block Pompeii; fixed voice registration in providers/factory.py; disabled amix normalization in editor.py; locked khaki kabalak, 28cm Krupp gun, Roman mills/oven, and zero-text shield; enforced ADR-060 host restrictions
+- **İptal / Kabul Gerekçesi**: Delivers historical documentary fidelity matching benchmark, eliminates hallucinations across eras, and guarantees broadcast audio compliance
+- **Kalıcı Kural / Ders**: Enforce ADR-060 strictly by isolating host Nova to 3 pivotal shots; lock period headwear and mechanical props; never attenuate voice in amix
+
+---
