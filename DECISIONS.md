@@ -640,3 +640,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Reject A-roll clips with more than 0.5 seconds of unexplained pre-speech silence. Re-prompt with direct-to-camera speech beginning on the first frame, minimal pre-speech action, and a short line; verify mouth frames and ASR timestamps together.
 
 ---
+
+### [ADR-060] Reject incidental researcher faces in Flow lightning-system B-roll
+- **Tarih**: 2026-10-12
+- **Durum**: `ABANDONED`
+- **Talep / Fikir**: Use Flow-generated documentary B-roll to explain the lightning system while Nova remains the only host identity.
+- **Yapılan İş / Sonuç**: The 1 FPS final contact sheet showed multiple unrelated lab researchers and changing house models in B-roll despite the narration and continuity prompts; the visual cast no longer matched the authored story.
+- **İptal / Kabul Gerekçesi**: Incidental faces distract from Nova and make visual identity/scene continuity inconsistent across the video.
+- **Kalıcı Kural / Ders**: For this story use Nova only in three explicit on-camera host shots. Generate mechanism B-roll without people, faces, silhouettes, hands or mannequins, and repeat one precise model-house and glass-dome anchor across B-roll prompts.
+
+---
