@@ -91,6 +91,72 @@ def test_gallipoli_90s_master_reproduction_22_blocks_tr():
     assert script.beats[21].role == "host_nova"
 
 
+def test_gallipoli_100s_master_reproduction_25_blocks_en():
+    """Verify 100-second (25-block) Gallipoli benchmark arc in English with ADR-060 host constraints."""
+    topic = "18 Mart 1915 Çanakkale Boğaz Savaşı: Rumeli Mecidiye Tabyası, Seyit Onbaşı ve Bouvet Zırhlısı Düellosu (PXixPeATIQc 2:10 - 3:50)"
+    script = generate_dynamic_screenplay(topic, target_blocks=25, lang="en")
+
+    assert len(script.beats) == 25
+    assert len(script.shots) == 25
+
+    # Check narrative milestones from reference video
+    beats_text = " ".join(b.text for b in script.beats)
+    assert "18 March 1915" in beats_text
+    assert "Mecidiye" in beats_text
+    assert "Seyit" in beats_text
+    assert "Krupp" in beats_text
+    assert "Bouvet" in beats_text
+
+    # ADR-060 Check: Host Nova on Opening (1), Midpoint (13), Closing (25)
+    assert script.beats[0].role == "host_nova"
+    assert script.shots[0].subject_id == "host_nova"
+
+    assert script.beats[12].role == "host_nova"
+    assert script.shots[12].subject_id == "host_nova"
+
+    assert script.beats[24].role == "host_nova"
+    assert script.shots[24].subject_id == "host_nova"
+
+    # Duration & Pacing checks: 25 x 4.0s = 100.0s footage for 100s master reproduction
+    for shot in script.shots:
+        assert shot.duration == 4.0, f"Shot {shot.block} has duration {shot.duration}, expected 4.0s"
+    assert script.shots[-1].t_end == 100.0
+
+    # All intermediate B-Roll shots MUST NOT have host_nova
+    broll_indices = list(range(1, 12)) + list(range(13, 24))
+    for idx in broll_indices:
+        assert script.beats[idx].role == "narrator", f"Beat {idx+1} should be narrator, got {script.beats[idx].role}"
+        assert script.shots[idx].subject_id != "host_nova", f"Shot {idx+1} should not be host_nova"
+        assert script.shots[idx].visual_domain in ("archaeology", "incident"), f"Shot {idx+1} domain unexpected"
+
+
+def test_gallipoli_100s_master_reproduction_25_blocks_tr():
+    """Verify 100-second (25-block) Gallipoli benchmark arc in Turkish with ADR-060 host constraints."""
+    topic = "18 Mart 1915 Çanakkale Boğaz Savaşı: Rumeli Mecidiye Tabyası, Seyit Onbaşı ve Bouvet Zırhlısı Düellosu"
+    script = generate_dynamic_screenplay(topic, target_blocks=25, lang="tr")
+
+    assert len(script.beats) == 25
+    assert len(script.shots) == 25
+
+    beats_text = " ".join(b.text for b in script.beats)
+    assert "18 Mart 1915" in beats_text
+    assert "Mecidiye Tabyası" in beats_text
+    assert "Seyit Onbaşı" in beats_text
+    assert "215 kiloluk" in beats_text
+    assert "Krupp" in beats_text
+    assert "Bouvet" in beats_text
+
+    # Duration & Pacing checks: 25 x 4.0s = 100.0s footage
+    for shot in script.shots:
+        assert shot.duration == 4.0, f"Shot {shot.block} has duration {shot.duration}, expected 4.0s"
+    assert script.shots[-1].t_end == 100.0
+
+    # Host presence on pivotal shots only: 1, 13, 25
+    assert script.beats[0].role == "host_nova"
+    assert script.beats[12].role == "host_nova"
+    assert script.beats[24].role == "host_nova"
+
+
 def test_pompeii_generalization_15_blocks_en():
     """Verify 15-block Pompeii generalization target in English with ADR-060 host constraints."""
     topic = "Zaman Yolcusu Defne - Pompei Vezüv Patlaması: MS 79 Roman Bakery"

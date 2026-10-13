@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.format == "short":
                 args.format = "longform"
             if args.blocks is None:
-                args.blocks = 22
+                args.blocks = 25 if any(t in topic_lower for t in ("3:50", "100", "25")) else 22
         elif "qzzoxhjtliw" in topic_lower:
             args.topic = "Zaman Yolcusu Defne - Pompei Vezüv Patlaması: MS 79 Roman Bakery"
             if args.format == "short":
@@ -118,7 +118,12 @@ def main(argv: list[str] | None = None) -> int:
                 args.blocks = 15
 
     topic_str = (args.topic or "").casefold()
-    if args.duration == 90 or any(term in topic_str for term in ("90s", "90 saniye", "2:10", "3:40")):
+    if args.duration == 100 or any(term in topic_str for term in ("100s", "100 saniye", "3:50")):
+        if args.blocks is None:
+            args.blocks = 25
+        if args.format == "short":
+            args.format = "longform"
+    elif args.duration == 90 or any(term in topic_str for term in ("90s", "90 saniye", "2:10", "3:40")):
         if args.blocks is None:
             args.blocks = 22
         if args.format == "short":

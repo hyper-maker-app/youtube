@@ -737,3 +737,14 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Always distinguish on-camera A-roll host speech from documentary B-roll voiceover in prompt directives, slice audio accurately per block, and provide working cloud/local lip-sync driving engines.
 
 ---
+
+### [ADR-069] Gallipoli (18 Mart 1915) 100s 25-Block Master Reproduction, ADR-060 A-Roll Lip-Sync & Krupp Physics Lock
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Replicate exact 100-second sequence (2:10 - 3:50) from reference benchmark PXixPeATIQc with 25 native 4.0s blocks (100.0s footage + 1.5s cloned tail = 101.5s), locking host Nova on 3 pivotal A-Roll shots (Blocks 1, 13, 25) with active lip-sync, and 22 pure historical B-Roll shots.
+- **Yapılan İş / Sonuç**: Added 25-block Gallipoli master reproduction sequence in `services/curated_beats.py` (total_blocks >= 25); updated `services/screenplay.py` and `services/script_engine.py` to propagate `is_a_roll` and `total_blocks`; configured `main.py` canonicalization for 25-block 100s runs (`--blocks 25` / `--duration 100` / `3:50`); added test cases in `tests/test_benchmark_reproduction.py`; verified 100% clean dry-run compilation.
+- **İptal / Kabul Gerekçesi**: Perfectly aligns with the 100s benchmark sequence of the reference video; guarantees zero red fez leaks via ADR-062 khaki kabalak lock; enforces realistic crane wreckage physics and 215kg Krupp gun mechanics (ADR-063); activates lip-sync on on-camera host moments while preserving clean voiceover on B-Roll (ADR-068).
+- **Kalıcı Kural / Ders**: The 100-second Gallipoli benchmark sequence requires exactly 25 blocks (100s) + 1.5s cloned tail (101.5s); host Nova is strictly constrained to Blocks 1, 13, and 25 with speaking lip articulation; all other 22 blocks are pure B-Roll with closed mouths.
+
+
+---

@@ -108,7 +108,7 @@ def generate_dynamic_screenplay(
     # 2. Assign flexible durations (6.0s - 15.0s for longform documentary pacing)
     # Default documentary blocks are 8.0s - 12.0s rather than 4s Shorts fragments
     durations: list[float] = []
-    is_curated_flow = bool(curated and total_blocks in (15, 22))
+    is_curated_flow = bool(curated and (total_blocks in (15, 22, 25) or len(curated) == total_blocks))
     native_four_second_blocks = bool(
         is_curated_flow
         or (
@@ -280,6 +280,8 @@ def generate_dynamic_screenplay(
             quality_critical=["authentic lighting", "zero modern equipment", "full headroom" if (is_a_roll or is_witness) else "period-correct visible people performing the authored action when called for"],
             location_id=str(curated_entry.get("location_id")) if curated_entry and curated_entry.get("location_id") else f"site_{era}_{block:02d}",
             endpoint_mode="first_only",
+            is_a_roll=is_a_roll,
+            total_blocks=total_blocks,
         ))
 
     return Script(

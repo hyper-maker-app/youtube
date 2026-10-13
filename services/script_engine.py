@@ -479,6 +479,8 @@ class Shot:
     spatial_anchor: str = ""
     scale_level: str = ""
     forbidden_entities: list[str] = field(default_factory=list)
+    is_a_roll: bool = False
+    total_blocks: int = 0
 
     @property
     def duration(self) -> float:
@@ -561,6 +563,8 @@ class Shot:
                     or []
                 )
             ],
+            is_a_roll=bool(value.get("is_a_roll", False)),
+            total_blocks=int(value.get("total_blocks", 0)),
         )
 
 
@@ -1207,7 +1211,8 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
         if not is_host_shot and hasattr(shot, "block"):
             try:
                 from services.character import classify_shot_role
-                role_inf = classify_shot_role(shot.block, getattr(shot, "total_blocks", 22))
+                tot_blocks = getattr(shot, "total_blocks", 0) or 25
+                role_inf = classify_shot_role(shot.block, tot_blocks)
                 is_host_shot = role_inf.get("is_speaking_avatar", False)
             except Exception:
                 pass

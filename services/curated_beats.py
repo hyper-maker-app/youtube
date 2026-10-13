@@ -26,6 +26,265 @@ def get_gallipoli_curated_beats(total_blocks: int, lang: str = "en", topic: str 
     is_tr = (lang or "en").strip().casefold() == "tr"
     is_seyit_arc = any(term in (topic or "").casefold() for term in ("seyit", "onbasi", "onbaşı", "mecidiye", "215", "rumeli"))
 
+    if total_blocks >= 25:
+        # 25-block master sequence (100-second video: 25 x 4.0s = 100s + 1.5s tail = 101.5s)
+        # Matches the exact 2:10 - 3:50 section of reference video https://www.youtube.com/watch?v=PXixPeATIQc
+        return [
+            {
+                "text": "18 Mart 1915; kudretli Müttefik armadası Çanakkale Boğazı'na giriyor."
+                if is_tr else "On 18 March 1915, the mighty Allied armada steamed into the narrow Dardanelles.",
+                "role": "host_nova", "emphasis": ["18 March 1915", "Allied armada"], "scale": "wide",
+                "scene": "Nova arrives on the Gallipoli shore on 18 March 1915 looking directly at camera, Allied battleships advancing into the narrow Dardanelles in Erenköy Bay; period khaki wool coat and brass temporal chronometer on her left wrist.",
+                "proof": "Nova's brass temporal chronometer; Allied armada entering the Dardanelles",
+                "action": "Nova addresses the viewer directly with active speaking lip movement, looking straight into the lens as coastal wind whips her khaki coat, armada advancing behind her.",
+                "lighting": "gray dawn beneath smoke-heavy coastal cloud",
+                "location_id": "gallipoli_battery_story_hook",
+                "character_reference": True,
+            },
+            {
+                "text": "Bouvet, Suffren ve İngiliz zırhlıları Boğaz'ı borda ateşleriyle inletiyor."
+                if is_tr else "French battleships Bouvet, Suffren, and British warships Ocean and Irresistible unleash thunderous broadsides.",
+                "role": "narrator", "emphasis": ["battleships Bouvet", "thunderous broadsides"], "scale": "wide",
+                "scene": "French pre-dreadnought battleships Bouvet and Suffren alongside British Ocean and Irresistible in Erenköy Bay firing colossal main battery broadsides; violent orange flames and massive smoke clouds over choppy channel water.",
+                "proof": "Allied battleship fleet firing heavy broadsides in the Dardanelles",
+                "action": "Massive naval gun turrets fire simultaneously, shockwaves rippling across the dark sea as dense gray-white cordite smoke engulfs the steel hulls.",
+                "lighting": "smoke-diffused cold daylight with orange muzzle flashes",
+                "location_id": "dardanelles_allied_broadsides",
+            },
+            {
+                "text": "Ağır düşman mermileri Rumeli Mecidiye Tabyası kıyısını hallaç pamuğu gibi atıyor."
+                if is_tr else "Allied heavy artillery shells crash relentlessly along the Rumeli Mecidiye battery shore.",
+                "role": "narrator", "emphasis": ["artillery shells", "Rumeli Mecidiye"], "scale": "wide",
+                "scene": "Heavy naval artillery shells exploding along the coastal bluffs and shoreline of Rumeli Mecidiye Bastion on 18 March 1915; soaring geysers of limestone earth, shattered rocks, and dense black powder smoke.",
+                "proof": "Heavy naval bombardment impacts throwing up earth along the Mecidiye shore",
+                "action": "High-explosive shell bursts erupt along the shoreline, flinging shattered rock and dirt into the gray air as concussion waves rock the fortifications.",
+                "lighting": "smoke-filled overcast daylight",
+                "location_id": "dardanelles_mecidiye_shore_shelling",
+            },
+            {
+                "text": "Doğrudan bir isabet Mecidiye Tabyası'nın göbeğini vuruyor; taş mevziler yıkılıyor."
+                if is_tr else "A catastrophic direct hit slams into the heart of Mecidiye Bastion.",
+                "role": "narrator", "emphasis": ["catastrophic", "direct hit"], "scale": "medium",
+                "scene": "A direct heavy naval shell impact inside the stone ramparts of Rumeli Mecidiye Bastion; fortress limestone masonry crumbling, massive shockwave tearing through sandbags and stone parapets.",
+                "proof": "Direct artillery shell strike collapsing the stone ramparts of Mecidiye Bastion",
+                "action": "The bastion walls shudder violently under the direct detonation, limestone blocks fracturing and sandbag breastworks collapsing inward.",
+                "lighting": "warm explosive fireball through thick gray dust",
+                "location_id": "dardanelles_mecidiye_direct_hit",
+            },
+            {
+                "text": "Patlamanın şok dalgası 28'lik Krupp topunun mermi vincini parçalıyor."
+                if is_tr else "The blast shockwave obliterates the 28cm Krupp gun's mechanical shell hoist.",
+                "role": "narrator", "emphasis": ["blast shockwave", "mechanical shell hoist"], "scale": "close",
+                "scene": "Close documentary inspection of the destroyed shell hoist mechanism beside the 28cm Krupp gun inside Mecidiye Bastion; snapped steel chains, shattered cast-iron gears, twisted guide rails, and scattered mechanical debris.",
+                "proof": "The broken mechanical shell crane and twisted iron chains inside the battery",
+                "action": "Snapped heavy iron chains whip across the stone floor, twisted gears and buckled steel hoist tracks collapse into the rubble beside the heavy artillery carriage.",
+                "lighting": "smoke-softened daylight with warm ember highlights",
+                "location_id": "dardanelles_broken_crane",
+            },
+            {
+                "text": "Duman dağılırken yıkıntılar arasında sadece Seyit Onbaşı ve Niğdeli Ali ayakta kalıyor."
+                if is_tr else "Through clearing smoke and fallen comrades, only Corporal Seyit and Niğdeli Ali rise to their feet.",
+                "role": "narrator", "emphasis": ["Corporal Seyit", "Niğdeli Ali"], "scale": "medium",
+                "scene": "Ottoman artillerymen amidst clearing smoke in the devastated battery; fallen martyrs and wounded gunners among shattered stone, with Corporal Seyit Onbaşı and comrade Niğdeli Ali standing resolute.",
+                "proof": "Corporal Seyit Onbaşı and Niğdeli Ali standing amidst the battery rubble",
+                "action": "Seyit and Niğdeli Ali pull themselves up from the debris, shaking limestone dust from their khaki uniforms, surveying the shattered gun position with grim resolve.",
+                "lighting": "chiaroscuro daylight through drifting black powder smoke",
+                "location_id": "dardanelles_surviving_gunners",
+            },
+            {
+                "text": "Yıkıntılar arasında sağlam kalan son üç dev Krupp mermisi yatıyor."
+                if is_tr else "Beside the broken rails lie the bastion's final three intact 215-kilogram Krupp shells.",
+                "role": "narrator", "emphasis": ["final three", "215-kilogram Krupp shells"], "scale": "close",
+                "scene": "Three intact colossal 215kg Krupp armor-piercing artillery shells resting horizontally on the stone floor beside the mangled hoist tracks inside Mecidiye Bastion.",
+                "proof": "Three intact 215kg Krupp artillery shells resting beside the broken hoist",
+                "action": "Camera tracks low along the stone pavement, revealing the three gleaming olive-gray steel armor-piercing shells resting intact amidst the surrounding destruction.",
+                "lighting": "diffuse cool daylight highlighting cylindrical steel shell casings",
+                "location_id": "dardanelles_three_shells",
+            },
+            {
+                "text": "Seyit Onbaşı'nın toz ve barut kaplı kararlı gözleri dev mermiye kilitleniyor."
+                if is_tr else "Beneath his khaki kabalak, Corporal Seyit's resolute eyes lock onto the colossal steel projectile.",
+                "role": "narrator", "emphasis": ["khaki kabalak", "resolute eyes"], "scale": "close",
+                "scene": "Dramatic close-up of Corporal Seyit Onbaşı's weathered Anatolian face, wearing authentic Ottoman khaki cloth kabalak (Enveriye) hat with strictly NO red fez; intense resolute eyes locked on the 215kg shell through drifting powder smoke.",
+                "proof": "Corporal Seyit's determined face and authentic khaki kabalak hat locked on the shell",
+                "action": "Seyit tightens his jaw, jaw muscles clenching with determination as he stares down at the monstrous projectile, steeling his resolve.",
+                "lighting": "dramatic directional sunlight through battle smoke",
+                "location_id": "dardanelles_seyit_resolve",
+            },
+            {
+                "text": "Seyit dua edip yere çöküyor, kollarını ve deri kayışını dev çeliğin altına sarıyor."
+                if is_tr else "Seyit whispers a prayer, squats low, and wraps his thick arms and leather strap beneath the steel.",
+                "role": "narrator", "emphasis": ["squats low", "leather strap"], "scale": "close",
+                "scene": "Corporal Seyit Onbaşı crouching deep beside the 215kg shell, securing heavy leather harness straps and wrapping his thick bare forearms beneath the colossal steel casing.",
+                "proof": "Corporal Seyit wrapping his arms and leather straps beneath the 215kg shell",
+                "action": "Seyit drops into a deep power squat, wedging his shoulders beneath the shell harness, fingers gripping the leather straps tightly against the cold metal.",
+                "lighting": "low-angle dramatic side light across stone pavement",
+                "location_id": "dardanelles_seyit_grip",
+            },
+            {
+                "text": "İnsanüstü bir iradeyle 215 kiloluk devasa yükü sırtına kaldırıyor."
+                if is_tr else "With superhuman willpower, he heaves the colossal 215-kilogram shell onto his back.",
+                "role": "narrator", "emphasis": ["superhuman willpower", "215-kilogram shell"], "scale": "close",
+                "scene": "Heroic low-angle shot of Corporal Seyit lifting the 215kg shell onto his upper back; leg muscles bulging, veins swelling along his neck and forearms, hobnail leather boots digging into crushed limestone.",
+                "proof": "Corporal Seyit lifting the heavy 215kg artillery shell onto his back",
+                "action": "Seyit drives upward with immense leg drive, every tendon straining as the monstrous 215kg steel shell leaves the ground and rests across his broad shoulders.",
+                "lighting": "directional daylight through powder haze highlighting muscular exertion",
+                "location_id": "dardanelles_seyit_lift",
+            },
+            {
+                "text": "Ezici ağırlık altında taş mevzide ağır ve kararlı adımlarla ilerliyor."
+                if is_tr else "Under the crushing burden, Seyit marches with deliberate, agonizing strides across the battery.",
+                "role": "narrator", "emphasis": ["crushing burden", "agonizing strides"], "scale": "medium",
+                "scene": "Medium shot of Corporal Seyit carrying the enormous 215kg artillery shell across the stone floor of Mecidiye Bastion; limestone dust rising with each heavy boot step toward the Krupp gun mount.",
+                "proof": "Seyit Onbaşı carrying the massive 215kg shell across the battery",
+                "action": "Seyit advances step by deliberate step across the rubble-strewn battery floor, back bent forward under the immense weight, boots crushing limestone gravel.",
+                "lighting": "deep shadows and dusty daylight across stone embrasure",
+                "location_id": "dardanelles_seyit_walk",
+            },
+            {
+                "text": "Çevresinde mermiler patlarken top arabasının altı taş basamağını tırmanıyor."
+                if is_tr else "Shells explode around him as he climbs the six steep stone steps leading to the gun platform.",
+                "role": "narrator", "emphasis": ["six steep stone steps", "gun platform"], "scale": "medium",
+                "scene": "Seyit Onbaşı ascending the six steep stone steps leading to the 28cm Krupp gun platform under the crushing 215kg burden; sweat pouring down his face as artillery explosions flash in the background.",
+                "proof": "Seyit Onbaşı carrying the massive 215kg shell up the battery stone steps",
+                "action": "Seyit climbs the massive stone stairs one agonizing step at a time, muscles shuddering with exhaustion, boots finding purchase on each worn stone edge.",
+                "lighting": "cool reflected daylight and deep gunmetal shadows",
+                "location_id": "dardanelles_steps_climb",
+            },
+            {
+                "text": "Vinç parçalanmıştı; ama tek bir adam Boğaz'ın kaderini sırtında taşıdı."
+                if is_tr else "With the crane destroyed, one man alone carried the fate of the entire strait.",
+                "role": "host_nova", "emphasis": ["crane destroyed", "carried the fate"], "scale": "medium",
+                "scene": "Nova on the Gallipoli ramparts at the midpoint turning point speaking directly to camera; wind pulling her khaki coat, glowing brass temporal chronometer on her left wrist, gun mount behind her.",
+                "proof": "Nova's brass chronometer; Corporal Seyit reaching the 28cm Krupp gun platform",
+                "action": "Nova looks straight into the camera lens with passionate conviction, speaking with synchronized lip movement as battle smoke swirls behind her.",
+                "lighting": "dramatic chiaroscuro daylight through thinning smoke",
+                "location_id": "gallipoli_midpoint_turning_point",
+                "character_reference": True,
+            },
+            {
+                "text": "Basamakların tepesinde Niğdeli Ali yardıma koşuyor; mermiyi namlu yatağına hizalıyorlar."
+                if is_tr else "At the top, Niğdeli Ali rushes in to align the shell with the open breech of the Krupp gun.",
+                "role": "narrator", "emphasis": ["Niğdeli Ali", "open breech"], "scale": "close",
+                "scene": "Seyit Onbaşı and comrade Niğdeli Ali steadying the massive 215kg shell at the open circular steel breech of the heavy 28cm Krupp coastal gun.",
+                "proof": "The heavy shell aligned with the open breech of the coastal gun",
+                "action": "Ali supports the nose of the heavy shell while Seyit guides the base, aligning the tapered projectile perfectly with the open rifled breech bore.",
+                "lighting": "cool reflected daylight and deep gunmetal shadows",
+                "location_id": "dardanelles_breech_align",
+            },
+            {
+                "text": "Mermiyi çelik namluya sürüp dev kama mekanizmasını demir kolla kilitliyorlar."
+                if is_tr else "They slide the shell into the barrel and slam shut the heavy steel breech block.",
+                "role": "narrator", "emphasis": ["slide the shell", "breech block"], "scale": "close",
+                "scene": "The 215kg artillery shell sliding smoothly into the rifled steel bore of the 28cm Krupp cannon; gunners slamming shut the massive horizontal wedge breech mechanism with heavy iron levers.",
+                "proof": "The heavy shell sliding into the breech of the 28cm Krupp coastal gun",
+                "action": "With a coordinated push the shell slides home into the chamber, and Ali drives the heavy steel wedge locking lever downward with a solid metallic clang.",
+                "lighting": "gray daylight broken by powder smoke",
+                "location_id": "dardanelles_breech_load",
+            },
+            {
+                "text": "Topçular ağır demir çarkları çevirerek dev namluyu Bouvet zırhlısına çeviriyor."
+                if is_tr else "The gunners crank the traversing handwheels, training the massive barrel toward battleship Bouvet.",
+                "role": "narrator", "emphasis": ["traversing handwheels", "battleship Bouvet"], "scale": "medium",
+                "scene": "Ottoman gunners vigorously spinning heavy cast-iron traversing and elevation handwheels on the Krupp gun carriage, pivoting the massive long steel barrel seaward.",
+                "proof": "The loaded Ottoman coastal gun being aimed toward the strait",
+                "action": "The gun carriage rotates smoothly on its circular steel floor ring, traversing the menacing black cannon barrel out over the parapet toward the channel.",
+                "lighting": "gray daylight broken by powder smoke",
+                "location_id": "dardanelles_gun_traverse",
+            },
+            {
+                "text": "Açık nişangahın ortasında Bouvet zırhlısının silüeti hedefe oturuyor."
+                if is_tr else "Through open iron sights, the dark silhouette of Bouvet locks into dead center.",
+                "role": "narrator", "emphasis": ["open iron sights", "dead center"], "scale": "close",
+                "scene": "POV through the precision iron gun sight of the 28cm Krupp cannon: the distant silhouette of the French pre-dreadnought battleship Bouvet centered in the sight notch through swirling battle smoke.",
+                "proof": "The 28cm Krupp gun iron sights aligned directly on the battleship in the strait",
+                "action": "The gun layer makes fine elevation adjustments, crosshairs and iron post aligning squarely on the waterline armor belt of the enemy warship.",
+                "lighting": "cold overcast daylight with distant ship silhouettes",
+                "location_id": "dardanelles_aim_bouvet",
+            },
+            {
+                "text": "Ateş! 28'lik dev Krupp topu yeri göğü inleten dehşetli bir gürlemeyle patlıyor."
+                if is_tr else "Fire! The 28cm Krupp gun recoils violently with an earth-shattering flash and smoke.",
+                "role": "narrator", "emphasis": ["Fire", "recoils violently"], "scale": "wide",
+                "scene": "The 28cm Krupp coastal cannon firing toward the Allied fleet; colossal blinding orange muzzle flash, violent hydraulic recoil along the steel carriage, and massive expanding white smoke ring.",
+                "proof": "A coastal gun firing with massive recoil from an Ottoman battery during the naval assault",
+                "action": "The cannon unleashes a massive blast, recoiling backward violently on its hydraulic cylinders as shockwaves kick up limestone dust and thick cordite smoke.",
+                "lighting": "brief hot orange muzzle flash in cold gray smoke",
+                "location_id": "dardanelles_gun_firing",
+            },
+            {
+                "text": "215 kiloluk zırh delici mermi Bouvet'nin gövdesine tam isabet kaydediyor."
+                if is_tr else "The 215-kilogram shell tears across the water, striking Bouvet directly at the waterline.",
+                "role": "narrator", "emphasis": ["striking Bouvet", "waterline"], "scale": "wide",
+                "scene": "Artillery shell impact directly on the armored waterline belt of French battleship Bouvet in the Dardanelles; colossal fountain of sea water, shattered armor plate, and fiery blast.",
+                "proof": "Direct artillery shell strike on the French battleship Bouvet",
+                "action": "The heavy shell impacts the French warship's midsection armor belt, penetrating the hull and producing a tremendous explosion of fire, steel fragments, and soaring white water plume.",
+                "lighting": "cold daylight with bright explosion flash",
+                "location_id": "dardanelles_bouvet_impact",
+            },
+            {
+                "text": "Bouvet'nin cephaneliği patlıyor; göğe yüzlerce metrelik devasa alev topu yükseliyor."
+                if is_tr else "Bouvet's magazine detonates in a colossal explosion, sending a massive fireball into the sky.",
+                "role": "narrator", "emphasis": ["magazine detonates", "massive fireball"], "scale": "wide",
+                "scene": "Catastrophic internal magazine explosion on French battleship Bouvet; towering apocalyptic fireball and billowing mushroom cloud of oily black smoke soaring hundreds of meters into the sky.",
+                "proof": "Internal magazine explosion tearing through the French battleship Bouvet",
+                "action": "A colossal secondary explosion rips the warship open from the inside, sending a massive pillar of orange flame and roiling black smoke billowing skyward.",
+                "lighting": "cold storm light with towering orange fire glow",
+                "location_id": "dardanelles_bouvet_explosion",
+            },
+            {
+                "text": "Fransız Bouvet zırhlısı hızla sancak tarafına yatıp iki dakikada sulara gömülüyor."
+                if is_tr else "Listing heavily to starboard, Bouvet capsizes and sinks beneath the Dardanelles in two minutes.",
+                "role": "narrator", "emphasis": ["Bouvet capsizes", "sinks beneath"], "scale": "wide",
+                "scene": "The French battleship Bouvet listing sharply on its side in the Dardanelles, sea water cascading across the decks as the hull turns completely upside down and sinks beneath churning foam.",
+                "proof": "French battleship Bouvet listing and capsizing into the Dardanelles",
+                "action": "The warship rolls over onto its starboard side, funnels disappearing under surging waves, vanishing completely beneath the water amid swirling whirlpools and steam.",
+                "lighting": "cold daylight through fading smoke haze",
+                "location_id": "dardanelles_bouvet_capsizes",
+            },
+            {
+                "text": "Mayınlara çarpan diğer zırhlılarla birlikte İtilaf donanmasında büyük panik başlıyor."
+                if is_tr else "Panic sweeps the Allied armada as battleships Ocean and Irresistible strike mines.",
+                "role": "narrator", "emphasis": ["Panic sweeps", "strike mines"], "scale": "wide",
+                "scene": "Wide historical spectacle of Allied fleet disarray on 18 March 1915: British battleships HMS Ocean and HMS Irresistible listing severely from mine strikes, rescue destroyers maneuvering amidst dense smoke.",
+                "proof": "Bouvet, Irresistible, and Ocean lost in the 18 March attack",
+                "action": "Damaged battleships veer off course in disorder, rescue boats scrambling alongside smoking hulls as the Allied naval formation completely shatters.",
+                "lighting": "late afternoon haze over rough water",
+                "location_id": "dardanelles_fleet_losses",
+            },
+            {
+                "text": "18 Mart akşamında gün batarken bozguna uğrayan müttefik filosu geri çekiliyor."
+                if is_tr else "At sunset, the battered Allied fleet retreats past drifting smoke into open waters.",
+                "role": "narrator", "emphasis": ["sunset", "Allied fleet retreats"], "scale": "wide",
+                "scene": "Cinematic sunset over the Dardanelles strait on 18 March 1915: surviving Allied warships silhouetted against glowing golden-orange sky, steaming away in full retreat past oil slicks.",
+                "proof": "The surviving Allied fleet turning away in retreat past drifting wreckage",
+                "action": "The defeated armada steams away in the distance toward the setting sun, silhouettes fading into the golden evening mist as battle smoke slowly clears over the tranquil water.",
+                "lighting": "cinematic golden sunset glow reflecting on calm water",
+                "location_id": "dardanelles_fleet_retreat",
+            },
+            {
+                "text": "Rumeli Mecidiye Tabyası'nda dalgalanan Osmanlı sancağı ve topunun başında kahraman topçular."
+                if is_tr else "Above Mecidiye Bastion, the Ottoman flag flies victorious as hero gunners stand tall beside their gun.",
+                "role": "narrator", "emphasis": ["Ottoman flag", "hero gunners"], "scale": "medium",
+                "scene": "Heroic tableau at Rumeli Mecidiye Bastion: the Ottoman red crescent-and-star flag waving victoriously in the coastal breeze above the sandbagged ramparts, Corporal Seyit and his brothers standing beside the 28cm Krupp cannon.",
+                "proof": "The Ottoman flag waving over Rumeli Mecidiye Bastion beside the gun",
+                "action": "The Ottoman banner snaps boldly in the sea wind through thinning cordite smoke, the weary gunners standing tall beside their battle-scarred fortress gun with quiet triumph.",
+                "lighting": "warm sunset glow over stone fortress walls and crimson flag",
+                "location_id": "dardanelles_mecidiye_triumph",
+            },
+            {
+                "text": "O tek atış, yenilmez sanılan armadayı bozguna uğrattı ve dünya tarihini değiştirdi."
+                if is_tr else "That single shot broke the Allied fleet and changed the course of world history.",
+                "role": "host_nova", "emphasis": ["single shot", "world history"], "scale": "medium",
+                "scene": "Nova standing on the peaceful Gallipoli shore at twilight looking directly at the camera, wearing her 1915 khaki wool coat and glowing brass chronometer, calm Dardanelles waters behind her.",
+                "proof": "Nova's brass temporal chronometer; the calm Dardanelles shoreline at twilight",
+                "action": "Nova looks directly into the lens with deep emotional reverence, speaking with synchronized lip movement as the calm waters of the strait reflect the final twilight glow.",
+                "lighting": "restrained dusk light with smoke fading into the horizon",
+                "location_id": "gallipoli_1915_shore_evening",
+                "character_reference": True,
+            },
+        ]
+
     if total_blocks >= 20:
         # 22-block master sequence (90-second video: 22 x 4.0s = 88s + 1.5s tail = 89.5s)
         # Matches the exact 2:10 - 3:40 section of reference video https://www.youtube.com/watch?v=PXixPeATIQc
