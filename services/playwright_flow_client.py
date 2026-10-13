@@ -96,6 +96,7 @@ class PlaywrightFlowClient:
         self._last_mint_token: str = ""
         self._active_account_path: Path | None = None
         self._active_account_bundle: dict[str, Any] = {}
+        self._gem_pix_2_quota_exhausted: bool = False
         self._lock = asyncio.Lock()
 
     async def _jitter(self, min_s: float = 1.5, max_s: float = 4.0) -> None:
@@ -592,6 +593,11 @@ class PlaywrightFlowClient:
         if asset_type == "image":
             asp = aspect_ratio if aspect_ratio in ("16:9", "9:16", "1:1") else "16:9"
             model = os.getenv("FLOW_IMAGE_MODEL", "gem_pix_2")
+            if model == "gem_pix_2" and self._gem_pix_2_quota_exhausted:
+                logger.info(
+                    "[FLOW AUTO-HEAL] gem_pix_2 günlük kotası bu oturumda tüketildiği için doğrudan 'beluga' kullanılıyor..."
+                )
+                model = "beluga"
             cmd = [str(FLOW_BINARY), "image", "-prompt", prompt, "-aspect", asp, "-model", model]
         else:
             asp = "landscape" if aspect_ratio in ("16:9", "landscape") else "portrait"
@@ -660,6 +666,7 @@ class PlaywrightFlowClient:
                 ))
 
                 if asset_type == "image" and model == "gem_pix_2" and is_quota_reached:
+                    self._gem_pix_2_quota_exhausted = True
                     logger.warning(
                         "[FLOW AUTO-HEAL] gem_pix_2 günlük kotası doldu (PUBLIC_ERROR_PER_MODEL_DAILY_QUOTA_REACHED). "
                         "Otomatik olarak kesintisiz 'beluga' (Imagen 3) modeline geçiliyor..."
@@ -668,6 +675,7 @@ class PlaywrightFlowClient:
                         f"\n    [gem_pix_2 Kota Doldu] Google Flow günlük gem_pix_2 kotası doldu. Otomatik çözüm: 'beluga' (Imagen 3) modeliyle kesintisiz üretiliyor...",
                         flush=True,
                     )
+                    await asyncio.sleep(4.0)
                     beluga_cmd = list(cmd)
                     for idx_m, arg in enumerate(beluga_cmd):
                         if arg == "-model" and idx_m + 1 < len(beluga_cmd):
@@ -691,11 +699,19 @@ class PlaywrightFlowClient:
                         raise RuntimeError(f"Flow engine exited {proc.returncode} on fallback beluga: {(stderr or stdout)[-600:]}")
 
                 elif asset_type == "image" and is_unusual_activity:
-                    logger.warning("[FLOW AUTO-HEAL] reCAPTCHA değerlendirme gecikmesi tespit edildi. 3.5s cooldown ile yeniden deneniyor...")
-                    print(f"\n    [Flow reCAPTCHA Yenileme] 3.5s bekleme ve taze token ile tekrar deneniyor...", flush=True)
-                    await self._jitter(3.0, 4.5)
+                    if model == "gem_pix_2":
+                        self._gem_pix_2_quota_exhausted = True
+                    logger.warning("[FLOW AUTO-HEAL] Google hesabı geçici soğuma / reCAPTCHA uyarısı tespit edildi. 25s beklenip taze token ile yeniden deneniyor...")
+                    print(f"\n    [Flow Cooldown] Google hesabı soğuma süresi bekleniyor (25s), ardından taze token ile tekrar deneniyor...", flush=True)
+                    await asyncio.sleep(25.0)
+                    retry_cmd = list(cmd)
+                    if model == "gem_pix_2":
+                        for idx_m, arg in enumerate(retry_cmd):
+                            if arg == "-model" and idx_m + 1 < len(retry_cmd):
+                                retry_cmd[idx_m + 1] = "beluga"
+                                break
                     proc = await asyncio.create_subprocess_exec(
-                        *cmd,
+                        *retry_cmd,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
                         cwd=str(FLOW_AGENT_ROOT),
@@ -709,9 +725,11 @@ class PlaywrightFlowClient:
                     stdout = stdout_b.decode("utf-8", errors="replace")
                     stderr = stderr_b.decode("utf-8", errors="replace")
                     if proc.returncode != 0:
-                        if model == "gem_pix_2":
+                        if model == "gem_pix_2" and "-model" in retry_cmd:
+                            # Try one more fallback directly to beluga
                             logger.warning("[FLOW AUTO-HEAL] gem_pix_2 oturum engeli aşılamadı, 'beluga' modeliyle deneniyor...")
                             print(f"\n    [gem_pix_2 Oturum Hatası] 'beluga' modeliyle otomatik tamamlanıyor...", flush=True)
+                            await asyncio.sleep(4.0)
                             beluga_cmd = list(cmd)
                             for idx_m, arg in enumerate(beluga_cmd):
                                 if arg == "-model" and idx_m + 1 < len(beluga_cmd):
@@ -730,6 +748,27 @@ class PlaywrightFlowClient:
                                 raise RuntimeError(f"Flow engine exited {proc.returncode}: {(stderr or stdout)[-600:]}")
                         else:
                             raise RuntimeError(f"Flow engine exited {proc.returncode}: {(stderr or stdout)[-600:]}")
+
+                elif asset_type == "video" and is_unusual_activity:
+                    logger.warning("[FLOW AUTO-HEAL] Video üretimi sırasında Google Flow soğuma uyarısı. 30s beklenip yeniden deneniyor...")
+                    print(f"\n    [Flow Video Cooldown] 30s bekleniyor, ardından tekrar deneniyor...", flush=True)
+                    await asyncio.sleep(30.0)
+                    proc = await asyncio.create_subprocess_exec(
+                        *cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                        cwd=str(FLOW_AGENT_ROOT),
+                    )
+                    try:
+                        stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+                    except asyncio.TimeoutError:
+                        proc.kill()
+                        await proc.wait()
+                        raise TimeoutError(f"Flow video generation timed out after {timeout}s on retry")
+                    stdout = stdout_b.decode("utf-8", errors="replace")
+                    stderr = stderr_b.decode("utf-8", errors="replace")
+                    if proc.returncode != 0:
+                        raise RuntimeError(f"Flow engine exited {proc.returncode} on video retry: {(stderr or stdout)[-600:]}")
 
                 elif asset_type == "image" and is_safety_refusal:
                     sanitized_prompt = self._sanitize_flow_image_prompt(prompt)
@@ -813,6 +852,7 @@ class PlaywrightFlowClient:
                     except Exception:
                         pass
                     logger.info(f"[PLAYWRIGHT CDP] Saved {asset_type} to {out_path} ({out_path.stat().st_size / 1024:.1f} KB)")
+                    await asyncio.sleep(2.5)
                     return out_path
 
             raise RuntimeError(f"Flow engine did not return output file: {stdout[-400:]}")

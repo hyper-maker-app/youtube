@@ -755,11 +755,12 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Yapılan İş / Sonuç**:
   1. `.env` ve `services/playwright_flow_client.py` içerisinde `FLOW_IMAGE_MODEL=gem_pix_2` kalıcı varsayılan olarak kilitlendi.
   2. `PlaywrightFlowClient._generate_asset_locked` içerisine 3 katmanlı akıllı oto-iyileştirme (auto-healing) motoru entegre edildi:
-     - **Kota Dolumu Çözümü (`PUBLIC_ERROR_PER_MODEL_DAILY_QUOTA_REACHED`)**: Google hesabı `gem_pix_2` günlük kotasına ulaştığında boru hattı durdurulmaz veya hata vermez; sistem otomatik olarak yüksek kotalı `beluga` (Imagen 3) modeline geçerek görseli anında tamamlar. Ertesi gün kota sıfırlandığında sistem otomatik olarak tekrar `gem_pix_2` ile üretmeye devam eder.
-     - **Oturum / reCAPTCHA Gecikmesi Çözümü (`PUBLIC_ERROR_UNUSUAL_ACTIVITY`)**: Jitter/cooldown uygulanarak CDP tokeni yenilenir ve tekrar denenir; engelin sürmesi durumunda yine `beluga` emniyet supabına geçilir.
+     - **Kota Dolumu Çözümü (`PUBLIC_ERROR_PER_MODEL_DAILY_QUOTA_REACHED`)**: Google hesabı `gem_pix_2` günlük kotasına ulaştığında boru hattı durdurulmaz veya hata vermez; sistem otomatik olarak yüksek kotalı `beluga` (Imagen 3) modeline geçerek görseli anında tamamlar. Ayrıca `self._gem_pix_2_quota_exhausted = True` oturum hafızasına kaydedilerek, aynı oturumdaki sonraki isteklerde Google'a mükerrer ve başarısız `gem_pix_2` çağrısı yapılmaz, doğrudan 4s bekleme ile `beluga` modeline yönlendirilerek hesap hız sınırına girmesi engellenir. Ertesi gün yeni oturumda sistem otomatik olarak tekrar `gem_pix_2` ile başlar.
+     - **Hesap Soğuma ve Sıra Koruma Çözümü (`PUBLIC_ERROR_UNUSUAL_ACTIVITY` / `every account is cooling`)**: Google hesabı geçici olarak soğuma moduna girdiğinde hem istemci hem de `pipeline.py` seviyesinde anında teslim olmak yerine 25-30 saniye beklenir, taze reCAPTCHA tokeni alınır ve `beluga` modeliyle kesintisiz devam edilir.
+     - **İstekler Arası Nezaket Aralığı (Inter-Request Pacing)**: Her başarılı görsel ve video üretiminin ardından 2.5 saniyelik doğal bekleme süresi eklenerek Google Flow API'sinin burst/spam hız korumasına takılması önlendi.
      - **Güvenlik Filtresi Çözümü (`is_safety_refusal`)**: `_sanitize_flow_image_prompt` ile tetikleyici kelimeler nötr sinematik tarihsel belgesel terimleriyle değiştirilip tekrar denenir.
   3. Gerçek üretim testinde `gem_pix_2` kota hatası yakalanmış, sistem otomatik olarak `beluga`'ya geçerek 1066 KB'lık görseli kesintisiz başarıyla üretmiştir.
-- **Kalıcı Kural / Ders**: `FLOW_IMAGE_MODEL` her zaman `gem_pix_2`'dir. Kota bittiğinde kullanıcı müdahalesi gerekmeden `beluga` oto-iyileştirmesi devreye girer; boru hattı asla durdurulmaz veya çökertilmez.
+- **Kalıcı Kural / Ders**: `FLOW_IMAGE_MODEL` her zaman `gem_pix_2`'dir. Kota bittiğinde kullanıcı müdahalesi gerekmeden oturum hafızalı `beluga` oto-iyileştirmesi devreye girer; hesap soğuma durumunda 25-30 saniye beklenerek otomatik devam edilir; boru hattı asla durdurulmaz veya çökertilmez.
 
 ---
 

@@ -1403,7 +1403,12 @@ async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]
                             ))
                         except Exception as exc:
                             if (ctx.image_provider or config.IMAGE_PROVIDER or "").casefold().replace("-", "_") in {"playwright_flow", "playwrightflow"}:
-                                unusual = any(token in str(exc).casefold() for token in ("public_error_unusual_activity", "assessment refused", "unusual activity detected"))
+                                unusual = any(token in str(exc).casefold() for token in ("public_error_unusual_activity", "assessment refused", "unusual activity detected", "every account is cooling"))
+                                if unusual and attempt < config.KEYFRAME_ADMISSION_ATTEMPTS:
+                                    logger.warning(f"[FLOW COOLDOWN] {key} için Google Flow soğuma süresi bekleniyor (30s, deneme {attempt}/{config.KEYFRAME_ADMISSION_ATTEMPTS})...")
+                                    print(f"\n    [{key}] [Flow Soğuma] Google Flow geçici hız sınırı, 30s bekleniyor (deneme {attempt}/{config.KEYFRAME_ADMISSION_ATTEMPTS})...", flush=True)
+                                    await asyncio.sleep(30.0)
+                                    continue
                                 category = "PUBLIC_ERROR_UNUSUAL_ACTIVITY" if unusual else "Flow CLI/session failure"
                                 handoff_path = ctx.out_dir / "handoff.md"
                                 handoff_path.write_text(
@@ -1766,13 +1771,23 @@ async def phase4_motion(ctx: RunContext, script: Script, refs: dict[str, Any], s
                         "public_error_unusual_activity", "assessment refused", "unusual activity detected"
                     ))
                     if selected in {"playwright_flow", "playwrightflow"} and unusual_activity:
-                        handoff = write_handoff(ctx, script, refs, f"Google Flow rejected video generation because of an unusual-activity assessment: {flow_error}")
-                        raise ProviderHandoffPending("Google Flow requires its account cooldown before video generation can continue.", handoff) from exc
-                    logger.warning(f"Animation failed for block {shot.block} ({exc}); retrying once...")
-                    if flow_roster_refs:
-                        res = await flow_method(*video_args, reference_images=flow_roster_refs)
+                        logger.warning(f"[FLOW COOLDOWN] Video bloğu {shot.block} için Google Flow soğuma süresi bekleniyor (30s)...")
+                        print(f"\n    [Blok {shot.block:02d}] [Flow Soğuma] Google Flow geçici hız sınırı, 30s beklenip tekrar deneniyor...", flush=True)
+                        await asyncio.sleep(30.0)
+                        try:
+                            if flow_roster_refs:
+                                res = await flow_method(*video_args, reference_images=flow_roster_refs)
+                            else:
+                                res = await provider.animate_block(*video_args)
+                        except Exception as retry_exc:
+                            handoff = write_handoff(ctx, script, refs, f"Google Flow rejected video generation because of an unusual-activity assessment: {retry_exc}")
+                            raise ProviderHandoffPending("Google Flow requires its account cooldown before video generation can continue.", handoff) from retry_exc
                     else:
-                        res = await provider.animate_block(*video_args)
+                        logger.warning(f"Animation failed for block {shot.block} ({exc}); retrying once...")
+                        if flow_roster_refs:
+                            res = await flow_method(*video_args, reference_images=flow_roster_refs)
+                        else:
+                            res = await provider.animate_block(*video_args)
                 if is_longform and Path(res).is_file():
                     p_info = editor.probe(res)
                     if p_info.width and p_info.height and p_info.width < p_info.height:
