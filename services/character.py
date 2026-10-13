@@ -87,6 +87,10 @@ def detect_era(text: str) -> str:
         return "mesopotamian"
     if any(k in lower for k in ("victorian", "19th century", "steampunk", "industrial", "darwin")):
         return "victorian"
+    if any(k in lower for k in ("chernobyl", "nuclear", "reactor", "meltdown", "radiation", "titanic", "disaster", "explosion", "fire", "crash")):
+        return "modern_disaster"
+    if any(k in lower for k in ("apollo", "nasa", "space", "rocket", "astronaut", "moon landing", "shuttle", "iss", "satellite")):
+        return "modern_space"
     return "default"
 
 
@@ -399,6 +403,11 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
     if witness_2_idx in {1, mid_index, total_shots, witness_1_idx}:
         witness_2_idx = min(total_shots - 1, mid_index + 2)
 
+    # lip_sync_required is True only in Longform documentary mode (LONGFORM_MODE=True)
+    # for Nova on-camera A-roll shots. In 9:16 Shorts mode ADR-002 mandates zero lip-sync.
+    # Witness shots never require lip-sync (closed-mouth documentary framing only).
+    _longform = bool(getattr(config, "LONGFORM_MODE", False))
+
     if is_opening:
         return {
             "role": "a_roll",
@@ -407,7 +416,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_witness_interview": False,
             "camera_style": "vlog_selfie_host",
             "description": "On-camera host arrival hook: direct address to viewer, introducing site/mystery",
-            "lip_sync_required": True,
+            "lip_sync_required": _longform,
         }
     if is_closing:
         return {
@@ -417,7 +426,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_witness_interview": False,
             "camera_style": "vlog_selfie_host",
             "description": "On-camera host sign-off: closing reflection and key takeaway",
-            "lip_sync_required": True,
+            "lip_sync_required": _longform,
         }
     if is_turning_point:
         return {
@@ -427,7 +436,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_witness_interview": False,
             "camera_style": "vlog_selfie_reaction",
             "description": "On-camera host reaction: reacting to pivotal clue or shocking reveal",
-            "lip_sync_required": True,
+            "lip_sync_required": _longform,
         }
     if shot_index == witness_1_idx:
         return {
@@ -438,7 +447,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_witness_interview": True,
             "camera_style": "historical_witness_interview",
             "description": "Field interview with primary historical eyewitness in authentic period setting",
-            "lip_sync_required": True,
+            "lip_sync_required": False,  # Witness: closed-mouth, ADR-002
         }
     if shot_index == witness_2_idx:
         return {
@@ -449,7 +458,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_witness_interview": True,
             "camera_style": "historical_witness_interview",
             "description": "Field interview with secondary historical chronicler in authentic period setting",
-            "lip_sync_required": True,
+            "lip_sync_required": False,  # Witness: closed-mouth, ADR-002
         }
 
     return {

@@ -32,6 +32,7 @@ from services.prompt_compiler import (
     apply_movement_lock,
     compile_longform_broll_prompt,
     format_multi_shot_prompt,
+    format_veo_cinematography_prompt,
 )
 from services.script_engine import Beat, Script, Shot
 from services.story_weaver import StoryWeaver
@@ -234,7 +235,6 @@ def generate_dynamic_screenplay(
                 action_description=str(curated_entry.get("action") or "") if curated_entry else "",
             )
             end_prompt = start_prompt
-            from services.prompt_compiler import format_veo_cinematography_prompt
             motion_prompt = format_veo_cinematography_prompt(
                 shot_type=f"Cinematic {scale} documentary camera move",
                 subject_labor=str(curated_entry.get("action")) if curated_entry and curated_entry.get("action") else f"slow camera glide revealing {proof_target}",

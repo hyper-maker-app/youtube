@@ -63,7 +63,7 @@ class StoryWeaver:
             # Pad with additional sensory investigation beats
             needed = self.total_blocks - len(raw_beats)
             for k in range(needed):
-                raw_beats.insert(-1, self._create_investigation_beat(k + 10))
+                raw_beats.insert(len(raw_beats) - 1, self._create_investigation_beat(k + 10))
 
         # 4. Apply 4 Visual Locks and Motion Contracts across all generated beats
         locked_beats: list[dict[str, Any]] = []

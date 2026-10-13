@@ -690,3 +690,20 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Story-Weaver içinde 5-aşamalı dramatik akış (Arrival Hook, Context, Rising Investigation, Turning Point, Legacy) ve 4 görsel kilit zorunludur; WWI/modern sahneler antik ahşap kaldıraç enjeksiyonundan muaf tutulmalıdır; Flux modelleri `/v2/speak`, Aura modelleri `/v1/speak` rotasını kullanmalıdır; ses atamaları video boyunca Entity Lock ile korunmalıdır.
 
 ---
+
+### [ADR-065] Next-Gen 4-Engine Expansion, Technical Debt Resolution & Multi-Agent Quality Architecture
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Kod tabanındaki mevcut tüm 10 motorun mimari ve AST sınırları açısından satır satır denetlenmesi, gizli teknik borçların giderilmesi ve tam otonom stüdyo için 4 yeni nesil motorun (`Thumbnail Engine`, `Vision Quality Gate`, `Live Deep-Research Engine`, `Adaptive Music & Braam Engine`) çift alt-ajan onaylı mimariyle inşa edilmesi.
+- **Yapılan İş / Sonuç**:
+  1. **Teknik Borç Temizliği**: `services/flow_browser_automation.py` içindeki ağ ve websocket importları `providers/flow_browser/client.py` katmanına taşındı; `services/` sıfır ağ bağımlılığı (AST-clean) kuralına kavuşturuldu. `screenplay.py` içindeki döngü içi lazy import tepeye alındı. `audio_bed.py` orchestral stem bulunamadığında lavfi sentezine graceful fallback yapacak şekilde korundu. `character.py` lip-sync bayrağı yalnızca Longform Nova A-roll ile sınırlandırıldı. `historical_research.py` içine `modern_disaster` ve `modern_space` dönemleri eklendi.
+  2. **Engine 1 (Thumbnail & Click-Hook)**: `services/thumbnail_engine.py` geliştirildi. 9:16 Shorts ve 16:9 Longform için YouTube UI güvenli alanları (`SafeZoneBounds`), <= 6 kelimelik merak kancaları (`CTRHookLibrary`), görsel promptlara model-metni yazdırmayan evrensel `ZERO_TEXT_SHIELD` ve FFmpeg/ASS overlay metadata üretimi sağlandı.
+  3. **Engine 2 (Vision Quality Gate)**: `services/vision_quality_gate.py` deterministik CV sinyal kalite kapısı olarak inşa edildi (Laplacian varyans odak/bulanıklık, dinamik aralık histogram yayılımı, geometri ve letterbox tespiti). Pahalı video üretimlerini gereksiz çöpe atmamak için varsayılan olarak `QUARANTINE_ADVISORY` modunda çalışır.
+  4. **Engine 3 (Live Deep-Research Engine)**: `services/live_research_engine.py` (AST-clean enricher) ve `providers/research/` (`BaseResearchProvider`, `MockResearchProvider`, `WikipediaResearchProvider`) inşa edildi. Canlı Wikipedia özetlerinden alıntı imleri (`[1]`, `[citation needed]`) ve HTML temizlenip `HistoricalTruthSheet` tablosuna deduplicate edilerek eklendi.
+  5. **Engine 4 (Adaptive Music & Braam Engine)**: `services/adaptive_music_engine.py` 5-aşamalı dramatik tansiyon haritası (`DramaticTensionMap`), 40 Hz sub-bass zemin drone'u ve dönüm noktası `Braam / Sub-drop` FFmpeg lavfi sentezleyicisi inşa edildi. -12 dBFS / HP 30 Hz tavanı, -3.0 dB @ 2.5 kHz konuşma cebi EQ filtresi ve stereo side-diffusion ile seslendirme boğulmadan broadcast -14 LUFS standardı korundu.
+  6. **Doğrulama & Test**: 31 yeni birim testi yazıldı; toplam 288 test 0 hata ile geçti; `scripts/audit_and_sync.py` 0 failure / 0 warning ile doğrulandı. 2 bağımsız alt-ajan denetiminden "UYGULAMA KUSURSUZ" onayı alındı.
+- **İptal / Kabul Gerekçesi**: Saf OpenCV ile el/parmak deformasyonu arama yaklaşımı yüksek false-positive riski nedeniyle reddedildi ve deterministik sinyal kalitesi kapısına dönüştürüldü; diğer tüm motorlar tam uyumluluk sağladı.
+- **Kalıcı Kural / Ders**: Kapak resmi promptlarına asla metin yazdırılamaz, metinler sadece ASS/FFmpeg ile eklenir; Vision QA varsayılan olarak advisory çalışmalıdır; Research servis katmanı AST-clean kalıp ağ çağrıları sadece `providers/` altında yapılmalıdır; Braam ses patlamaları -12 dBFS ve HP 30 Hz sınırını aşamaz.
+
+---
+

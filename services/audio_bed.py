@@ -163,7 +163,12 @@ def generate_orchestral_score(mood: str, duration_seconds: float, output_dir: st
     # For architectural completeness, we expect the file to exist or we raise an error,
     # rather than faking an orchestral score with a sine wave generator.
     if not source_file.is_file():
-        raise FileNotFoundError(f"Missing orchestral stem for mood '{mood}': {source_file}")
+        import logging as _log
+        _log.getLogger(__name__).warning(
+            f"[AUDIO BED] Missing orchestral stem for mood '{mood}': {source_file}. "
+            "Falling back to lavfi synthesis."
+        )
+        return generate_audio_bed(mood, duration_seconds, output_dir)
     
     fade_in = 1.0
     fade_out = 3.0

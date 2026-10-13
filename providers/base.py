@@ -113,3 +113,24 @@ class BaseSfxProvider(ABC):
     @abstractmethod
     async def resolve_asset(self, query: dict[str, Any], cache_dir: Path) -> dict[str, Any]:
         """Return one downloaded/local asset record with licensing provenance."""
+
+
+class BaseResearchProvider(ABC):
+    """Fetch and sanitize live research data to enrich a HistoricalTruthSheet.
+
+    Concrete adapters implement network retrieval (Wikipedia, academic sources).
+    The service layer (services/live_research_engine.py) is strictly AST-clean
+    and only receives pre-fetched ResearchResult objects injected from pipeline.py.
+
+    In ``--dry-run`` mode, providers/research/mock_provider.py must be used.
+    """
+
+    @abstractmethod
+    async def fetch(self, query: "Any") -> "Any":
+        """Fetch and return a ResearchResult for the given ResearchQuery.
+
+        Implementations must sanitize raw text (strip [1], [citation needed],
+        editorial marks) before populating ResearchResult fields.
+        Returns a ResearchResult dataclass defined in services/live_research_engine.py.
+        """
+

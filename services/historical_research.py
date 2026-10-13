@@ -364,6 +364,54 @@ _CURATED_ERA_KNOWLEDGE: dict[str, dict[str, Any]] = {
             "Subterranean cisterns and aqueducts supplied freshwater across miles of hilly terrain beneath the capital.",
         ],
     },
+    "modern_disaster": {
+        "civilization": "Late 20th Century Industrial & Technical Operations",
+        "location_name": "Industrial Complex / Incident Site",
+        "time_period": "c. 1912 – 1986 AD",
+        "verified_dates": ["Documented Incident Timestamp", "Emergency Response & Inquiry Findings"],
+        "architecture_and_materials": [
+            "heavy reinforced industrial concrete shielding and structural steel girders",
+            "analog gauge control panels with mechanical toggle switches and dials",
+            "riveted steel bulkheads and industrial steam piping valves",
+            "canvas fire-hoses, lead shielding blankets, and protective canvas overalls",
+        ],
+        "sensory_details": [
+            "piercing mechanical alarms echoing through wet concrete utility corridors",
+            "metallic ozone scent and escaping high-pressure steam misting across gauges",
+            "heavy hum of emergency cooling turbines shaking concrete floorplates",
+        ],
+        "prohibited_anachronisms": [
+            "smartphones", "modern touchscreens", "LED flat-screens", "drones", "futuristic sci-fi lasers",
+        ],
+        "verified_facts": [
+            "Emergency protocols were initiated within minutes as sensor arrays went off-scale.",
+            "Subsequent inquiry boards identified structural design failure modes under extreme dynamic load.",
+        ],
+    },
+    "modern_space": {
+        "civilization": "Mid-to-Late 20th Century Space Exploration",
+        "location_name": "Orbital Trajectory / Launch Complex",
+        "time_period": "c. 1961 – 1975 AD",
+        "verified_dates": ["Documented Launch T-Minus Zero", "Orbital Insertion & Lunar Contact"],
+        "architecture_and_materials": [
+            "corrugated aluminum-lithium skin and gold Kapton foil thermal insulation",
+            "oxygen-rich liquid kerosene rocket nozzles and cryogenic fuel manifolds",
+            "multi-layered nylon, Dacron, and aluminized beta-cloth pressure suits",
+            "analog flight directors and mechanical circular slide rules",
+        ],
+        "sensory_details": [
+            "deafening low-frequency rocket rumble vibrating through solid bedrock",
+            "sterile hiss of recirculated pure oxygen inside pressurized helmets",
+            "pitch-black silence of vacuum contrasting against intense unfiltered solar glare",
+        ],
+        "prohibited_anachronisms": [
+            "touchscreen displays", "modern carbon fiber monocoques", "holographic interfaces", "smartphone devices",
+        ],
+        "verified_facts": [
+            "Guidance computers operated with mere kilobytes of magnetic core rope memory.",
+            "Multi-stage propulsion systems delivered millions of pounds of thrust at stage separation.",
+        ],
+    },
 }
 
 

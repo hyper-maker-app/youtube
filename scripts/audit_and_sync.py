@@ -77,10 +77,10 @@ def _compatible_annotation(expected: Any, actual: Any) -> bool:
 
 
 def audit_provider_contracts(report: AuditReport) -> None:
-    from providers.base import BaseImageProvider, BaseLLMProvider, BaseSfxProvider, BaseVideoProvider, BaseVoiceProvider
+    from providers.base import BaseImageProvider, BaseLLMProvider, BaseResearchProvider, BaseSfxProvider, BaseVideoProvider, BaseVoiceProvider
 
     report.section("1/5 Provider contract signatures")
-    bases = (BaseLLMProvider, BaseImageProvider, BaseVideoProvider, BaseVoiceProvider, BaseSfxProvider)
+    bases = (BaseLLMProvider, BaseImageProvider, BaseVideoProvider, BaseVoiceProvider, BaseSfxProvider, BaseResearchProvider)
     discovered: list[type[Any]] = []
     for module in _modules_under_providers():
         for _, candidate in inspect.getmembers(module, inspect.isclass):
