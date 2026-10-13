@@ -641,7 +641,8 @@ def _lock_audio_driven_timeline(ctx: RunContext, script: Script, voice: dict[str
             needed_footage = max(total_current, duration + config.TAIL_HOLD) if duration > 0 else total_current
             if total_current > 0 and needed_footage > total_current:
                 scale_factor = needed_footage / total_current
-                if scale_factor > 1.25:
+                is_curated = len(script.shots) in (15, 22, 25) or (len(script.beats) == len(script.shots) and len(script.shots) >= 15)
+                if scale_factor > 1.25 and not is_curated:
                     # Do not stretch individual shots into 10-14s which creates freezes.
                     # Expand the shot sequence to match the needed block count at ~4.0s per shot.
                     needed_blocks = max(len(script.shots), math.ceil(needed_footage / config.BLOCK_DURATION))

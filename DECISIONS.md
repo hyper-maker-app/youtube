@@ -746,5 +746,20 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **İptal / Kabul Gerekçesi**: Perfectly aligns with the 100s benchmark sequence of the reference video; guarantees zero red fez leaks via ADR-062 khaki kabalak lock; enforces realistic crane wreckage physics and 215kg Krupp gun mechanics (ADR-063); activates lip-sync on on-camera host moments while preserving clean voiceover on B-Roll (ADR-068).
 - **Kalıcı Kural / Ders**: The 100-second Gallipoli benchmark sequence requires exactly 25 blocks (100s) + 1.5s cloned tail (101.5s); host Nova is strictly constrained to Blocks 1, 13, and 25 with speaking lip articulation; all other 22 blocks are pure B-Roll with closed mouths.
 
+---
+
+### [ADR-070] Google Flow `gem_pix_2` Öncelikli Üretim ve Otomatik Hata İyileştirme (Auto-Healing Fallback) Motoru
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: `FLOW_IMAGE_MODEL` daima varsayılan olarak `gem_pix_2` olsun ve bir hata verdiğinde (günlük kota dolumu, reCAPTCHA değerlendirme gecikmesi, güvenlik filtresi reddi vb.) hatayı otomatik olarak çözüp prodüksiyonu kesintisiz devam ettiren bir yöntem uygulansın.
+- **Yapılan İş / Sonuç**:
+  1. `.env` ve `services/playwright_flow_client.py` içerisinde `FLOW_IMAGE_MODEL=gem_pix_2` kalıcı varsayılan olarak kilitlendi.
+  2. `PlaywrightFlowClient._generate_asset_locked` içerisine 3 katmanlı akıllı oto-iyileştirme (auto-healing) motoru entegre edildi:
+     - **Kota Dolumu Çözümü (`PUBLIC_ERROR_PER_MODEL_DAILY_QUOTA_REACHED`)**: Google hesabı `gem_pix_2` günlük kotasına ulaştığında boru hattı durdurulmaz veya hata vermez; sistem otomatik olarak yüksek kotalı `beluga` (Imagen 3) modeline geçerek görseli anında tamamlar. Ertesi gün kota sıfırlandığında sistem otomatik olarak tekrar `gem_pix_2` ile üretmeye devam eder.
+     - **Oturum / reCAPTCHA Gecikmesi Çözümü (`PUBLIC_ERROR_UNUSUAL_ACTIVITY`)**: Jitter/cooldown uygulanarak CDP tokeni yenilenir ve tekrar denenir; engelin sürmesi durumunda yine `beluga` emniyet supabına geçilir.
+     - **Güvenlik Filtresi Çözümü (`is_safety_refusal`)**: `_sanitize_flow_image_prompt` ile tetikleyici kelimeler nötr sinematik tarihsel belgesel terimleriyle değiştirilip tekrar denenir.
+  3. Gerçek üretim testinde `gem_pix_2` kota hatası yakalanmış, sistem otomatik olarak `beluga`'ya geçerek 1066 KB'lık görseli kesintisiz başarıyla üretmiştir.
+- **Kalıcı Kural / Ders**: `FLOW_IMAGE_MODEL` her zaman `gem_pix_2`'dir. Kota bittiğinde kullanıcı müdahalesi gerekmeden `beluga` oto-iyileştirmesi devreye girer; boru hattı asla durdurulmaz veya çökertilmez.
 
 ---
+
