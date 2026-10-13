@@ -62,26 +62,31 @@ class DramaticTensionMap:
         events: list[BraamEvent] = []
         current_time = 0.0
 
+        total_b = len(beats)
         for idx, beat in enumerate(beats):
             dur = shot_durations[idx] if idx < len(shot_durations) else 4.0
-            phase = str(beat.get("phase", "")).casefold()
+            if isinstance(beat, dict):
+                phase = str(beat.get("phase", "")).casefold()
+                role = str(beat.get("role", "")).casefold()
+            else:
+                phase = str(getattr(beat, "phase", getattr(beat, "journey_phase", ""))).casefold()
+                role = str(getattr(beat, "role", "")).casefold()
 
-            if "arrival" in phase or "hook" in phase:
+            if "arrival" in phase or "hook" in phase or idx == 0:
                 t_level = 1  # RISING opening hook
                 b_type = "string_swell"
             elif "context" in phase or "immersion" in phase:
                 t_level = 0  # CALM atmospheric exploration
                 b_type = "sub_drop"
-            elif "rising" in phase or "investigation" in phase:
-                # Progressive escalation across rising investigation beats
-                t_level = 2 if idx > len(beats) // 3 else 1
-                b_type = "bass_impact" if t_level == 2 else "sub_drop"
-            elif "turning" in phase or "climax" in phase:
-                t_level = 3  # BRAAM: pivotal revelation moment
+            elif "turning" in phase or "climax" in phase or (total_b >= 10 and idx == total_b // 2) or (total_b >= 20 and idx == 15):
+                t_level = 3  # BRAAM: pivotal revelation / artillery firing impact
                 b_type = "sub_drop"
-            elif "legacy" in phase or "verdict" in phase or "reflection" in phase:
+            elif "legacy" in phase or "verdict" in phase or "reflection" in phase or idx == total_b - 1:
                 t_level = 4  # RESOLUTION: peaceful contemplative fade
                 b_type = "string_swell"
+            elif "rising" in phase or "investigation" in phase or idx > total_b // 3:
+                t_level = 2  # Escalating tension
+                b_type = "bass_impact"
             else:
                 t_level = 1
                 b_type = "sub_drop"

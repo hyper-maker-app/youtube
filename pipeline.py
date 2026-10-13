@@ -1505,6 +1505,14 @@ async def phase2_3_assets(ctx: RunContext, script: Script, state: dict[str, Any]
                         f"{'; '.join(rejection_reasons) or 'contract not visible'}"
                     )
                 refs[key] = {"local": str(generated)}
+                try:
+                    from services.vision_quality_gate import VisionQualityGate
+                    kf_target_fmt = "16:9" if (config.LONGFORM_MODE or getattr(ctx, "format", "short") == "longform" or is_longform_kf) else "9:16"
+                    vq_report = VisionQualityGate().evaluate_image(str(generated), expected_format=kf_target_fmt)
+                    if not vq_report.is_passed:
+                        print(f"    [{key}] [VisionQualityGate Uyarı: {'; '.join(vq_report.reasons)} (Netlik: {vq_report.sharpness_score:.1f})]")
+                except Exception as _vq_exc:
+                    logger.debug(f"VisionQualityGate check skipped: {_vq_exc}")
                 atomic_write_json(ctx.out_dir / "refs.json", refs)
         if sorted(refs) != expected_ids:
             raise RuntimeError("Keyframe reuse/generation did not produce exact sequential kfNN identities")
@@ -1854,17 +1862,33 @@ def phase5_edit(ctx: RunContext, script: Script, blocks: list[Path], vo: dict[st
 
     if music_path is None and not ctx.no_music:
         bed_duration = full_audio_duration
-        try:
-            from services.audio_bed import generate_audio_bed
-            bed_path = generate_audio_bed(
-                mood=ctx.mode.audio_bed_mood,
-                duration_seconds=bed_duration,
-                output_dir=str(ctx.out_dir),
-            )
-            music_path = Path(bed_path)
-            print(f"  [audio-bed] generated {ctx.mode.audio_bed_mood} bed ({bed_duration:.1f}s)")
-        except Exception as exc:
-            print(f"  [audio-bed] generation failed, continuing without BGM: {exc}")
+        if is_longform or getattr(config, "LONGFORM_MODE", False):
+            try:
+                from services.adaptive_music_engine import AdaptiveMusicEngine, DramaticTensionMap
+                beats_dicts = [b.to_dict() if hasattr(b, "to_dict") else b for b in script.beats]
+                shot_durs = [float(s.duration) for s in script.shots] if script.shots else [4.0] * len(beats_dicts)
+                t_map = DramaticTensionMap.from_beats(beats_dicts, shot_durs)
+                adaptive_engine = AdaptiveMusicEngine()
+                adaptive_wav = ctx.out_dir / "audio_bed_adaptive.wav"
+                adaptive_engine.generate(t_map, duration=bed_duration, out_path=adaptive_wav)
+                if adaptive_wav.is_file() and adaptive_wav.stat().st_size > 0:
+                    music_path = adaptive_wav
+                    print(f"  [adaptive-music] generated dynamic score with braam impact ({bed_duration:.1f}s)")
+            except Exception as exc:
+                print(f"  [adaptive-music] notice: fallback to audio_bed ({exc})")
+
+        if music_path is None:
+            try:
+                from services.audio_bed import generate_audio_bed
+                bed_path = generate_audio_bed(
+                    mood=ctx.mode.audio_bed_mood,
+                    duration_seconds=bed_duration,
+                    output_dir=str(ctx.out_dir),
+                )
+                music_path = Path(bed_path)
+                print(f"  [audio-bed] generated {ctx.mode.audio_bed_mood} bed ({bed_duration:.1f}s)")
+            except Exception as exc:
+                print(f"  [audio-bed] generation failed, continuing without BGM: {exc}")
 
     soundscape_path = None
     if is_longform or getattr(config, "LONGFORM_MODE", False) or getattr(config, "SOUNDSCAPE_ENABLED", True):

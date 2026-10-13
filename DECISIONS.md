@@ -707,3 +707,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 
 ---
 
+
+### [ADR-066] Gallipoli (18 Mart 1915) Benchmark Audit, Engine Pipeline Wiring & Playwright Flow Activation
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Audit existing Gallipoli renders against YouTube benchmark PXixPeATIQc (2:10-3:40), wire thumbnail_engine, vision_quality_gate, and adaptive_music_engine into the core pipeline, and execute 22-block 90s production plan via Playwright Flow
+- **Yapılan İş / Sonuç**: Audited out/ directories using MCP media inspector and 1-FPS frames; identified red fez leaks and missing 28cm Krupp / Seyit Onbasi mechanics in old runs; integrated ThumbnailPromptCompiler into write_metadata, VisionQualityGate into keyframe admission, and AdaptiveMusicEngine with 5-stage tension & braam into pipeline audio beds; verified 100% green compilation on dry-run
+- **İptal / Kabul Gerekçesi**: Ensures strict historical fidelity, zero-text thumbnail compliance, broadcast audio LUFS (-14 LUFS) with cinematic braam impacts, and flawless background generation via Playwright Flow
+- **Kalıcı Kural / Ders**: Thumbnail specs must be written idempotently alongside metadata; DramaticTensionMap must support both dict and Beat object streams; all 22 blocks in WWI artillery must lock khaki kabalak and 28cm Krupp mechanical hoist geometry
+
+---

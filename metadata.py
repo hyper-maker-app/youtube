@@ -168,4 +168,36 @@ def write_metadata(script: "Script", out_dir: Path) -> Path:
     )
     txt_path = out_dir / "metadata.txt"
     txt_path.write_text(txt, encoding="utf-8")
+
+    try:
+        from services.thumbnail_engine import ThumbnailPromptCompiler
+        import config
+        is_longform = getattr(script, "mode", "") == "explorer" or getattr(config, "LONGFORM_MODE", False)
+        thumb_fmt = "16:9" if is_longform else "9:16"
+        thumb_spec = ThumbnailPromptCompiler().compile(topic=script.topic, format=thumb_fmt)
+        (out_dir / "thumbnail_spec.json").write_text(
+            json.dumps({
+                "topic": thumb_spec.topic,
+                "era": thumb_spec.era,
+                "format": thumb_spec.format,
+                "curiosity_hook_text": thumb_spec.curiosity_hook_text,
+                "focal_subject": thumb_spec.focal_subject,
+                "color_palette_lock": thumb_spec.color_palette_lock,
+                "contrast_lut": thumb_spec.contrast_lut,
+                "candidates": list(thumb_spec.candidates),
+                "ass_overlay_spec": thumb_spec.ass_overlay_spec,
+                "safe_zone": {
+                    "format": thumb_spec.safe_zone.format,
+                    "text_x_pct": thumb_spec.safe_zone.text_x_pct,
+                    "text_y_pct": thumb_spec.safe_zone.text_y_pct,
+                    "text_w_pct": thumb_spec.safe_zone.text_w_pct,
+                    "text_h_pct": thumb_spec.safe_zone.text_h_pct,
+                },
+                "zero_text_shield": thumb_spec.zero_text_shield,
+            }, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+
     return txt_path
