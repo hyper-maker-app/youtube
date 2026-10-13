@@ -1201,6 +1201,23 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
         if shot.secondary_subject_ids else ""
     )
 
+    is_host_shot = False
+    if is_longform:
+        is_host_shot = getattr(shot, "is_a_roll", False) or (getattr(shot, "subject_id", "") or "").startswith("host_")
+        if not is_host_shot and hasattr(shot, "block"):
+            try:
+                from services.character import classify_shot_role
+                role_inf = classify_shot_role(shot.block, getattr(shot, "total_blocks", 22))
+                is_host_shot = role_inf.get("is_speaking_avatar", False)
+            except Exception:
+                pass
+
+    mouth_directive = (
+        "The host looks directly at the camera and speaks with clear, natural, expressive lip articulation and engaged mouth motion, addressing the viewer directly."
+        if is_host_shot
+        else "Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover."
+    )
+
     # Detect Push-Through (dıştan içe dalış) vs Pull-Back Reveal (içten dışa çıkış)
     is_push_through = (
         shot.transition_kind == "scale_transition"
@@ -1276,7 +1293,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Transition from {shot.entry_state} to {shot.exit_state}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_motion}",
                 f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} {mouth_directive} No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1301,7 +1318,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {lighting_pull}",
                 f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} {mouth_directive} No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (
@@ -1323,7 +1340,7 @@ def optimize_for_flow(shot: Shot, mode: ModeProfile = ANATOMICAL, *, prior_shots
                 f"[Subject & Physics]: Maintain continuity anchor {shot.continuity_anchor or shot.subject_id}.{secondary_clause} Show causal physical payoff: {shot.dominant_event}. Animate only diegetic scene physics: {physics_verbs}. Proof: {shot.proof_on_screen}.{scale_anchor}{damage_clause}",
                 f"[Lighting & Environment]: {_environment_motion_clause(shot, mode, scale=shot.scale)} {lighting_clause}.",
                 f"[Style]: Photorealistic National Geographic / BBC Earth documentary cinematography, natural 35mm motion physics.",
-                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} Closed or neutral mouths, no dialogue or lip-sync; narration is voiceover. No text, subtitles, logos, watermark, UI, or HUD.",
+                f"[Directives]: {_marker_instruction(shot)} Reserve lower-third caption space. {raw_motion}{spatial_clause}{role_clause} {text_shield} {mouth_directive} No text, subtitles, logos, watermark, UI, or HUD.",
             )
         else:
             parts = (

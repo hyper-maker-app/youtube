@@ -487,17 +487,17 @@ def compile_character_shot_prompt(
         framing = (
             "Medium close-up eye-level documentary framing with complete head, hair, and shoulders fully inside frame "
             "(generous headroom above crown of head, NEVER crop forehead or top of head), "
-            "host observing the scene with a warm, engaged gaze and a neutral closed mouth; communicate through eye direction and restrained gestures, "
-            "with no visible dialogue or lip movement because narration remains voiceover"
+            "host looking directly into the camera lens, speaking with clear, natural, expressive lip articulation, "
+            "warm engaged eyes, and confident documentary on-camera presence"
         )
     elif camera_style == "vlog_selfie_reaction":
         framing = (
             "Medium eye-level shot with complete head and shoulders fully inside frame "
-            "(generous headroom above head, NEVER crop head), host turning toward camera and gesturing toward background phenomenon "
-            "with wide amazed eyes, spontaneous real-time discovery reaction"
+            "(generous headroom above head, NEVER crop head), host turning toward camera and speaking with wide amazed eyes, "
+            "spontaneous real-time discovery reaction, natural lip articulation, and expressive gestures toward background phenomenon"
         )
     else:
-        framing = "Medium eye-level shot with full headroom, host standing in environment inspecting surroundings"
+        framing = "Medium eye-level shot with full headroom, host standing in environment inspecting surroundings and speaking to camera"
 
     return (
         f"[SOLO TIME-TRAVELER HOST A-ROLL]: {character.anchor_description(era=era)}. {framing}. "

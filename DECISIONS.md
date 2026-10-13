@@ -727,3 +727,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Always pass absolute local image paths to flow-windows.exe so assets are uploaded cleanly into the active project. Keep Playwright clients open for the duration of the pipeline phase.
 
 ---
+
+### [ADR-068] Explorer Host A-Roll Lip-Sync Activation and Gradio-Client LivePortrait Integration
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Resolve why lip-sync was missing in longform productions, enable on-camera speaking articulation for host A-roll shots, and integrate gradio-client.
+- **Yapılan İş / Sonuç**: Installed gradio-client, enabled EXPLORER_LIPSYNC_ENABLED by default in longform/explorer modes, fixed pipeline audio slicing from vo.mp3, and updated character/motion prompt compilers to command natural lip articulation on A-roll while keeping B-roll voiceover clean.
+- **İptal / Kabul Gerekçesi**: Previously EXPLORER_LIPSYNC_ENABLED was False, gradio-client was missing, vo audio path was invalid, and prompt compilers hardcoded 'closed or neutral mouths' on all shots including host A-roll.
+- **Kalıcı Kural / Ders**: Always distinguish on-camera A-roll host speech from documentary B-roll voiceover in prompt directives, slice audio accurately per block, and provide working cloud/local lip-sync driving engines.
+
+---

@@ -1716,8 +1716,21 @@ async def phase4_motion(ctx: RunContext, script: Script, refs: dict[str, Any], s
                 block_start = time.monotonic()
                 print(f"    [blok{shot.block:02d}/{total_blocks:02d}] Lip-sync / Animated Host...", end="", flush=True)
                 from services.lip_sync import generate_host_video
-                vo_audio = ctx.out_dir / "narration.mp3"
-                lip_prov = ctx.video_provider if (ctx.video_provider or "").lower() in {"live_portrait", "sadtalker", "gradio_client"} else None
+                vo_full = ctx.out_dir / "audio" / "vo.mp3"
+                vo_audio = ctx.out_dir / "audio" / f"shot_{shot.block:02d}_audio.mp3"
+                if vo_full.is_file() and not vo_audio.is_file():
+                    start_sec = max(0.0, (shot.block - 1) * shot.duration)
+                    ffmpeg_bin = config.resolve_ffmpeg()
+                    subprocess.run([
+                        ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-y",
+                        "-ss", f"{start_sec:.3f}", "-t", f"{shot.duration:.3f}",
+                        "-i", str(vo_full),
+                        "-c:a", "libmp3lame", "-b:a", "192k",
+                        str(vo_audio),
+                    ], check=False)
+                if not vo_audio.is_file():
+                    vo_audio = vo_full
+                lip_prov = ctx.video_provider if (ctx.video_provider or "").lower() in {"live_portrait", "sadtalker", "gradio_client"} else getattr(config, "EXPLORER_LIPSYNC_PROVIDER", "gradio_client")
                 lip_res = generate_host_video(start, vo_audio, out_path, shot.duration, provider=lip_prov)
                 if not getattr(lip_res, "fallback_used", False) and getattr(lip_res, "engine_used", "") != "ken_burns_fallback":
                     block_elapsed = time.monotonic() - block_start
