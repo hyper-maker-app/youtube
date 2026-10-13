@@ -30,13 +30,13 @@ class PlaywrightFlowImageProvider(BaseImageProvider):
         if reference_image is not None:
             refs.append(reference_image)
         logger.info(f"Generating image with Playwright CDP Flow ({aspect_ratio}): {prompt[:60]}...")
-        try:
-            return await self.client.generate_asset(
-                prompt=prompt,
-                out_path=out_path,
-                asset_type="image",
-                aspect_ratio=aspect_ratio,
-                reference_images=refs,
-            )
-        finally:
-            await self.client.close()
+        return await self.client.generate_asset(
+            prompt=prompt,
+            out_path=out_path,
+            asset_type="image",
+            aspect_ratio=aspect_ratio,
+            reference_images=refs,
+        )
+
+    async def close(self) -> None:
+        await self.client.close()

@@ -130,7 +130,9 @@ class DeepgramAuraProvider(BaseVoiceProvider):
         audio_parts: list[bytes] = []
         async with httpx.AsyncClient(timeout=httpx.Timeout(180.0)) as client:
             for chunk_voice, chunk_text in chunks:
-                synth_params = {**base_params, "model": chunk_voice, "sample_rate": 48000}
+                synth_params = {**base_params, "model": chunk_voice}
+                if base_params.get("encoding") == "linear16":
+                    synth_params["sample_rate"] = 48000
                 speak_url = self._speak_url(chunk_voice)
                 synth = None
                 for attempt in range(3):
@@ -147,7 +149,8 @@ class DeepgramAuraProvider(BaseVoiceProvider):
 
                 if synth is None or synth.status_code >= 400:
                     status = synth.status_code if synth is not None else "timeout"
-                    raise ProviderError(f"deepgram synthesis failed with HTTP {status}")
+                    err_msg = synth.text if synth is not None else ""
+                    raise ProviderError(f"deepgram synthesis failed with HTTP {status}: {err_msg}")
                 if not synth.content:
                     raise ProviderError("deepgram synthesis returned an empty audio payload")
                 audio_parts.append(synth.content)

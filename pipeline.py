@@ -1823,6 +1823,12 @@ async def phase4_motion(ctx: RunContext, script: Script, refs: dict[str, Any], s
     except ProviderHandoffPending as exc:
         handoff = write_handoff(ctx, script, refs, str(exc))
         raise HandoffPending(f"Flow session needs manual completion; handoff written to {handoff}") from exc
+    finally:
+        if hasattr(provider, "close") and callable(provider.close):
+            try:
+                await provider.close()
+            except Exception:
+                pass
     expected_blocks = (script.timeline or ctx.timeline or provider_timeline()).block_count
     if len(paths) != expected_blocks:
         raise RuntimeError(f"Phase 4 requires every persisted block ({expected_blocks}), got {len(paths)}")

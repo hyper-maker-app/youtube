@@ -717,3 +717,13 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 - **Kalıcı Kural / Ders**: Thumbnail specs must be written idempotently alongside metadata; DramaticTensionMap must support both dict and Beat object streams; all 22 blocks in WWI artillery must lock khaki kabalak and 28cm Krupp mechanical hoist geometry
 
 ---
+
+### [ADR-067] Playwright Flow Client Lifecycle Persistence and Local Reference File Upload Lock
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Fix Flow video block 1 failure ('is not in the project listing') and eliminate client teardown hangs during multi-block animation.
+- **Yapılan İş / Sonuç**: Updated _resolve_flow_media_id to pass direct local file paths, removed per-block client.close() calls, and added 15s timeout to token minting.
+- **İptal / Kabul Gerekçesi**: flow.db media records lack project_id and can belong to previous projects, causing Flow backend rejection. Closing Playwright per block corrupted connection for concurrent tasks.
+- **Kalıcı Kural / Ders**: Always pass absolute local image paths to flow-windows.exe so assets are uploaded cleanly into the active project. Keep Playwright clients open for the duration of the pipeline phase.
+
+---

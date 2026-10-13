@@ -257,6 +257,23 @@ class PlaywrightFlowClient:
                 lambda route: route.fulfill(status=200, content_type="text/html", body=html),
             )
             await self._captcha_page.goto(RECAPTCHA_HOST_URL, wait_until="domcontentloaded", timeout=15000)
+        else:
+            # If tab already existed from prior session, verify grecaptcha is present; if not, inject it
+            try:
+                has_recaptcha = await self._captcha_page.evaluate("() => typeof window.grecaptcha !== 'undefined' && !!window.grecaptcha.enterprise")
+                if not has_recaptcha:
+                    await self._captcha_page.evaluate(
+                        f"""() => {{
+                            if (!document.getElementById('recaptcha-script')) {{
+                                const s = document.createElement('script');
+                                s.id = 'recaptcha-script';
+                                s.src = 'https://www.google.com/recaptcha/enterprise.js?render={RECAPTCHA_SITE_KEY}';
+                                document.head.appendChild(s);
+                            }}
+                        }}"""
+                    )
+            except Exception:
+                pass
 
         if not self.page:
             self.page = self._captcha_page
@@ -270,26 +287,48 @@ class PlaywrightFlowClient:
         if elapsed < 8.5 and self._last_mint_time > 0:
             await asyncio.sleep(8.5 - elapsed)
 
-        token: str = await self._captcha_page.evaluate(
-            """async ([sk, act]) => {
-                await new Promise((resolve) => window.grecaptcha.enterprise.ready(resolve));
-                return await window.grecaptcha.enterprise.execute(sk, { action: act });
-            }""",
-            [site_key, action],
-        )
+        eval_script = """async ([sk, act]) => {
+            try {
+                if (typeof window.grecaptcha === 'undefined' || !window.grecaptcha.enterprise) {
+                    return "";
+                }
+                return await new Promise((resolve) => {
+                    const timer = setTimeout(() => resolve(""), 12000);
+                    window.grecaptcha.enterprise.ready(async () => {
+                        try {
+                            const res = await window.grecaptcha.enterprise.execute(sk, { action: act });
+                            clearTimeout(timer);
+                            resolve(res || "");
+                        } catch {
+                            clearTimeout(timer);
+                            resolve("");
+                        }
+                    });
+                });
+            } catch {
+                return "";
+            }
+        }"""
+
+        token = ""
+        try:
+            token = await asyncio.wait_for(self._captcha_page.evaluate(eval_script, [site_key, action]), timeout=15.0)
+        except Exception as e:
+            logger.debug(f"[PLAYWRIGHT CDP] mint_recaptcha_token evaluate warning: {e}")
+
         if token and token == self._last_mint_token:
             await asyncio.sleep(3.0)
-            token = await self._captcha_page.evaluate(
-                """async ([sk, act]) => {
-                    await new Promise((resolve) => window.grecaptcha.enterprise.ready(resolve));
-                    return await window.grecaptcha.enterprise.execute(sk, { action: act });
-                }""",
-                [site_key, action],
-            )
-        self._last_mint_token = token
-        self._last_mint_time = time.time()
-        logger.info(f"[PLAYWRIGHT CDP] Minted fresh browser reCAPTCHA Enterprise token ({len(token)} chars, action={action})")
-        return token
+            try:
+                token = await asyncio.wait_for(self._captcha_page.evaluate(eval_script, [site_key, action]), timeout=15.0)
+            except Exception:
+                pass
+
+        if token:
+            self._last_mint_token = token
+            self._last_mint_time = time.time()
+            logger.info(f"[PLAYWRIGHT CDP] Minted fresh browser reCAPTCHA Enterprise token ({len(token)} chars, action={action})")
+            return token
+        return ""
 
     async def read_browser_fingerprint(self) -> dict[str, Any]:
         """Read exact navigator fingerprint from the Chrome CDP tab that mints reCAPTCHA tokens."""
@@ -509,36 +548,10 @@ class PlaywrightFlowClient:
             )
 
     def _resolve_flow_media_id(self, image_path: Path) -> str | None:
-        """Look up existing server-side media_id in data/flow.db for a generated keyframe.
-
-        Passing the server-side media_id directly to -start-image avoids a redundant
-        UploadImageViaBatch call and preserves 16:9 landscape aspect ratio on Flow's backend.
+        """Passing the local image file path directly allows flow-windows.exe to upload the asset
+        directly to the current project listing via UploadImageViaBatch, avoiding cross-project
+        'not in the project listing' failures (ADR-067).
         """
-        try:
-            p = Path(image_path).resolve()
-            if not p.is_file():
-                return None
-            size = p.stat().st_size
-            db_path = FLOW_AGENT_ROOT / "data" / "flow.db"
-            if not db_path.is_file():
-                return None
-            import sqlite3
-            target_bytes = p.read_bytes()
-            with sqlite3.connect(str(db_path)) as conn:
-                rows = conn.execute(
-                    "SELECT media_id, file_path FROM media WHERE kind='image' AND bytes=? ORDER BY id DESC LIMIT 10",
-                    (size,),
-                ).fetchall()
-            for media_id, file_path in rows:
-                if not media_id:
-                    continue
-                if file_path and Path(file_path).is_file():
-                    if Path(file_path).read_bytes() == target_bytes:
-                        return str(media_id)
-                else:
-                    return str(media_id)
-        except Exception as exc:
-            logger.debug(f"Could not resolve Flow media_id for {image_path}: {exc}")
         return None
 
     async def _generate_asset_locked(
@@ -681,13 +694,14 @@ class PlaywrightFlowClient:
                 pass
 
     async def close(self) -> None:
-        self.browser = None
-        self.context = None
-        self.page = None
-        self._captcha_page = None
-        if self.playwright:
-            try:
-                await self.playwright.stop()
-            except Exception:
-                pass
-            self.playwright = None
+        async with self._lock:
+            self.browser = None
+            self.context = None
+            self.page = None
+            self._captcha_page = None
+            if self.playwright:
+                try:
+                    await self.playwright.stop()
+                except Exception:
+                    pass
+                self.playwright = None
