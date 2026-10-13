@@ -26,6 +26,8 @@ Consult `DECISIONS.md` (ADR log), `DURUM.md` (status), and `WALKTHROUGH.md` (rel
 - The user will never manually run audit or synchronization scripts, nor any git commands.
 - The assistant must automatically execute `python scripts/audit_and_sync.py` after code/prompt modifications to ensure 0 failures.
 - Mandatory Git Commit & Push: Whenever any code, documentation, prompts, configs, or assets are modified, the assistant must automatically commit and push all changes (`git add .`, `git commit -m "..."`, `git push origin main`) to GitHub before concluding the turn. Leaving uncommitted or unpushed changes is strictly forbidden.
+- **5-Minute Periodic Health & Progress Inspection Mandate (ADR-071):**
+  During long-running background video/image production or rendering runs, the assistant must never leave the user without status updates. The assistant MUST schedule an active check every 5 minutes (`schedule` tool with `DurationSeconds=300`) to inspect progress, report keyframe/block milestones, and verify pipeline health.
 
 ## MCP Active Usage Mandate
 - Actively use `youtube-decision-memory` (`search_decisions`), `youtube-research` (`evaluate_claim`, `research_topic`), `youtube-media-inspector` (`measure_audio_loudness`, `detect_black_or_freeze`, `analyze_audio_spectrum`, `analyze_video_stability`), and `youtube-pipeline-db` (`recent_topics`, `record_run`) for verification, claim evaluation, loudness/quality inspection, and run history.

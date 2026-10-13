@@ -572,6 +572,14 @@ class PlaywrightFlowClient:
         """
         return None
 
+    def _cleanup_proc_transport(self, proc: Any) -> None:
+        """Cleanly close Windows asyncio transport pipe to prevent ValueError on closed pipe during GC (ADR-071)."""
+        if proc is not None and hasattr(proc, "_transport") and proc._transport:
+            try:
+                proc._transport.close()
+            except Exception:
+                pass
+
     async def _generate_asset_locked(
         self,
         prompt: str,
@@ -648,6 +656,7 @@ class PlaywrightFlowClient:
 
             stdout = stdout_b.decode("utf-8", errors="replace")
             stderr = stderr_b.decode("utf-8", errors="replace")
+            self._cleanup_proc_transport(proc)
             if proc.returncode != 0:
                 err_text = f"{stderr}\n{stdout}"
                 is_quota_reached = any(token in err_text for token in (

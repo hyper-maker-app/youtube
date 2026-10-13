@@ -7,7 +7,11 @@ import asyncio
 import json
 import os
 import sys
+import warnings
 from pathlib import Path
+
+# Silence Windows asyncio pipe GC ResourceWarning (ADR-071)
+warnings.filterwarnings("ignore", category=ResourceWarning)
 
 if hasattr(sys.stdout, "reconfigure"):
     try:

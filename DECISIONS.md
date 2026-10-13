@@ -764,3 +764,11 @@ Bu belge, projede talep edilen, denenen, kabul edilen veya **kötü sonuçlanıp
 
 ---
 
+### [ADR-071] Uzun Süren Prodüksiyonlarda 5-Dakikalık Periyodik Sağlık & İlerleme Kontrolü ve Windows Subprocess Pipe Susturma Mandatesi
+- **Tarih**: 2026-10-13
+- **Durum**: `ACCEPTED`
+- **Talep / Fikir**: Arka planda yürütülen uzun video/görsel üretimlerinde ajanın kullanıcıyı sessizce bekletmeyip her 5 dakikada bir düzenli kontrol yapması zorunluluğu getirilsin. Ayrıca Windows asyncio subprocess kapatma aşamasında ortaya çıkan benign `ValueError: I/O operation on closed pipe` çöp toplama (GC) uyarıları temizlensin.
+- **Yapılan İş / Sonuç**:
+  1. `AGENTS.md` ve `GEMINI.md` kurallarına **5-Dakikalık Periyodik Üretim Sağlık & İlerleme Kontrolü Mandatesi** eklendi: Arka planda süren üretimlerde ajan `schedule` aracı ile her 5 dakikada bir (300 saniye) aktif kontrol kuracak, üretilen kare/blok durumunu raporlayacak ve süreci denetleyecektir.
+  2. Windows Python 3.12 ProactorEventLoop altında alt süreçlerin (subprocess) kapatılması sırasında GC tarafından tetiklenen benign `ValueError: I/O operation on closed pipe` ve `ResourceWarning` mesajları `main.py` ve `services/playwright_flow_client.py` seviyesinde taşımaların açıkça kapatılması ve filtreleme ile susturuldu; ana üretim sürecinin kesilmediği doğrulandı (`kf05`–`kf12` başarıyla üretildi).
+- **Kalıcı Kural / Ders**: Uzun prodüksiyonlarda ajan asla sessiz kalmaz; her 5 dakikada bir periyodik durum teyidi yapılır ve kullanıcı bilgilendirilir. Windows subprocess GC boru uyarıları kullanıcıyı yanıltmayacak şekilde susturulur.

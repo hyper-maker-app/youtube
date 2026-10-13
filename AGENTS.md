@@ -80,6 +80,8 @@ a resume must preserve it exactly.
   1. The agent must AUTOMATICALLY run `python scripts/audit_and_sync.py` in the background and verify that all checks pass (0 failures) before responding to the user.
   2. The agent must AUTOMATICALLY stage, commit, and push all changes (`git add .`, `git commit -m "..."`, `git push origin main`) to GitHub (`https://github.com/hyper-maker-app/youtube.git`). Leaving uncommitted or unpushed modifications in the local workspace is strictly forbidden.
 - If MCP configurations or server scripts change, the agent must automatically run `python scripts/sync_mcp_configs.py`.
+- **5-Minute Periodic Health & Progress Inspection Mandate (ADR-071):**
+  During long-running autonomous video/image productions or background rendering tasks, the AI agent must NEVER leave the user without status updates. The agent MUST schedule a check every 5 minutes (`schedule` tool with `DurationSeconds=300`) to inspect progress, report keyframe/block render milestones, and verify pipeline health.
 - Read `ARCHITECTURE.md`, `PROJECT_CONTEXT.md`, `DURUM.md`, and `WALKTHROUGH.md` as companion references.
 
 
