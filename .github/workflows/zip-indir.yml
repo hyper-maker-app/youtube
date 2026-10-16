@@ -1,0 +1,22 @@
+name: Klasor Haric Zip Olustur
+
+on:
+  workflow_dispatch:
+
+jobs:
+  zip-islem:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodlari Cek
+        uses: actions/checkout@v4
+
+      - name: Klasoru Sil ve Ziple
+        run: |
+          rm -rf _character_sheets
+          zip -r repo-kodlari.zip . -x "*.git*"
+
+      - name: Zipi Indirme Linki Yap
+        uses: actions/upload-artifact@v4
+        with:
+          name: temiz-repo-dosyasi
+          path: repo-kodlari.zip
