@@ -1,0 +1,35 @@
+{
+  "title": "Sub Abyss 8000",
+  "genre": "Deep-Sea Submarine",
+  "duration": 16,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "scene_01",
+      "scene_number": 1,
+      "narration": "Four hundred and fifty atmospheres of black ocean press against your submarine hull. A rusted rivet snaps with the sound of a rifle shot beside your ear.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Sub Abyss 8000 - Four hundred and fifty atmospheres of black ocean press against your submarine hull. A rusted rivet snaps with the sound of a rifle shot beside your ear. Hyper-realistic Deep-Sea / Submarine cinematography, Scratched brass depth gauge, leaking ceiling rivets, periscope rubber eyepiece, emergency blow wheel, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Extreme macro shot of a pressurized brass rivet sheering off a dark steel bulkhead, high-pressure jet of icy seawater spraying across the frame. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.8
+    },
+    {
+      "id": "scene_02",
+      "scene_number": 2,
+      "narration": "Your analog depth gauge trembles at six thousand eight hundred meters. Your emergency battery reserve registers eighteen percent.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Sub Abyss 8000 - Your analog depth gauge trembles at six thousand eight hundred meters. Your emergency battery reserve registers eighteen percent. Hyper-realistic Deep-Sea / Submarine cinematography, Scratched brass depth gauge, leaking ceiling rivets, periscope rubber eyepiece, emergency blow wheel, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Tight circular POV of a vibrating brass depth gauge surrounded by condensation beads, emergency amber floodlights flickering. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.8
+    },
+    {
+      "id": "scene_03",
+      "scene_number": 3,
+      "narration": "Your vessel lurches upward, but the hull fracture splits another three inches down the center seam. The sonar ping returns in zero point two seconds. It is directly under your keel.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Sub Abyss 8000 - Your vessel lurches upward, but the hull fracture splits another three inches down the center seam. The sonar ping returns in zero point two seconds. It is directly under your keel. Hyper-realistic Deep-Sea / Submarine cinematography, Scratched brass depth gauge, leaking ceiling rivets, periscope rubber eyepiece, emergency blow wheel, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Suffocating wide shot of the dark submarine control room tilting violently as water rushes across floorboards into the battery wells. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 6.4
+    }
+  ]
+}

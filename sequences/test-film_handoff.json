@@ -1,0 +1,44 @@
+{
+  "title": "Test Film",
+  "genre": "Sci-Fi",
+  "duration": 16,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "scene_01",
+      "scene_number": 1,
+      "narration": "Act 1: Midnight silence falls over the city streets as amber fog rolls past abandoned vehicles.",
+      "visual_prompt": "Cinematic 16:9 film still. Test Film - Midnight silence falls over the city streets as amber fog rolls past abandoned vehicles. Hyper-realistic horror atmosphere, volumetric rain and fog, chiaroscuro lighting, 8k resolution.",
+      "motion_prompt": "Slow, foreboding cinematic forward dolly down the desolate avenue under flickering sodium lights. Continuous physical realism and natural body momentum.",
+      "camera_scale": "wide",
+      "duration": 8.0
+    },
+    {
+      "id": "scene_02",
+      "scene_number": 2,
+      "narration": "Act 1: Distant sirens fade away, replaced by the ominous sound of unnatural movement in the alleyways.",
+      "visual_prompt": "Cinematic 16:9 film still. Test Film - Distant sirens fade away, replaced by the ominous sound of unnatural movement in the alleyways. Hyper-realistic horror atmosphere, volumetric rain and fog, chiaroscuro lighting, 8k resolution.",
+      "motion_prompt": "Smooth camera tilt down from blackened skyscrapers to shadowed alleys where silhouettes begin to stir. Continuous physical realism and natural body momentum.",
+      "camera_scale": "medium",
+      "duration": 8.0
+    },
+    {
+      "id": "scene_03",
+      "scene_number": 3,
+      "narration": "Act 1: Inside Saint Jude Memorial triage center, emergency power fails, plunging the ward into crimson strobe light.",
+      "visual_prompt": "Cinematic 16:9 film still. Test Film - Inside Saint Jude Memorial triage center, emergency power fails, plunging the ward into crimson strobe light. Hyper-realistic horror atmosphere, volumetric rain and fog, chiaroscuro lighting, 8k resolution.",
+      "motion_prompt": "Rapid push-in through shattered double doors into a flooded medical corridor with blinking backup flares. Continuous physical realism and natural body momentum.",
+      "camera_scale": "close",
+      "duration": 8.0
+    },
+    {
+      "id": "scene_04",
+      "scene_number": 4,
+      "narration": "Act 1: Paramedic Elias Kane navigates past overturned gurneys, gripping an emergency iron crowbar tightly.",
+      "visual_prompt": "Cinematic 16:9 film still. Test Film - Paramedic Elias Kane navigates past overturned gurneys, gripping an emergency iron crowbar tightly. Hyper-realistic horror atmosphere, volumetric rain and fog, chiaroscuro lighting, 8k resolution.",
+      "motion_prompt": "Low-angle tracking shot matching Elias walking cautiously forward, breathing heavily into the humid air. Continuous physical realism and natural body momentum.",
+      "camera_scale": "medium",
+      "duration": 8.0
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "title": "Abyss Breach",
+  "genre": "Deep-Sea Submarine",
+  "duration": 30,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "abyss_01",
+      "scene_number": 1,
+      "narration": "You are at 6800 meters when the hull groans under 450 atmospheres. A rivet shears above your head and seawater sprays across the console. Your battery reserve drops to 18 percent.",
+      "visual_prompt": "Scratched brass depth gauge needle twitching wildly at 6800m, water jetting from a ceiling rivet onto flickering control panels, emergency lights pulsing red across the cramped cockpit",
+      "motion_prompt": "Violent camera shake synced to hull impacts, water spray arcing through frame, depth needle spinning erratically",
+      "camera_scale": "close",
+      "duration": 6.0
+    },
+    {
+      "id": "abyss_02",
+      "scene_number": 2,
+      "narration": "You yank the ballast valve handle. The gauge reads 1400 PSI but the tanks refuse to empty. The sub tilts nose-down, scraping against an unseen rock face with a metallic screech.",
+      "visual_prompt": "Gloved hand pulling the brass ballast valve lever, pressure gauge needle stuck at 1400 PSI, periscope rubber eyepiece swinging wildly as the vessel pitches forward",
+      "motion_prompt": "Hand straining on lever with increasing force, entire cockpit tilting downward in slow roll, sparks and debris cascading across frame",
+      "camera_scale": "medium",
+      "duration": 8.0
+    },
+    {
+      "id": "abyss_03",
+      "scene_number": 3,
+      "narration": "Warning lights flood the panel. You spin the emergency blow wheel with everything you have, but the depth gauge keeps climbing. The hull pops and flexes as the pressure tries to crush you.",
+      "visual_prompt": "Emergency blow wheel turning desperately under your grip, multiple red warning lights strobing across scratched gauges, ceiling leaks intensifying into steady streams",
+      "motion_prompt": "Rapid clockwise wheel rotation, rising bubbles and particulate rushing past exterior viewports, hull visibly compressing with each metallic pop",
+      "camera_scale": "macro",
+      "duration": 10.0
+    },
+    {
+      "id": "abyss_04",
+      "scene_number": 4,
+      "narration": "The lights fail completely. In total darkness you hear the unmistakable crack of the viewport spider-webbing directly in front of your face.",
+      "visual_prompt": "Complete blackness pierced only by a single failing LED on the depth gauge, faint cracks racing across thick acrylic viewport inches from camera, final trickle of seawater",
+      "motion_prompt": "Sudden cut to near-total darkness, subtle pulsing red emergency glow, hairline fractures propagating across glass with audible stress sounds",
+      "camera_scale": "close",
+      "duration": 6.0
+    }
+  ]
+}

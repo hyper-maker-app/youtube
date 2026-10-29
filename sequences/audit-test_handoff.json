@@ -1,0 +1,26 @@
+{
+  "title": "Audit Test",
+  "genre": "Survival Horror",
+  "duration": 12,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "scene_01",
+      "scene_number": 1,
+      "narration": "Your breath fogs the inside of your gas mask. Outside your reinforced door, forty-two decibels of shuffling footsteps echo down the corridor. You do not move.",
+      "visual_prompt": "Cinematic 16:9 film still. Audit Test - Your breath fogs the inside of your gas mask. Outside your reinforced door, forty-two decibels of shuffling footsteps echo down the corridor. You do not move. Hyper-realistic atmospheric survival cinematography, volumetric rain and fog, chiaroscuro shadow, zero face distortion, 8k film grain.",
+      "motion_prompt": "Suffocating macro push-in on a reinforced steel door sealed with industrial duct tape under flickering amber emergency lighting. Continuous physical realism and natural body momentum.",
+      "camera_scale": "close",
+      "duration": 6.0
+    },
+    {
+      "id": "scene_02",
+      "scene_number": 2,
+      "narration": "You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction.",
+      "visual_prompt": "Cinematic 16:9 film still. Audit Test - You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction. Hyper-realistic atmospheric survival cinematography, volumetric rain and fog, chiaroscuro shadow, zero face distortion, 8k film grain.",
+      "motion_prompt": "Tight macro shot of gloved tactical fingers tilting an aluminum military canteen, gauging remaining fluid in shadow. Continuous physical realism and natural body momentum.",
+      "camera_scale": "close",
+      "duration": 6.0
+    }
+  ]
+}

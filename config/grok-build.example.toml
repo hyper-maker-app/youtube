@@ -1,0 +1,49 @@
+# Grok Build configuration for Grok Imagine Cinematic Studio v3.11.3
+# Copy to ~/.grok/config.toml and adjust as needed
+#
+# Unified chat stack:
+#   - Cinematic orchestration + Grok Build / coding: grok-4.6 (default)
+#   - grok-4.5 / cinematic / build aliases resolve to grok-4.6
+#   - Optional 1M-context Bibles: grok-4.3 (--chat-model grok-4.3)
+# Min recommended CLI: 1.0.5 (`grok --version`)
+
+[models]
+default = "grok-4.6"
+
+[ui]
+# Default render mode: "fullscreen" (full TUI) or "minimal" (scrollback-native)
+# Prefer fullscreen so plain `grok` does not open in Minimal mode.
+screen_mode = "fullscreen"
+# Secondary model for code/skills work when forking from creative sessions
+fork_secondary_model = "grok-build"
+
+# Optional: register 1M-context model for picker / API-key routing
+[model."grok-4.3"]
+model = "grok-4.3"
+base_url = "https://api.x.ai/v1"
+name = "Grok 4.3"
+description = "Optional 1M-context Production Bibles (opt-in)"
+context_window = 1000000
+env_key = "XAI_API_KEY"
+api_backend = "chat_completions"
+
+# Cinematic Studio model stack (reference)
+# Orchestration default: grok-4.6
+# Long context (opt-in): grok-4.3
+# Build / coding: grok-4.6 (aliases: grok-4.5, grok-build-latest, cinematic)
+# Video: grok-imagine-video (1.0 default) or grok-imagine-video-1.5 (native audio)
+# Legacy coding API: grok-build-0.1 (prefer grok-4.6)
+#
+# v9-4p5 / Auto specialist pickers (Model Layer v4.5):
+#   config/grok-build-v9-models.example.toml
+#   tools/models.py → GROK_BUILD_V9_MODELS
+# Install: bash scripts/install_v9_grok_models.sh [--force]
+# Then: grok models · /model grok-v9-4p5-chat-expert
+# Note: public api.x.ai may not expose native v9 product IDs; pickers wrap grok-4.6.
+#
+# NSFW / ErosForge custom Grok Build picker aliases (opt-in):
+#   config/grok-build-nsfw-models.example.toml
+#   tools/models.py → GROK_BUILD_NSFW_MODELS (listed by models list / verify)
+# Install: bash scripts/install_nsfw_grok_models.sh [--force] [--subagents]
+# Then: grok models · /model erosforge-director · ACTIVATE EROSFORGE
+# Personas: .grok/personas/{erosforge,nsfw-prompt,nsfw-qa}.toml

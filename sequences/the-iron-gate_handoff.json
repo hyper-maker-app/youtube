@@ -1,0 +1,35 @@
+{
+  "title": "The Iron Gate",
+  "genre": "Medieval Siege",
+  "duration": 16,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "scene_01",
+      "scene_number": 1,
+      "narration": "Pitch-black midnight covers the ramparts. In your trembling grip, your last pine-pitch torch crackles against freezing rain, casting shadows over stone battlements.",
+      "visual_prompt": "Cinematic 16:9 landscape still. The Iron Gate - Pitch-black midnight covers the ramparts. In your trembling grip, your last pine-pitch torch crackles against freezing rain, casting shadows over stone battlements. Hyper-realistic Historical / Medieval Siege cinematography, Stone arrow slit POV, wooden bow grip, vibrating portcullis chains, chiaroscuro torchlight on stone, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Atmospheric macro shot of rain hissing against a flaming pitch torch held in an iron gauntlet over dark wet fortress masonry. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.8
+    },
+    {
+      "id": "scene_02",
+      "scene_number": 2,
+      "narration": "You draw an iron bodkin arrow from your quiver. Four arrows left. Three hours until the first light of dawn breaks over your valley.",
+      "visual_prompt": "Cinematic 16:9 landscape still. The Iron Gate - You draw an iron bodkin arrow from your quiver. Four arrows left. Three hours until the first light of dawn breaks over your valley. Hyper-realistic Historical / Medieval Siege cinematography, Stone arrow slit POV, wooden bow grip, vibrating portcullis chains, chiaroscuro torchlight on stone, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Extreme macro shot of steel gauntlet fingers drawing a feathered bodkin arrow across a rough wooden longbow rest. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.8
+    },
+    {
+      "id": "scene_03",
+      "scene_number": 3,
+      "narration": "You draw your longbow to your cheek. The heavy oak gate splinters inward with a deafening roar. In the darkness below, the first iron scaling ladder slams against your parapet. Your torch sputters and goes out.",
+      "visual_prompt": "Cinematic 16:9 landscape still. The Iron Gate - You draw your longbow to your cheek. The heavy oak gate splinters inward with a deafening roar. In the darkness below, the first iron scaling ladder slams against your parapet. Your torch sputters and goes out. Hyper-realistic Historical / Medieval Siege cinematography, Stone arrow slit POV, wooden bow grip, vibrating portcullis chains, chiaroscuro torchlight on stone, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Chiaroscuro silhouette of lone archer drawn at full draw on rain-swept castle battlements as darkness swallows the horizon. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 6.4
+    }
+  ]
+}

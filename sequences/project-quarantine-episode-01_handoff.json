@@ -1,0 +1,53 @@
+{
+  "title": "Project Quarantine Episode 01",
+  "genre": "Survival Horror",
+  "duration": 40,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "q01s01",
+      "scene_number": 1,
+      "narration": "You slam the apartment door as the first infected crashes into the hallway. Your heart pounds while you twist the deadbolt. The peephole reveals blurred motion under flickering fluorescents.",
+      "visual_prompt": "Door peephole POV of a rain-soaked corridor with backlit aggressive silhouette lunging forward, emergency lights strobing.",
+      "motion_prompt": "Violent door impacts shaking the frame, rapid silhouette lunges, rain streaks on lens, flickering light pulses.",
+      "camera_scale": "close",
+      "duration": 6.0
+    },
+    {
+      "id": "q01s02",
+      "scene_number": 2,
+      "narration": "You drop to the floor and unspool your last 8 meters of barricade tape. Wrapping three tight layers around the knob and hinges buys you seconds. The scratching outside grows to 87 decibels.",
+      "visual_prompt": "Macro view of hands stretching yellow barricade tape around a metal door knob and hinge plates, rain pattering against the door from outside.",
+      "motion_prompt": "Fingers pulling tape with urgency, stretching and layering it three times, door vibrating from external pounding.",
+      "camera_scale": "macro",
+      "duration": 8.0
+    },
+    {
+      "id": "q01s03",
+      "scene_number": 3,
+      "narration": "Your flashlight beam flickers at 62 percent battery. You gulp the last 120 milliliters of water from your bottle, tasting copper. The creature's howls echo as you grip the crowbar.",
+      "visual_prompt": "Over-the-shoulder grip on crowbar wrapped in three layers of tape, LED flashlight casting harsh shadows across a near-empty plastic water bottle.",
+      "motion_prompt": "Hand tilting bottle to drink final drops, flashlight beam jittering with each breath, subtle tremors in the crowbar grip.",
+      "camera_scale": "medium",
+      "duration": 10.0
+    },
+    {
+      "id": "q01s04",
+      "scene_number": 4,
+      "narration": "You back toward the fire escape, 240 calories left in your emergency bar. The front door begins to splinter. You must move now or become the next meal.",
+      "visual_prompt": "Situational perspective of rain-lashed window leading to fire escape, splintering wooden door in background with tape beginning to peel, distant city lights.",
+      "motion_prompt": "Slow backward steps, door cracking and tape stretching to breaking point, rain hammering glass, urgent flashlight sweeps.",
+      "camera_scale": "wide",
+      "duration": 10.0
+    },
+    {
+      "id": "q01s05",
+      "scene_number": 5,
+      "narration": "You pry the window open. Cold wind hits your face as you step out into the storm, the infected roar now directly behind you. Survival is measured in seconds.",
+      "visual_prompt": "First-person view through rain-streaked window being forced open, backlit silhouette of infected bursting through door in far background.",
+      "motion_prompt": "Window latch turning and frame rising, heavy rain and wind rushing in, distant door crash, fast climb onto metal fire escape.",
+      "camera_scale": "close",
+      "duration": 6.0
+    }
+  ]
+}

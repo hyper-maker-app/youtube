@@ -1,0 +1,35 @@
+{
+  "title": "Sector 9 Infiltration",
+  "genre": "Cyberpunk",
+  "duration": 16,
+  "aspect": "9:16",
+  "scenes": [
+    {
+      "id": "scene_01",
+      "scene_number": 1,
+      "narration": "Your retinal display counts down eighteen seconds until terminal ICE lockout. Combat drones are scanning the hallway.",
+      "visual_prompt": "Cinematic 9:16 vertical mobile still. Sector 9 Infiltration - Your retinal display counts down eighteen seconds until terminal ICE lockout. Combat drones are scanning the hallway. Hyper-realistic Cyberpunk / Infiltration cinematography, Cracked retinal HUD overlay, suppressed pistol slide, server stacks, neon rain reflections, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Vertical high-contrast POV looking down a rain-soaked neon corridor as red laser grids sweep across industrial server racks. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.6
+    },
+    {
+      "id": "scene_02",
+      "scene_number": 2,
+      "narration": "You rack the slide of your sidearm. Seven rounds left in the mag, sixty percent neural buffer.",
+      "visual_prompt": "Cinematic 9:16 vertical mobile still. Sector 9 Infiltration - You rack the slide of your sidearm. Seven rounds left in the mag, sixty percent neural buffer. Hyper-realistic Cyberpunk / Infiltration cinematography, Cracked retinal HUD overlay, suppressed pistol slide, server stacks, neon rain reflections, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Vertical macro close-up on gloved fingers checking a digital ammo readout on the pistol slide under neon blue backlight. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.6
+    },
+    {
+      "id": "scene_03",
+      "scene_number": 3,
+      "narration": "You dive behind the reinforced firewall console, finger tightening on the cold steel trigger because...",
+      "visual_prompt": "Cinematic 9:16 vertical mobile still. Sector 9 Infiltration - You dive behind the reinforced firewall console, finger tightening on the cold steel trigger because... Hyper-realistic Cyberpunk / Infiltration cinematography, Cracked retinal HUD overlay, suppressed pistol slide, server stacks, neon rain reflections, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Vertical low-angle silhouette shot bracing behind a glowing terminal rack as footsteps halt directly outside the doorway. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 6.8
+    }
+  ]
+}

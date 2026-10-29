@@ -1,0 +1,240 @@
+{
+  "schema_version": 2,
+  "checked_at": "2026-10-21",
+  "source": "https://support.google.com/flow/answer/16352836?hl=en",
+  "video": {
+    "alias": "gemini_omni_flash_1_1",
+    "display_name": "Omni 1.1 Flash",
+    "cli_name": null,
+    "transport_verified": false,
+    "transport_strategy": "internal_conditioned_model",
+    "model_families": {
+      "text_to_video": "abra_t2v_{duration}s",
+      "start_frame": "abra_i2v_{duration}s",
+      "start_and_end_frame": "omni_flash_i2v_{duration}s_first_last",
+      "references": "abra_r2v_{duration}s"
+    },
+    "supported_native_durations": [
+      4,
+      6,
+      8,
+      10
+    ],
+    "supported_qualities": [
+      "360p",
+      "720p"
+    ],
+    "supported_aspect_ratios": [
+      "9:16",
+      "16:9"
+    ],
+    "supports_text_to_video": true,
+    "supports_first_frame": true,
+    "supports_first_and_last_frame": true,
+    "supports_references": true,
+    "supports_video_editing": true,
+    "supports_extend": false,
+    "source_dispatch_verified": true,
+    "internal_model_keys": [
+      "abra_t2v_4s",
+      "abra_t2v_6s",
+      "abra_t2v_8s",
+      "abra_t2v_10s",
+      "abra_i2v_4s",
+      "abra_i2v_6s",
+      "abra_i2v_8s",
+      "abra_i2v_10s",
+      "omni_flash_i2v_4s_first_last",
+      "omni_flash_i2v_6s_first_last",
+      "omni_flash_i2v_8s_first_last",
+      "omni_flash_i2v_10s_first_last",
+      "abra_r2v_4s",
+      "abra_r2v_6s",
+      "abra_r2v_8s",
+      "abra_r2v_10s"
+    ],
+    "conditioning_dispatch": {
+      "text_to_video": "abra_t2v_{duration}s",
+      "start_frame": "abra_i2v_{duration}s",
+      "start_and_end_frame": "omni_flash_i2v_{duration}s_first_last",
+      "references": "abra_r2v_{duration}s"
+    },
+    "rpc_ids": {
+      "text_to_video": "YhhmEf",
+      "start_frame": "eb1hJf",
+      "start_and_end_frame": "nprQif",
+      "references": "MZZa6b"
+    },
+    "display_name_verified": true,
+    "display_name_match": true,
+    "reference_transport_verified": false,
+    "requested_display_name": "Gemini Omni Flash 1.1",
+    "response_contract_verified": true,
+    "catalog_evidence": {
+      "observed_at": "2026-10-21T20:59:59.528102+00:00",
+      "origin": "https://flow.google.com",
+      "rpc_id": "HTrJv",
+      "http_status": 200,
+      "record_path": [
+        0,
+        4,
+        0
+      ],
+      "display_name": "Omni 1.1 Flash",
+      "internal_model_keys": [
+        "abra_i2v_10s",
+        "abra_i2v_10s_360p",
+        "abra_i2v_4s",
+        "abra_i2v_4s_360p",
+        "abra_i2v_6s",
+        "abra_i2v_6s_360p",
+        "abra_i2v_8s",
+        "abra_i2v_8s_360p",
+        "abra_r2v_10s",
+        "abra_r2v_10s_360p",
+        "abra_r2v_4s",
+        "abra_r2v_4s_360p",
+        "abra_r2v_6s",
+        "abra_r2v_6s_360p",
+        "abra_r2v_8s",
+        "abra_r2v_8s_360p",
+        "abra_t2v_10s",
+        "abra_t2v_10s_360p",
+        "abra_t2v_4s",
+        "abra_t2v_4s_360p",
+        "abra_t2v_6s",
+        "abra_t2v_6s_360p",
+        "abra_t2v_8s",
+        "abra_t2v_8s_360p",
+        "omni_flash_i2v_10s_first_last",
+        "omni_flash_i2v_10s_first_last_360p",
+        "omni_flash_i2v_4s_first_last",
+        "omni_flash_i2v_4s_first_last_360p",
+        "omni_flash_i2v_6s_first_last",
+        "omni_flash_i2v_6s_first_last_360p",
+        "omni_flash_i2v_8s_first_last",
+        "omni_flash_i2v_8s_first_last_360p"
+      ],
+      "method": "Passive HTrJv HTTP 200 during reload of existing signed-in project; scripts/flow_preflight.py; no generation or credential access"
+    },
+    "requested_display_name_exact_match": false,
+    "conditioning_evidence": {
+      "text_to_video": {
+        "request_fields_verified": true,
+        "outcome_schema": "batch_video_evidence_v2",
+        "runtime_verified": false
+      },
+      "start_frame": {
+        "request_fields_verified": true,
+        "outcome_schema": "batch_video_evidence_v2",
+        "runtime_verified": false
+      },
+      "start_and_end_frame": {
+        "request_fields_verified": true,
+        "outcome_schema": "batch_video_evidence_v2",
+        "runtime_verified": false
+      },
+      "references": {
+        "request_fields_verified": false,
+        "outcome_schema": null,
+        "runtime_verified": false
+      }
+    }
+  },
+  "image": {
+    "alias": "nano_banana_pro",
+    "display_name": "\ud83c\udf4c Nano Banana Pro",
+    "cli_name": "gem_pix_2",
+    "transport_verified": false,
+    "transport_strategy": "flow_go_image_models.GEM_PIX_2",
+    "source_dispatch_verified": true,
+    "internal_model_keys": [
+      "GEM_PIX_2"
+    ],
+    "display_name_match": true,
+    "display_name_verified": true,
+    "requested_display_name": "Nano Banana Pro",
+    "response_contract_verified": false,
+    "catalog_evidence": {
+      "observed_at": "2026-10-21T20:59:59.528102+00:00",
+      "origin": "https://flow.google.com",
+      "rpc_id": "HTrJv",
+      "http_status": 200,
+      "record_path": [
+        0,
+        5,
+        0
+      ],
+      "display_name": "\ud83c\udf4c Nano Banana Pro",
+      "internal_model_keys": [
+        "GEM_PIX_2"
+      ],
+      "method": "Passive HTrJv HTTP 200 during reload of existing signed-in project; scripts/flow_preflight.py; no generation or credential access"
+    },
+    "requested_display_name_exact_match": false
+  },
+  "transport": {
+    "verified_binary_sha256": "8f3527ef192a61ae8cecfc2ca2a889258b63b8a5220e4f7c4069bb12df7e49b9",
+    "source_repository": "https://github.com/kodelyx/flow-go",
+    "source_revision": "70ec73861091267dd1f57184bcf809a922bea85b",
+    "binary_version_observed": "flow-go 0.1.0",
+    "binary_version": "flow-go 0.1.0",
+    "binary_sha256": "8f3527ef192a61ae8cecfc2ca2a889258b63b8a5220e4f7c4069bb12df7e49b9",
+    "source_binary_match": true,
+    "display_name_match": true,
+    "transport_verified": false,
+    "source_evidence": "internal/config/config.go and internal/config/video_models_test.go define the conditioned video model tables; GEM_PIX_2 is the documented Pro image enum.",
+    "reason": "Video field normalization reviewed for pinned BatchVideoOutcome. Model/quality originate in transport submission; media properties require ffprobe. Runtime remains blocked by explicit no-spoof/no-CAPTCHA policy; image normalization remains unsupported.",
+    "binary_source_verified": true,
+    "rpc_ids": {
+      "model_catalog": "HTrJv",
+      "available_models": "yBhWQ"
+    },
+    "response_contract_verified": true,
+    "response_contract_missing_fields": [],
+    "account_ui_observed": {
+      "observed_at": "2026-10-21",
+      "project_open": true,
+      "video_model_label": "Omni 1.1 Flash",
+      "qualities": [
+        "360p",
+        "720p"
+      ],
+      "native_durations": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "aspect_ratios": [
+        "9:16",
+        "16:9"
+      ],
+      "generation_submitted": false,
+      "credit_balance_verified": false
+    },
+    "source_build_candidate": {
+      "source_revision": "70ec73861091267dd1f57184bcf809a922bea85b",
+      "binary_sha256": "8f3527ef192a61ae8cecfc2ca2a889258b63b8a5220e4f7c4069bb12df7e49b9",
+      "go_version": "go1.26.4 windows/amd64",
+      "vcs_modified": false,
+      "source_build_verified": true,
+      "selected_for_runtime": false,
+      "matches_installed_binary": false,
+      "build_flags": [
+        "-mod=readonly",
+        "-trimpath",
+        "-buildvcs=true"
+      ],
+      "note": "Built outside repository from clean source; does not authenticate or replace installed executable."
+    },
+    "evidence_schema_version": 2,
+    "installed_binary_source_verified": false,
+    "installed_binary_sha256": "863c84a4ed1b35ccfc0fbe00aa4e3377c78599eac5dd8402dd2e7e5bd727f1f7",
+    "response_contract": "batch_video_evidence_v2",
+    "runtime_policy": {
+      "verified": false,
+      "reason": "Pinned CLI uses Chrome TLS impersonation (internal/httpx/client.go:246-263); existing Python bridge mints CAPTCHA tokens and forwards fingerprints. No reviewed browser-native submission transport. Do not invoke under no-spoof/no-CAPTCHA constraint."
+    }
+  }
+}

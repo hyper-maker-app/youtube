@@ -1,0 +1,243 @@
+# Grok Imagine Cinematic Studio - Python .gitignore
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+!scripts/lib/
+!web_ui/lib/
+!web_nicegui/lib/
+!web_react/src/lib/
+!web_academy/src/lib/
+!web_marketplace/src/lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+!scripts/required_skills.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+_docs/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.env.*
+!.env.example
+!**/.env.example
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Project-specific
+# Build release zips (regenerate via scripts/build_*.sh)
+grok-imagine-cinematic-studio-*.zip
+
+# Generated outputs
+artifacts/*
+!artifacts/.gitkeep
+
+# CLI generated state
+.cinematic_project_state.json
+.quota_config.json
+
+# Per-project character DNA profiles (keep characters/.gitkeep)
+characters/*/
+!characters/.gitkeep
+
+# Per-project sequence blueprints (keep sequences/.gitkeep)
+sequences/*/
+!sequences/.gitkeep
+
+# NSFW batch plans (keep nsfw_batches/.gitkeep)
+nsfw_batches/*/
+!nsfw_batches/.gitkeep
+
+# SFW batch plans (keep sfw_batches/.gitkeep)
+sfw_batches/*/
+!sfw_batches/.gitkeep
+
+# Imagine job artifacts and reference uploads
+artifacts/jobs/
+artifacts/references/
+artifacts/polished/
+artifacts/delivery/
+artifacts/edl/
+artifacts/animatics/
+
+# Generated production files (optional - comment out if you want to commit examples)
+# production_bible.json
+# *.pdf
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Local SpaceXAI AUP attestation (never commit)
+.aup_attestation.json
+
+# React / Vite cockpit (web_react)
+web_react/node_modules/
+web_react/dist/
+web_react/.env
+web_react/.env.local
+web_react/*.local
+web_react/playwright-report/
+web_react/test-results/
+web_react/blob-report/
+web_react/playwright/.cache/
+
+# Plugin Marketplace SPA (web_marketplace)
+web_marketplace/node_modules/
+web_marketplace/dist/
+web_marketplace/.vercel/
+web_marketplace/.env
+web_marketplace/.env.local
+web_marketplace/*.local
+web_marketplace/screenshots/
+web_marketplace/attachments/
+
+# Superpowers brainstorm session artifacts (local only)
+.superpowers/
+
+# Git worktrees (local isolation)
+.worktrees/
+
+# Output directories & media
+out/
+engine/.env
+*.mp4
+*.wav
+*.zip
+*.log
