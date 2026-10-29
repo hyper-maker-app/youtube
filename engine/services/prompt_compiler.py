@@ -284,15 +284,64 @@ def build_scoped_negatives_for_barrier() -> str:
     )
 
 
+def inject_active_deltas_with_visibility_gating(
+    prompt: str,
+    world_state: Any,
+    shot_spec: dict[str, Any] | None = None,
+) -> str:
+    """Inject active canon deltas strictly if the entity is visible in the frame (Grok 4.6 Mandate).
+    
+    Prevents latent space pollution (e.g. injecting door cracks into a macro shot of floor bottles).
+    """
+    if not world_state or not getattr(world_state, "delta_ledger", None):
+        return prompt
+
+    clean = prompt
+    p_lower = prompt.lower()
+    shot_spec = shot_spec or {}
+    declared_visible = set(shot_spec.get("visible_entities", []))
+    if shot_spec.get("focus_entity"):
+        declared_visible.add(shot_spec["focus_entity"])
+
+    injected_deltas = []
+    for delta in world_state.delta_ledger:
+        ent_id = delta.get("entity_id", "")
+        # Check if entity is visible in frame (either explicitly declared or lexically present)
+        is_visible = (
+            ent_id in declared_visible
+            or ("door" in ent_id.lower() and any(k in p_lower for k in ("door", "portal", "barrier", "entry")))
+            or ("bottle" in ent_id.lower() and any(k in p_lower for k in ("bottle", "floor", "tripwire")))
+            or ("peep" in ent_id.lower() and any(k in p_lower for k in ("peephole", "optic", "lens")))
+            or ("win" in ent_id.lower() and any(k in p_lower for k in ("window", "pane", "glass")))
+        )
+
+        if is_visible:
+            evidence = delta.get("evidence", "")
+            attr = delta.get("attribute", "")
+            after = delta.get("after", "")
+            if evidence:
+                injected_deltas.append(f"{ent_id} maintains {evidence}")
+            elif attr and after:
+                injected_deltas.append(f"{ent_id} {attr} is {after}")
+
+    if injected_deltas:
+        clean = f"{clean}. Continuous physical state: {'; '.join(injected_deltas)}."
+
+    return clean
+
+
 def compile_udse_prompt(
     visual_prompt: str,
     scene_type: str = "standard",
     barrier_entity_id: str = "E_DOOR_01",
+    world_state: Any | None = None,
+    shot_spec: dict[str, Any] | None = None,
 ) -> str:
-    """Compile visual prompt according to UDSE v4.2 standards:
+    """Compile visual prompt according to UDSE v4.3 standards:
     1. Lints against unpartitioned coplanar conflation.
     2. If barrier is present, attaches contrastive material clause.
-    3. Guarantees photographic realism without program syntax leakage.
+    3. Injects active canon deltas strictly if entities are visible in the frame (Visibility Gating).
+    4. Guarantees photographic realism without program syntax leakage.
     """
     clean_p = visual_prompt.strip()
     # Strip any accidental brackets like [INVARIANT: ...]
@@ -305,6 +354,10 @@ def compile_udse_prompt(
     if "door" in clean_p.lower() and "contrastive" not in clean_p.lower() and "opaque timber" not in clean_p.lower():
         anchor = build_contrastive_barrier_clause(entity_id=barrier_entity_id)
         clean_p = f"{clean_p}. {anchor}"
+
+    # Apply Visibility Gating on active deltas
+    if world_state:
+        clean_p = inject_active_deltas_with_visibility_gating(clean_p, world_state, shot_spec)
 
     return clean_p
 

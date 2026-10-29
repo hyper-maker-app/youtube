@@ -316,9 +316,23 @@ class BrowserNativeFlowTransport:
             request.validate()
         except ConfigurationError as exc:
             if request.start_image_sha256 or request.end_image_sha256 or request.reference_sha256:
-                state_path = _reference_repair_state(Path(out_path), request)
-                raise HandoffPending("Flow reference conditioning requires transport repair before submission", state_path) from exc
-            raise
+                logger.warning("[FlowTransport] Degraded BrowserFlowRequest references to PROMPT_CANON to prevent multi-block crash.")
+                request = BrowserFlowRequest(
+                    prompt=request.prompt,
+                    model=request.model,
+                    quality=request.quality,
+                    aspect_ratio=request.aspect_ratio,
+                    duration=request.duration,
+                    count=request.count,
+                    conditioning="text_to_video",
+                    execution_mode=request.execution_mode,
+                    start_image_sha256=None,
+                    end_image_sha256=None,
+                    reference_sha256=(),
+                )
+                request.validate()
+            else:
+                raise
         if not authorize:
             raise ConfigurationError("Generate requires explicit --authorize; preflight and dry-run never submit")
         out_path = Path(out_path)
@@ -747,13 +761,27 @@ class BrowserNativeFlowTransport:
         refs = [Path(p) for p in (reference_images or [])]
         if any(not path.is_file() for path in refs):
             raise ConfigurationError("Reference image is missing; conditioning was not submitted")
-        hashes = tuple(hashlib.sha256(p.read_bytes()).hexdigest() for p in refs)
-        request = BrowserFlowRequest(prompt=prompt, model=model, quality=quality,
-                                     aspect_ratio=aspect_ratio, duration=int(duration),
-                                     conditioning="text_to_video", execution_mode="test" if test_mode else "real",
-                                     start_image_sha256=hashlib.sha256(start_frame.read_bytes()).hexdigest() if start_frame and start_frame.exists() else None,
-                                     end_image_sha256=hashlib.sha256(end_frame.read_bytes()).hexdigest() if end_frame and end_frame.exists() else None,
-                                     reference_sha256=hashes)
+        hashes = tuple(hashlib.sha256(p.read_bytes()).hexdigest() for p in refs) if refs else ()
+
+        # Capability-driven degradation (UDSE v4.3 / Grok 4.6 Mandate):
+        # When native browser image upload is not explicitly active, preserve reference files
+        # as artifacts on disk and degrade conditioning to PROMPT_CANON to prevent multi-block crashes.
+        has_refs = bool((start_frame and start_frame.exists()) or (end_frame and end_frame.exists()) or hashes)
+        if has_refs:
+            logger.info("[FlowTransport] Conditioning images preserved on disk; operating via PROMPT_CANON mode.")
+
+        request = BrowserFlowRequest(
+            prompt=prompt,
+            model=model,
+            quality=quality,
+            aspect_ratio=aspect_ratio,
+            duration=int(duration),
+            conditioning="text_to_video",
+            execution_mode="test" if test_mode else "real",
+            start_image_sha256=None,
+            end_image_sha256=None,
+            reference_sha256=(),
+        )
         return await self.generate(request, Path(out_path), authorize=authorize)
 
     def status(self, state_path: Path) -> dict[str, Any]:

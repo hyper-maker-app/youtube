@@ -52,6 +52,8 @@ from services.director_agent import (
     commit_canon_delta,
     evaluate_visual_delta,
 )
+from services.duration_packer import pack_durations_to_veo_blocks
+from services.prompt_compiler import compile_udse_prompt
 from services.series_architect import build_canonical_rigor_mortis_world_state
 from services.text_sanitizer import sanitize_spoken_text
 
@@ -138,6 +140,7 @@ async def execute_grok_flow_production(
     sfx_provider: str = "ffmpeg_lavfi",
     hero_plate_path: Path | None = None,
     director_mode: bool = True,
+    episode_num: int = 1,
 ) -> Path:
     """Take Grok Studio planned scenes and execute full physical render with Flow + Voice + FFmpeg."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -188,40 +191,27 @@ async def execute_grok_flow_production(
     words_path.write_text(json.dumps({"words": words, "duration": measured_duration}, indent=2), encoding="utf-8")
     logger.info(f"[1/3] Voiceover ready: {measured_duration:.2f}s, {len(words)} timed words.")
 
-    # Step 2: Native Dynamic Video Block Allocation & Transition Boundary QA
-    aligned_scenes: list[dict[str, Any]] = []
-    accumulated_dur = 0.0
-    scene_idx = 0
-
-    while (accumulated_dur < measured_duration) or (scene_idx < len(scenes)):
-        if scene_idx < len(scenes):
-            sc = dict(scenes[scene_idx])
-            raw_dur = float(sc.get("duration", block_duration))
-            sc["duration"] = snap_to_veo_duration(raw_dur)
-        else:
-            prev = aligned_scenes[-1] if aligned_scenes else (scenes[0] if scenes else {})
-            rem = measured_duration - accumulated_dur
-            sc = {
-                "id": f"scene_{len(aligned_scenes)+1:02d}",
-                "narration": "",
-                "visual_prompt": f"{prev.get('visual_prompt', '')}, continuous physical realism",
-                "motion_prompt": f"{prev.get('motion_prompt', '')}, continuous camera movement",
-                "duration": snap_to_veo_duration(rem if rem > 0 else 4.0),
-            }
-        aligned_scenes.append(sc)
-        accumulated_dur += sc["duration"]
-        scene_idx += 1
-
-    # Tail optimization: ensure the final block fits the remaining audio duration without waste
-    if len(aligned_scenes) > 1:
-        prev_sum = sum(float(s["duration"]) for s in aligned_scenes[:-1])
-        remaining = measured_duration - prev_sum
-        if remaining > 0:
-            aligned_scenes[-1]["duration"] = snap_to_veo_duration(remaining)
-        else:
-            aligned_scenes[-1]["duration"] = 4.0
-    elif len(aligned_scenes) == 1:
-        aligned_scenes[0]["duration"] = snap_to_veo_duration(measured_duration)
+    # Step 2: Native Dynamic Video Block Allocation via DurationPacker (Grok 4.6 Standard)
+    block_plans = pack_durations_to_veo_blocks(
+        scenes=scenes,
+        total_audio_duration=measured_duration,
+        words=words,
+        default_block_duration=block_duration,
+    )
+    aligned_scenes: list[dict[str, Any]] = [
+        {
+            "id": bp.scene_id,
+            "duration": bp.veo_duration,
+            "audio_t0": bp.audio_t0,
+            "audio_t1": bp.audio_t1,
+            "pad_tail_seconds": bp.pad_tail_seconds,
+            "freeze_tail_seconds": bp.freeze_tail_seconds,
+            "visual_prompt": bp.visual_prompt,
+            "motion_prompt": bp.motion_prompt,
+            "narration": scenes[i].get("narration", "") if i < len(scenes) else "",
+        }
+        for i, bp in enumerate(block_plans)
+    ]
 
     logger.info(f"[2/3] Generating {len(aligned_scenes)} dynamic video blocks (durations: {[s['duration'] for s in aligned_scenes]}) via Flow CDP...")
 
@@ -259,7 +249,13 @@ async def execute_grok_flow_production(
             dur = float(sc.get("duration", block_duration))
             vp = str(sc.get("visual_prompt", "")).strip()
             mp = str(sc.get("motion_prompt", "")).strip()
-            full_prompt = f"{vp}. {mp}" if vp else mp
+            # Compile with UDSE v4.3 and active Visibility Gating
+            compiled_vp = compile_udse_prompt(
+                visual_prompt=vp,
+                world_state=world_state,
+                shot_spec=sc,
+            ) if vp else ""
+            full_prompt = f"{compiled_vp}. {mp}" if compiled_vp else mp
 
             if block_file.is_file() and block_file.stat().st_size > 10000:
                 logger.info(f"Block {i}/{len(aligned_scenes)} already rendered -> reusing: {block_file.name}")
@@ -436,14 +432,14 @@ async def execute_grok_flow_production(
         else:
             synthesize_dry_run_video_block(final_mp4, duration=4.0, aspect=aspect_ratio)
 
-    # Seal ending continuity state into out_dir
+    # Seal ending continuity state into out_dir (ADR-090 Zero-Hardcoding)
     last_scene = aligned_scenes[-1] if aligned_scenes else {}
     last_delta = last_scene.get("delta_state", {})
     last_narration = last_scene.get("narration", "")
-    ending_summary = f"Survivor behind oak barricade with pry-bar. Telemetry: {last_delta}. Action: '{last_narration}'"
+    ending_summary = f"Concluded Episode {episode_num} of {project_title}: {last_narration or 'Protagonist holds ground'}. Telemetry: {last_delta}"
     save_series_continuity(
         series_dir=out_dir,
-        episode_num=1,
+        episode_num=episode_num,
         ending_state=ending_summary,
         telemetry=last_delta,
         world_state=world_state.to_dict() if 'world_state' in locals() and hasattr(world_state, 'to_dict') else None,

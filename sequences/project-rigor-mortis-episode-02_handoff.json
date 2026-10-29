@@ -1,0 +1,117 @@
+{
+  "title": "Project Rigor Mortis Episode 02",
+  "genre": "Survival Horror",
+  "episode": 2,
+  "duration": 74,
+  "aspect": "16:9",
+  "scenes": [
+    {
+      "id": "scene_01",
+      "scene_number": 1,
+      "narration": "Your breath fogs the inside of your gas mask. Outside your reinforced door, forty-two decibels of shuffling footsteps echo down the corridor. You do not move.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Your breath fogs the inside of your gas mask. Outside your reinforced door, forty-two decibels of shuffling footsteps echo down the corridor. You do not move. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Suffocating macro push-in on a reinforced steel door sealed with industrial duct tape under flickering amber emergency lighting. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 6.0
+    },
+    {
+      "id": "scene_02",
+      "scene_number": 2,
+      "narration": "You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Tight macro shot of gloved tactical fingers tilting an aluminum military canteen, gauging remaining fluid in shadow. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_03",
+      "scene_number": 3,
+      "narration": "Through your brass peephole, you watch three pale infected silhouettes stagger past, their jerking rigor illuminated by distant strobe flares.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Through your brass peephole, you watch three pale infected silhouettes stagger past, their jerking rigor illuminated by distant strobe flares. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Distorted point-of-view shot through a circular scratched brass peephole, pale silhouettes shambling past a dark flooded corridor. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 8.0
+    },
+    {
+      "id": "scene_04",
+      "scene_number": 4,
+      "narration": "Your digital audio meter flickers at sixty-four decibels. Sixty-five brings them clawing at your hinges.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Your digital audio meter flickers at sixty-four decibels. Sixty-five brings them clawing at your hinges. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Extreme macro shot of a worn digital sensor display pulsing amber numbers: 64.2 dB, rain drumming against concrete outside. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_05",
+      "scene_number": 5,
+      "narration": "You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Tight macro shot of gloved tactical fingers tilting an aluminum military canteen, gauging remaining fluid in shadow. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_06",
+      "scene_number": 6,
+      "narration": "Through your brass peephole, you watch three pale infected silhouettes stagger past, their jerking rigor illuminated by distant strobe flares.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Through your brass peephole, you watch three pale infected silhouettes stagger past, their jerking rigor illuminated by distant strobe flares. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Distorted point-of-view shot through a circular scratched brass peephole, pale silhouettes shambling past a dark flooded corridor. Continuous physical realism and natural momentum.",
+      "camera_scale": "wide",
+      "duration": 8.0
+    },
+    {
+      "id": "scene_07",
+      "scene_number": 7,
+      "narration": "Your digital audio meter flickers at sixty-four decibels. Sixty-five brings them clawing at your hinges.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Your digital audio meter flickers at sixty-four decibels. Sixty-five brings them clawing at your hinges. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Extreme macro shot of a worn digital sensor display pulsing amber numbers: 64.2 dB, rain drumming against concrete outside. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_08",
+      "scene_number": 8,
+      "narration": "You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Tight macro shot of gloved tactical fingers tilting an aluminum military canteen, gauging remaining fluid in shadow. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_09",
+      "scene_number": 9,
+      "narration": "Through your brass peephole, you watch three pale infected silhouettes stagger past, their jerking rigor illuminated by distant strobe flares.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Through your brass peephole, you watch three pale infected silhouettes stagger past, their jerking rigor illuminated by distant strobe flares. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Distorted point-of-view shot through a circular scratched brass peephole, pale silhouettes shambling past a dark flooded corridor. Continuous physical realism and natural momentum.",
+      "camera_scale": "wide",
+      "duration": 8.0
+    },
+    {
+      "id": "scene_10",
+      "scene_number": 10,
+      "narration": "Your digital audio meter flickers at sixty-four decibels. Sixty-five brings them clawing at your hinges.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - Your digital audio meter flickers at sixty-four decibels. Sixty-five brings them clawing at your hinges. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Extreme macro shot of a worn digital sensor display pulsing amber numbers: 64.2 dB, rain drumming against concrete outside. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_11",
+      "scene_number": 11,
+      "narration": "You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - You check your canteen. Seven hundred milliliters of clean water left. Forty-eight hours until extraction. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Tight macro shot of gloved tactical fingers tilting an aluminum military canteen, gauging remaining fluid in shadow. Continuous physical realism and natural momentum.",
+      "camera_scale": "close",
+      "duration": 4.0
+    },
+    {
+      "id": "scene_12",
+      "scene_number": 12,
+      "narration": "A violent collision shakes your door frame. Multiple clawing hands breach the gap, tearing through three layers of duct tape. You strike your emergency magnesium flare, but the deadbolt snaps in two. Silence falls, and the doorknob begins to turn.",
+      "visual_prompt": "Cinematic 16:9 landscape still. Project Rigor Mortis Episode 02 - A violent collision shakes your door frame. Multiple clawing hands breach the gap, tearing through three layers of duct tape. You strike your emergency magnesium flare, but the deadbolt snaps in two. Silence falls, and the doorknob begins to turn. Hyper-realistic Survival Horror / Post-Apocalyptic cinematography, Scratched brass peephole POV, gloved pry-bar grip, amber LED meter, backlit silhouette in rain, chiaroscuro shadows, zero face distortion, volumetric lighting, 8k resolution.",
+      "motion_prompt": "Sudden Dutch-angle camera push on the buckling steel door as silver duct tape peels away, darkness engulfing the frame. Continuous physical realism and natural momentum.",
+      "camera_scale": "medium",
+      "duration": 10.0
+    }
+  ]
+}

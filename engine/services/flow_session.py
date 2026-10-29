@@ -66,15 +66,87 @@ class FlowBootstrapConfig:
         )
 
 
+@dataclass
+class BrowserLease:
+    lease_id: str
+    generation: int
+    created_at: float
+    expires_at: float
+    cdp_port: int
+    is_active: bool = True
+
+    def is_valid(self, current_generation: int) -> bool:
+        return self.is_active and (self.generation == current_generation) and (time.monotonic() < self.expires_at)
+
+    def renew(self, extension_seconds: float = 180.0) -> None:
+        self.expires_at = time.monotonic() + extension_seconds
+
+    def release(self) -> None:
+        self.is_active = False
+
+
+class BrowserLeaseManager:
+    """Manages active leases and prevents zombie callbacks via monotonic generation counter."""
+    _instance: Optional["BrowserLeaseManager"] = None
+
+    def __init__(self) -> None:
+        self._current_generation: int = 1
+        self._active_lease: Optional[BrowserLease] = None
+        self._lock = asyncio.Lock()
+
+    @classmethod
+    def get_instance(cls) -> "BrowserLeaseManager":
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @property
+    def current_generation(self) -> int:
+        return self._current_generation
+
+    def bump_generation(self) -> int:
+        self._current_generation += 1
+        if self._active_lease:
+            self._active_lease.release()
+            self._active_lease = None
+        return self._current_generation
+
+    async def acquire_lease(self, cdp_port: int = DEFAULT_CDP_PORT, duration_seconds: float = 180.0) -> BrowserLease:
+        async with self._lock:
+            if self._active_lease and self._active_lease.is_valid(self._current_generation):
+                self._active_lease.renew(duration_seconds)
+                return self._active_lease
+            self._current_generation += 1
+            now = time.monotonic()
+            lease_id = hashlib.sha256(f"lease_{self._current_generation}_{now}".encode()).hexdigest()[:12]
+            self._active_lease = BrowserLease(
+                lease_id=lease_id,
+                generation=self._current_generation,
+                created_at=now,
+                expires_at=now + duration_seconds,
+                cdp_port=cdp_port,
+                is_active=True,
+            )
+            return self._active_lease
+
+    def is_lease_valid(self, lease: BrowserLease) -> bool:
+        return lease.is_valid(self._current_generation)
+
+
 @dataclass(frozen=True)
 class FlowSessionResult:
     status: str
     cdp_port: int
     launched_batch: bool
     blocker: str | None = None
+    lease: BrowserLease | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        if self.lease:
+            data["lease_id"] = self.lease.lease_id
+            data["generation"] = self.lease.generation
+        return data
 
 
 @dataclass(frozen=True)
@@ -115,8 +187,10 @@ async def connect_flow_browser(
 ) -> tuple[Any, FlowSessionResult]:
     """Attach to CDP, starting the repository batch only when CDP is absent."""
     config = config or FlowBootstrapConfig.from_environment()
+    lease_mgr = BrowserLeaseManager.get_instance()
     try:
-        return await _connect_once(connect), FlowSessionResult("cdp_connected", config.cdp_port, False)
+        lease = await lease_mgr.acquire_lease(config.cdp_port)
+        return await _connect_once(connect), FlowSessionResult("cdp_connected", config.cdp_port, False, lease=lease)
     except Exception as first_error:
         if config.dry_run or not config.allow_autostart:
             raise FlowSessionError(
@@ -132,7 +206,8 @@ async def connect_flow_browser(
             ) from first_error
         async with _LAUNCH_LOCK:
             try:
-                return await _connect_once(connect), FlowSessionResult("cdp_connected", config.cdp_port, False)
+                lease = await lease_mgr.acquire_lease(config.cdp_port)
+                return await _connect_once(connect), FlowSessionResult("cdp_connected", config.cdp_port, False, lease=lease)
             except Exception:
                 if launch is None:
                     launch = _launch_batch
@@ -141,7 +216,8 @@ async def connect_flow_browser(
             while time.monotonic() < deadline:
                 try:
                     browser = await _connect_once(connect)
-                    return browser, FlowSessionResult("batch_launched", config.cdp_port, True)
+                    lease = await lease_mgr.acquire_lease(config.cdp_port)
+                    return browser, FlowSessionResult("batch_launched", config.cdp_port, True, lease=lease)
                 except Exception:
                     await asyncio.sleep(config.poll_interval)
         raise FlowSessionError(

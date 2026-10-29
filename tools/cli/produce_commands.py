@@ -29,6 +29,7 @@ if str(_ROOT / "engine") not in sys.path:
 
 from engine.flow_bridge import execute_grok_flow_production, sanitize_slug
 from engine.providers.llm.grok import GrokLLMProvider
+from engine.services.continuity import EpisodeHandoff, apply_handoff_to_scenes
 from engine.services.series_architect import generate_rigor_mortis_episode_01_scenes
 from engine.services.text_sanitizer import sanitize_spoken_text
 from engine.services.universal_narrative import (
@@ -111,6 +112,8 @@ def produce_film(
     hero_plate: Optional[str] = typer.Option(None, "--hero-plate", help="Path to character hero plate image for continuity QA"),
     rebuild: bool = typer.Option(False, "--rebuild", "-r", help="Bypass cached handoff and re-generate canonical 3-act UDSE screenplay"),
     director_mode: bool = typer.Option(True, "--director-mode/--no-director-mode", help="Enable Grok 4.6 Autonomous Director Engine with UDSE v4.2"),
+    episode: int = typer.Option(1, "--episode", help="Episode number in series (default: 1)"),
+    continue_from: Optional[str] = typer.Option(None, "--continue-from", help="Directory or path to previous episode continuity handoff to thaw state"),
 ) -> None:
     """Produce a complete cinematic film: Grok Studio AI Brain -> Flow CDP Video -> Voice Provider -> FFmpeg Assembly."""
     slug = sanitize_slug(title)
@@ -192,10 +195,23 @@ def produce_film(
     for sc in scenes:
         sc["narration"] = sanitize_spoken_text(sc.get("narration", ""))
 
+    # Thaw continuity if continuing from a previous episode (ADR-090 Standard)
+    if continue_from:
+        cont_path = Path(continue_from)
+        handoff_file = cont_path if cont_path.is_file() else (cont_path / "episode_handoff.json")
+        if handoff_file.is_file():
+            try:
+                thawed_handoff = EpisodeHandoff.thaw(handoff_file)
+                scenes = apply_handoff_to_scenes(scenes, thawed_handoff)
+                console.print(f"  [green]+ Thawed EpisodeHandoff from Episode {thawed_handoff.from_episode} (Hash: {thawed_handoff.continuity_hash[:10]}...)[/green]")
+            except Exception as exc:
+                console.print(f"  [yellow]Notice: Could not thaw EpisodeHandoff from {handoff_file}: {exc}[/yellow]")
+
     # Save handoff packet
     handoff_packet = {
         "title": title,
         "genre": genre,
+        "episode": episode,
         "duration": duration,
         "aspect": aspect,
         "scenes": scenes,
@@ -248,6 +264,7 @@ def produce_film(
             voice_provider=voice_provider,
             hero_plate_path=resolved_hero_plate,
             director_mode=director_mode,
+            episode_num=episode,
         ))
         console.print(Panel(
             f"[bold green][DONE] Film Successfully Produced![/bold green]\n\n"
