@@ -56,6 +56,7 @@ ROOT_MAP: dict[str, str] = {
     "grok": "Health",
     "create-bible": "Produce",
     "produce-film": "Produce",
+    "test-continuity": "Produce",
     "generate-prompt": "Produce",
     "dna": "Produce",
     "sequence": "Produce",

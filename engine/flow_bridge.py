@@ -38,7 +38,11 @@ from providers.factory import (
     get_voice_provider,
 )
 from services.audio_bed import generate_audio_bed
-from services.boundary_inspector import extract_video_frame, inspect_transition_boundary
+from services.boundary_inspector import (
+    BoundaryQAReport,
+    extract_video_frame,
+    inspect_transition_boundary,
+)
 from services.continuity import (
     build_continuity_prompt_suffix,
     load_series_continuity,
@@ -86,13 +90,18 @@ def synthesize_dry_run_audio(out_wav: Path, duration: float = 16.0) -> None:
     subprocess.run(cmd, check=True)
 
 
-def synthesize_dry_run_video_block(out_mp4: Path, duration: float = 4.0, aspect: str = "16:9") -> None:
+def synthesize_dry_run_video_block(
+    out_mp4: Path,
+    duration: float = 4.0,
+    aspect: str = "16:9",
+    color: str = "black",
+) -> None:
     """Generate dry-run video block fixture using local FFmpeg lavfi color."""
     ffmpeg = config.resolve_ffmpeg()
     dims = "1920x1080" if aspect == "16:9" else "1080x1920"
     cmd = [
         ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
-        "-f", "lavfi", "-i", f"color=c=black:s={dims}:r=30",
+        "-f", "lavfi", "-i", f"color=c={color}:s={dims}:r=30",
         "-t", f"{duration:.3f}",
         "-pix_fmt", "yuv420p",
         "-c:v", "libx264",
@@ -141,6 +150,7 @@ async def execute_grok_flow_production(
     hero_plate_path: Path | None = None,
     director_mode: bool = True,
     episode_num: int = 1,
+    simulate_defect_block: int | None = None,
 ) -> Path:
     """Take Grok Studio planned scenes and execute full physical render with Flow + Voice + FFmpeg."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -216,65 +226,59 @@ async def execute_grok_flow_production(
     logger.info(f"[2/3] Generating {len(aligned_scenes)} dynamic video blocks (durations: {[s['duration'] for s in aligned_scenes]}) via Flow CDP...")
 
     block_paths: list[Path] = []
-    if dry_run:
-        for i, sc in enumerate(aligned_scenes, 1):
-            block_file = out_dir / "blocks" / f"block_{i:02d}.mp4"
-            dur = float(sc.get("duration", block_duration))
-            synthesize_dry_run_video_block(block_file, duration=dur, aspect=aspect_ratio)
-            
-            # Cross-block transition inspection
-            if len(block_paths) >= 1:
-                qa_report = await inspect_transition_boundary(
-                    hero_plate_path=hero_plate_path,
-                    block_n_video=block_paths[-1],
-                    block_n_plus_1_video=block_file,
-                    dry_run=True,
-                )
-                logger.info(
-                    f"Transition Boundary QA [Block {i-1} -> {i}]: score={qa_report.continuity_score:.2f} "
-                    f"({qa_report.inspected_by}, passed={qa_report.passed})"
-                )
-            block_paths.append(block_file)
+    # Unified Video Block Generation & Transition Boundary QA (Dry-run & Live parity)
+    import cv2
+    video_prov = None if dry_run else get_video_provider("playwright_flow")
+    slug = sanitize_slug(project_title)
+    if slug == "project-rigor-mortis-episode-01":
+        world_state = build_canonical_rigor_mortis_world_state()
     else:
-        import cv2
-        video_prov = get_video_provider("playwright_flow")
-        slug = sanitize_slug(project_title)
-        if slug == "project-rigor-mortis-episode-01":
-            world_state = build_canonical_rigor_mortis_world_state()
-        else:
-            world_state = WorldState(project_id=slug)
+        world_state = WorldState(project_id=slug)
 
-        for i, sc in enumerate(aligned_scenes, 1):
-            block_file = out_dir / "blocks" / f"block_{i:02d}.mp4"
-            dur = float(sc.get("duration", block_duration))
-            vp = str(sc.get("visual_prompt", "")).strip()
-            mp = str(sc.get("motion_prompt", "")).strip()
-            # Compile with UDSE v4.3 and active Visibility Gating
-            compiled_vp = compile_udse_prompt(
-                visual_prompt=vp,
-                world_state=world_state,
-                shot_spec=sc,
-            ) if vp else ""
-            full_prompt = f"{compiled_vp}. {mp}" if compiled_vp else mp
+    for i, sc in enumerate(aligned_scenes, 1):
+        block_file = out_dir / "blocks" / f"block_{i:02d}.mp4"
+        dur = float(sc.get("duration", block_duration))
+        vp = str(sc.get("visual_prompt", "")).strip()
+        mp = str(sc.get("motion_prompt", "")).strip()
+        # Compile with UDSE v4.3 and active Visibility Gating
+        compiled_vp = compile_udse_prompt(
+            visual_prompt=vp,
+            world_state=world_state,
+            shot_spec=sc,
+        ) if vp else ""
+        full_prompt = f"{compiled_vp}. {mp}" if compiled_vp else mp
 
-            if block_file.is_file() and block_file.stat().st_size > 10000:
-                logger.info(f"Block {i}/{len(aligned_scenes)} already rendered -> reusing: {block_file.name}")
-                block_paths.append(block_file)
-                continue
+        if simulate_defect_block is not None and i == simulate_defect_block:
+            block_file.unlink(missing_ok=True)
 
-            # Extract exit-frame from previous block for abra_i2v temporal pixel lock
-            start_frame_path: Path | None = None
-            if block_paths and block_paths[-1].is_file():
-                exit_img = extract_video_frame(block_paths[-1], position="last")
-                if exit_img is not None:
-                    kf_path = out_dir / "keyframes" / f"exit_frame_b{i-1:02d}.jpg"
-                    cv2.imwrite(str(kf_path), exit_img)
-                    start_frame_path = kf_path
-                    logger.info(f"Conditioning Block {i} on previous block exit frame: {kf_path.name}")
+        if block_file.is_file() and block_file.stat().st_size > 1000:
+            logger.info(f"Block {i}/{len(aligned_scenes)} already rendered -> reusing: {block_file.name}")
+            block_paths.append(block_file)
+            continue
 
-            max_retries = 3
-            for attempt in range(1, max_retries + 1):
-                try:
+        # Extract exit-frame from previous block for abra_i2v temporal pixel lock
+        start_frame_path: Path | None = None
+        if block_paths and block_paths[-1].is_file():
+            exit_img = extract_video_frame(block_paths[-1], position="last")
+            if exit_img is not None:
+                kf_path = out_dir / "keyframes" / f"exit_frame_b{i-1:02d}.jpg"
+                cv2.imwrite(str(kf_path), exit_img)
+                start_frame_path = kf_path
+                logger.info(f"Conditioning Block {i} on previous block exit frame: {kf_path.name}")
+
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                is_defect_attempt = bool(
+                    simulate_defect_block is not None
+                    and i == simulate_defect_block
+                    and attempt == 1
+                )
+
+                if dry_run:
+                    color = "red" if is_defect_attempt else "black"
+                    synthesize_dry_run_video_block(block_file, duration=dur, aspect=aspect_ratio, color=color)
+                else:
                     logger.info(f"Rendering block {i}/{len(aligned_scenes)} (attempt {attempt}/{max_retries}) via Flow: {full_prompt[:60]}...")
                     await video_prov.animate_block(
                         start_frame=start_frame_path,
@@ -283,63 +287,80 @@ async def execute_grok_flow_production(
                         out_path=block_file,
                         duration=dur,
                     )
-                    if block_file.is_file() and block_file.stat().st_size > 10000:
-                        # Inspect transition boundary with previous block
-                        if len(block_paths) >= 1:
+
+                if block_file.is_file() and block_file.stat().st_size > 1000:
+                    # Inspect transition boundary with previous block
+                    if len(block_paths) >= 1:
+                        if is_defect_attempt:
+                            qa_rep = BoundaryQAReport(
+                                continuity_score=0.42,
+                                passed=False,
+                                violations=[
+                                    "Ontology break: E_DOOR_01 solid oak slab transformed into transparent glass window",
+                                    "180-degree camera axis break and palette mutation",
+                                ],
+                                corrective_prompt="Lock E_DOOR_01 as solid opaque oak slab, zero glass panels",
+                                inspected_by="simulated_continuity_defect",
+                            )
+                        else:
                             qa_rep = await inspect_transition_boundary(
                                 hero_plate_path=hero_plate_path,
                                 block_n_video=block_paths[-1],
                                 block_n_plus_1_video=block_file,
+                                dry_run=dry_run,
                             )
-                            logger.info(
-                                f"Transition Boundary QA [Block {i-1} -> {i}]: score={qa_rep.continuity_score:.2f} "
-                                f"({qa_rep.inspected_by}, passed={qa_rep.passed})"
-                            )
-                            if not qa_rep.passed and director_mode:
-                                # Dynamically resolve target entity
-                                target_entity_id = sc.get("focus_entity") or sc.get("entity_id")
-                                if not target_entity_id:
-                                    for eid in world_state.entities:
-                                        if eid.lower() in str(qa_rep.violations).lower() or eid.lower() in sc.get("visual_prompt", "").lower():
-                                            target_entity_id = eid
-                                            break
-                                if not target_entity_id:
-                                    target_entity_id = next(iter(world_state.entities.keys()), "E_HERO_01")
 
-                                delta = evaluate_visual_delta(
-                                    entity_id=target_entity_id,
-                                    before_desc=aligned_scenes[i - 2].get("visual_prompt", ""),
-                                    after_desc=sc.get("visual_prompt", ""),
-                                    continuity_score=qa_rep.continuity_score,
-                                    violations=qa_rep.violations,
-                                )
-                                action = arbitrate_decision(delta, world_state, current_attempt=attempt)
-                                if action.decision == DirectorDecision.HEAL and attempt <= action.max_heal_attempts:
-                                    logger.warning(f"Director Agent: HEAL triggered ({action.reason}). Corrective: {action.corrective_prompt}")
-                                    heal_parts = [action.corrective_prompt]
-                                    if action.scoped_negatives:
-                                        heal_parts.append(f"Avoid: {', '.join(action.scoped_negatives)}")
-                                    if action.reframe_strategy in ("tighter_mcu", "insert"):
-                                        reframe_prefix = f"Tight medium close-up shot focusing directly on {target_entity_id}. "
-                                        full_prompt = f"{reframe_prefix}{full_prompt}. {'. '.join(heal_parts)}"
-                                    else:
-                                        full_prompt = f"{full_prompt}. {'. '.join(heal_parts)}"
-                                    block_file.unlink(missing_ok=True)
-                                    continue
-                                elif action.decision == DirectorDecision.CANONIZE:
-                                    logger.info(f"Director Agent: CANONIZING emergent visual ({action.reason}).")
-                                    commit_canon_delta(world_state, delta)
-                        break
-                except Exception as exc:
-                    logger.warning(f"Block {i} attempt {attempt} failed: {exc}")
-                    state_dir = block_file.parent / f"{block_file.stem}.flow-state"
-                    if state_dir.is_dir():
-                        shutil.rmtree(state_dir, ignore_errors=True)
-                    if attempt == max_retries:
-                        raise
+                        heal_suffix = " [HEAL VERIFIED]" if attempt > 1 and qa_rep.passed else ""
+                        logger.info(
+                            f"Transition Boundary QA [Block {i-1} -> {i}]: score={qa_rep.continuity_score:.2f} "
+                            f"({qa_rep.inspected_by}, passed={qa_rep.passed}){heal_suffix}"
+                        )
+
+                        if not qa_rep.passed and director_mode:
+                            # Dynamically resolve target entity
+                            target_entity_id = sc.get("focus_entity") or sc.get("entity_id")
+                            if not target_entity_id:
+                                for eid in world_state.entities:
+                                    if eid.lower() in str(qa_rep.violations).lower() or eid.lower() in sc.get("visual_prompt", "").lower():
+                                        target_entity_id = eid
+                                        break
+                            if not target_entity_id:
+                                target_entity_id = next(iter(world_state.entities.keys()), "E_HERO_01")
+
+                            delta = evaluate_visual_delta(
+                                entity_id=target_entity_id,
+                                before_desc=aligned_scenes[i - 2].get("visual_prompt", ""),
+                                after_desc=sc.get("visual_prompt", ""),
+                                continuity_score=qa_rep.continuity_score,
+                                violations=qa_rep.violations,
+                            )
+                            action = arbitrate_decision(delta, world_state, current_attempt=attempt)
+                            if action.decision == DirectorDecision.HEAL and attempt <= action.max_heal_attempts:
+                                logger.warning(f"Director Agent: HEAL triggered ({action.reason}). Corrective: {action.corrective_prompt}")
+                                heal_parts = [action.corrective_prompt]
+                                if action.scoped_negatives:
+                                    heal_parts.append(f"Avoid: {', '.join(action.scoped_negatives)}")
+                                if action.reframe_strategy in ("tighter_mcu", "insert"):
+                                    reframe_prefix = f"Tight medium close-up shot focusing directly on {target_entity_id}. "
+                                    full_prompt = f"{reframe_prefix}{full_prompt}. {'. '.join(heal_parts)}"
+                                else:
+                                    full_prompt = f"{full_prompt}. {'. '.join(heal_parts)}"
+                                block_file.unlink(missing_ok=True)
+                                continue
+                            elif action.decision == DirectorDecision.CANONIZE:
+                                logger.info(f"Director Agent: CANONIZING emergent visual ({action.reason}).")
+                                commit_canon_delta(world_state, delta)
+                    break
+            except Exception as exc:
+                logger.warning(f"Block {i} attempt {attempt} failed: {exc}")
+                state_dir = block_file.parent / f"{block_file.stem}.flow-state"
+                if state_dir.is_dir():
+                    shutil.rmtree(state_dir, ignore_errors=True)
+                if attempt == max_retries:
+                    raise
+                if not dry_run:
                     await asyncio.sleep(4.0 * attempt)
-            block_paths.append(block_file)
-
+        block_paths.append(block_file)
     # Step 3: FFmpeg Assembly, Dual-Stage SFX & Foley Bed, Karaoke Subtitles
     logger.info("[3/3] Mixing broadcast audio bed, procedural SFX foley, and subtitles with FFmpeg...")
     target_len = round(measured_duration + config.TAIL_HOLD, 3)
