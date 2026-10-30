@@ -134,18 +134,6 @@ python tools/cinematic_studio_cli.py produce-film "Project Rigor Mortis Episode 
   --voice-provider deepgram
 ```
 
-#### D. Testing Visual Continuity QA Failure & HEAL Re-Roll Loop
-```powershell
-# Instant self-verifying test of Transition Boundary QA failure -> Director Agent HEAL -> Re-roll
-python tools/cinematic_studio_cli.py test-continuity
-
-# Or simulate defect on block 2 in full film production:
-python tools/cinematic_studio_cli.py produce-film "Project Rigor Mortis Episode 01" `
-  --duration 40 `
-  --simulate-defect-block 2 `
-  --dry-run
-```
-
 Output files will be generated under `out/<project-slug>/`:
 - `final_film.mp4`: Final broadcast master video.
 - `series_bible.json`: Structured 25-agent production bible.

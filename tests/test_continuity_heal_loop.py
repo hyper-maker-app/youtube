@@ -159,13 +159,3 @@ def test_continuity_heal_loop_execution():
         handoff = out_dir / "episode_handoff.json"
         assert cont_state.is_file(), "Continuity state must be persisted"
         assert handoff.is_file(), "Episode handoff must be frozen"
-
-
-def test_cli_test_continuity_command():
-    """Verify that the user-facing CLI command 'test-continuity' runs cleanly with exit code 0."""
-    result = runner.invoke(app, ["test-continuity"])
-    assert result.exit_code == 0, f"Command failed with output: {result.output}"
-    assert "Visual Continuity Healing Gateway" in result.output
-    assert "Continuity Healing Verified" in result.output
-    assert "Visual Continuity Failure" in result.output
-    assert "HEAL VERIFIED" in result.output
