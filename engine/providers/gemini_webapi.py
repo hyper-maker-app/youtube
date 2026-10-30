@@ -118,7 +118,7 @@ def ensure_server_running(cdp_port: int = 9223, force_refresh: bool = False) -> 
     raise RuntimeError(f"gemini-web2api failed to start on port {PORT} within timeout")
 
 
-def _post_with_retry(payload: dict[str, Any], timeout: float = 6.0) -> dict[str, Any]:
+def _post_with_retry(payload: dict[str, Any], timeout: float = 60.0) -> dict[str, Any]:
     """Execute chat completion request with automatic cookie re-sync and daemon restart on failure."""
     ensure_server_running()
 
@@ -142,7 +142,7 @@ def call_gemini_vision(
     images: list[Path | str],
     *,
     model: str = "gemini-3.5-flash-lite",
-    timeout: float = 6.0,
+    timeout: float = 60.0,
 ) -> str:
     """Send sampled video/image frames and prompt to local Gemini Pro/Flash endpoint."""
     content_parts: list[dict[str, Any]] = [{"type": "text", "text": prompt}]

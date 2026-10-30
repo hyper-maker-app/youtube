@@ -189,8 +189,8 @@ async def inspect_transition_boundary(
                 )
                 sidecar_model = "gemini-3.5-flash-lite" if "flash-lite" in gemini_model or "3.5" in gemini_model else "gemini-3.5-flash-lite"
                 raw_json = await asyncio.wait_for(
-                    asyncio.to_thread(call_gemini_vision, prompt, [tmp_path], model=sidecar_model),
-                    timeout=20.0,
+                    asyncio.to_thread(call_gemini_vision, prompt, [tmp_path], model=sidecar_model, timeout=60.0),
+                    timeout=75.0,
                 )
                 cleaned = raw_json.strip()
                 if cleaned.startswith("```"):
