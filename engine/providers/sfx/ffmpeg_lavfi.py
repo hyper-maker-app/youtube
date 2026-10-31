@@ -21,7 +21,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-import config
+try:
+    from engine import config
+except ImportError:
+    import config
 from providers.base import BaseSfxProvider, ProviderError
 
 logger = logging.getLogger(__name__)
@@ -57,7 +60,42 @@ class FFmpegLavfiSfxProvider(BaseSfxProvider):
 
         # Determine sound archetype from prompt or tags
         combined = f"{prompt} {' '.join(tags)}"
-        if any(w in combined for w in ("whoosh", "swoosh", "transition", "whip", "swipe")):
+        if any(w in combined for w in ("explosion", "explode", "blast", "detonation", "shockwave", "magma blast")):
+            recipe = "explosion"
+            fade_dur = max(0.5, duration - 0.05)
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=pink:r=48000,"
+                f"lowpass=f=220,"
+                f"afade=t=out:st=0.05:d={fade_dur:.3f}:curve=exp,"
+                f"volume=2.2,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("tsunami", "water", "flood", "surge", "tidal wave", "ocean wave")):
+            recipe = "tsunami_water"
+            fade_dur = max(0.4, duration - 0.2)
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=brown:r=48000,"
+                f"lowpass=f=450,"
+                f"volume='if(lt(t,1.0),t*1.5,1.5)':eval=frame,"
+                f"afade=t=out:st={max(0.1, duration - 0.4):.3f}:d=0.4:curve=exp,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("alarm", "siren", "klaxon", "warning", "alert", "emergency")):
+            recipe = "alarm_siren"
+            filter_expr = (
+                f"sine=frequency=880:duration={duration:.3f}:sample_rate=48000,"
+                f"volume='if(lt(mod(t,0.8),0.4),1.5,0.2)':eval=frame,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("earthquake", "rumble", "tectonic", "seismic", "tremor", "fault line")):
+            recipe = "earthquake_rumble"
+            filter_expr = (
+                f"sine=frequency=42:duration={duration:.3f}:sample_rate=48000,"
+                f"volume='1.6+0.4*sin(2*PI*t/1.5)':eval=frame,"
+                f"lowpass=f=90,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("whoosh", "swoosh", "transition", "whip", "swipe")):
             recipe = "whoosh"
             filter_expr = (
                 f"anoisesrc=d={duration:.3f}:c=pink:r=48000,"
@@ -115,6 +153,62 @@ class FFmpegLavfiSfxProvider(BaseSfxProvider):
                 f"anoisesrc=d={duration:.3f}:c=brown:r=48000,"
                 f"lowpass=f=260,"
                 f"volume='0.6+0.35*sin(2*PI*t/3.0)':eval=frame,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("debris", "rubble", "collapse", "rockfall", "crumble", "stone", "masonry")):
+            recipe = "debris_crumble"
+            fade_dur = max(0.3, duration - 0.1)
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=pink:r=48000,"
+                f"bandpass=f=380:w=1.8,"
+                f"volume='if(lt(mod(t,0.22),0.11),1.6,0.3)':eval=frame,"
+                f"afade=t=out:st=0.1:d={fade_dur:.3f}:curve=exp,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("creak", "hull", "metal groan", "bunker door", "bulkhead", "strain")):
+            recipe = "hull_creak"
+            fade_dur = max(0.4, duration - 0.2)
+            filter_expr = (
+                f"sine=frequency=140:duration={duration:.3f}:sample_rate=48000,"
+                f"volume='1.2+0.5*sin(2*PI*t/0.7)':eval=frame,"
+                f"lowpass=f=320,"
+                f"afade=t=out:st=0.2:d={fade_dur:.3f}:curve=exp,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("pyroclastic", "ash storm", "volcano wind", "fiery gale", "lava wind")):
+            recipe = "pyroclastic_wind"
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=brown:r=48000,"
+                f"bandpass=f=420:w=2.2,"
+                f"volume='1.2+0.6*sin(2*PI*t/1.8)':eval=frame,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("geiger", "radiation", "isotope", "dosimeter", "radioactive", "click")):
+            recipe = "geiger_click"
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=white:r=48000,"
+                f"highpass=f=3200,"
+                f"volume='if(lt(mod(t,0.14),0.02),2.4,0.0)':eval=frame,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("torrent", "deluge", "dam break", "rushing water", "flash flood")):
+            recipe = "water_rush"
+            fade_dur = max(0.4, duration - 0.2)
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=brown:r=48000,"
+                f"lowpass=f=650,"
+                f"volume='if(lt(t,0.8),t*2.0,1.6)':eval=frame,"
+                f"afade=t=out:st={max(0.1, duration - 0.4):.3f}:d=0.4:curve=exp,"
+                f"aformat=sample_rates=48000:channel_layouts=stereo"
+            )
+        elif any(w in combined for w in ("glass", "shatter", "window breach", "pane crack", "shards")):
+            recipe = "glass_shatter"
+            fade_dur = max(0.2, duration - 0.05)
+            filter_expr = (
+                f"anoisesrc=d={duration:.3f}:c=white:r=48000,"
+                f"highpass=f=4500,"
+                f"afade=t=out:st=0.04:d={fade_dur:.3f}:curve=exp,"
+                f"volume=1.9,"
                 f"aformat=sample_rates=48000:channel_layouts=stereo"
             )
         else:

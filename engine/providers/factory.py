@@ -4,7 +4,7 @@ Only active, verified providers are registered:
 - LLM: grok, gemini_flash
 - Video: playwright_flow
 - Image: playwright_flow
-- Voice: deepgram
+- Voice: deepgram, voyslity, elevenlabs, azure
 - SFX: local_manifest, mmaudio
 """
 
@@ -123,7 +123,7 @@ def _register_llm_adapters() -> None:
 
 
 def _register_voice_adapter(name: str) -> None:
-    """Register active voice adapter (deepgram, voyslity, elevenlabs)."""
+    """Register active voice adapter (deepgram, voyslity, elevenlabs, azure)."""
     selected = ProviderFactory._normalize(name)
     if selected == "deepgram" and selected not in voice_providers.registered_names:
         from .voice.deepgram_aura import DeepgramAuraProvider
@@ -139,6 +139,10 @@ def _register_voice_adapter(name: str) -> None:
         from .voice.voyslity_english import VoyslityEnglishVoiceProvider
 
         voice_providers.register(selected, VoyslityEnglishVoiceProvider)
+    elif selected in {"azure", "azure_neural", "azure_speech", "azure_tts"} and selected not in voice_providers.registered_names:
+        from .voice.azure_neural import AzureNeuralVoiceProvider
+
+        voice_providers.register(selected, AzureNeuralVoiceProvider)
 
 
 def _register_image_adapter(name: str) -> None:
@@ -217,7 +221,15 @@ def get_video_provider(name: str | None = None, **kwargs: Any) -> BaseVideoProvi
 def get_sfx_provider(name: str | None = None, **kwargs: Any) -> BaseSfxProvider:
     """Return the explicitly selected SFX catalogue."""
     _load_project_env()
-    selected = name or os.getenv("SFX_PROVIDER", "local_manifest")
+    selected = name or os.getenv("SFX_PROVIDER", "gradio_space")
     if selected:
         _register_sfx_adapter(selected)
     return sfx_providers.create(name, **kwargs)
+
+
+# Pre-register standard voice adapters so registered_names reflects available providers
+try:
+    _register_voice_adapter("azure")
+except Exception:
+    pass
+

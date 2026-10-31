@@ -56,6 +56,15 @@ This workspace is designed for advanced **Grok 4.5** agent workflows, with heavy
 > 3. **No Orphan Image Generations:** If character hero plates or concept art are generated, DO NOT leave them abandoned in chat artifacts. They MUST be saved into `characters/<character_slug>_hero.jpg` and linked into `sequences/<project>_handoff.json` as visual references for Google Flow CDP.
 > 4. **Never Confuse "Flow":** When the user asks to produce via "Flow", they mean the Google Flow CDP factory (`engine/flow_bridge.py`), NEVER generic ComfyUI or standalone Grok Imagine web prompts.
 
+## PURE ENGINE INVARIANT: ZERO HARDCODED DIRECTIVES IN ENGINES (CRITICAL)
+
+> [!IMPORTANT]
+> **ZERO HARDCODE IN ENGINES & ABSOLUTE SKILL AUTONOMY**:
+> Python engines (`engine/`, `tools/`) MUST NEVER hardcode creative narrative text, visual styles, camera instructions, timeline scales, or negative prompts in Python strings.
+> 1. **All Intelligence in `.grok/skills/`:** Every directing rule, 5-stage timeline progression, thermodynamic phase standard, Veo negative guard, and CTA policy lives strictly in `.grok/skills/*.md`.
+> 2. **Engines are Pure Pipelines:** `SkillLoader` and narrative services are pure execution pipelines (I/O, formatting, schema enforcement, API calls).
+> 3. **Nothing Overrides Skills:** No Python code may override, hard-wrap, or shadow directives defined in the Markdown skill files or reference guides.
+
 ## Directory Structure
 
 ```

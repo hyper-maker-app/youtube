@@ -84,6 +84,16 @@ Both paths share the same Ultimate Template discipline and DNA injection rules.
 
 "masterpiece, best quality, ultra-detailed, intricate details, sharp focus, 8K UHD, HDR10, volumetric lighting, global illumination, ray tracing, subsurface scattering, film grain, cinematic color grading, trending on ArtStation, award-winning"
 
+## Negative Prompt Discipline & AI Video Guardrails
+
+Always inject these universal AI video negative guards to prevent common synthesis deformities:
+
+1. **Mirror Deformity Ban:** Zero mirror facial reflections or glass surface face duplicates (causes melted facial geometry in video generators).
+2. **Display Typography Ban:** Zero readable alphanumeric characters, digital clock numbers, or smartphone/gauge UI text.
+3. **Baked-in Graphic Ban:** Zero text watermarks, 2D titles, channel logos, lower-thirds, or banner overlays inside video prompt text.
+4. **Universal Video Negative String:**
+   `"worst quality, normal quality, low quality, low res, blurry, distorted face, asymmetric eyes, melted face, duplicate faces, mirror reflection face, readable digital text on phone screen, legible numbers on digital display, baked-in subtitles, watermark, logo, cartoonish, 3d render plastic look"`
+
 ## Core Responsibilities
 
 - Translate creative and emotional intent into precise, optimized Grok Imagine prompts

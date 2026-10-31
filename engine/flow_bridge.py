@@ -40,8 +40,15 @@ from providers.factory import (
 from services.audio_bed import generate_audio_bed
 from services.boundary_inspector import (
     BoundaryQAReport,
+    TRANSITION_SCORE_THRESHOLD,
     extract_video_frame,
     inspect_transition_boundary,
+    write_qa_report,
+)
+from services.sfx_categorizer import (
+    SfxCategoryMatch,
+    auto_categorize_scene_sfx,
+    extract_sfx_category,
 )
 from services.continuity import (
     build_continuity_prompt_suffix,
@@ -146,7 +153,7 @@ async def execute_grok_flow_production(
     no_captions: bool = False,
     block_duration: float = 6.0,
     voice_provider: str = "deepgram",
-    sfx_provider: str = "ffmpeg_lavfi",
+    sfx_provider: str | None = None,
     hero_plate_path: Path | None = None,
     director_mode: bool = True,
     episode_num: int = 1,
@@ -226,6 +233,7 @@ async def execute_grok_flow_production(
     logger.info(f"[2/3] Generating {len(aligned_scenes)} dynamic video blocks (durations: {[s['duration'] for s in aligned_scenes]}) via Flow CDP...")
 
     block_paths: list[Path] = []
+    qa_evaluations: list[dict[str, Any]] = []
     # Unified Video Block Generation & Transition Boundary QA (Dry-run & Live parity)
     import cv2
     video_prov = None if dry_run else get_video_provider("playwright_flow")
@@ -253,6 +261,25 @@ async def execute_grok_flow_production(
 
         if block_file.is_file() and block_file.stat().st_size > 1000:
             logger.info(f"Block {i}/{len(aligned_scenes)} already rendered -> reusing: {block_file.name}")
+            if len(block_paths) >= 1:
+                qa_rep = await inspect_transition_boundary(
+                    hero_plate_path=hero_plate_path,
+                    block_n_video=block_paths[-1],
+                    block_n_plus_1_video=block_file,
+                    dry_run=dry_run,
+                )
+                qa_evaluations.append({
+                    "transition": f"Block {i-1:02d} -> Block {i:02d}",
+                    "from_block": block_paths[-1].name,
+                    "to_block": block_file.name,
+                    "attempt": 1,
+                    "continuity_score": round(float(qa_rep.continuity_score), 3),
+                    "passed": bool(qa_rep.passed),
+                    "threshold": TRANSITION_SCORE_THRESHOLD,
+                    "violations": list(qa_rep.violations),
+                    "corrective_prompt": str(qa_rep.corrective_prompt),
+                    "inspected_by": str(qa_rep.inspected_by),
+                })
             block_paths.append(block_file)
             continue
 
@@ -310,6 +337,19 @@ async def execute_grok_flow_production(
                                 dry_run=dry_run,
                             )
 
+                        qa_evaluations.append({
+                            "transition": f"Block {i-1:02d} -> Block {i:02d}",
+                            "from_block": block_paths[-1].name if block_paths else None,
+                            "to_block": block_file.name,
+                            "attempt": attempt,
+                            "continuity_score": round(float(qa_rep.continuity_score), 3),
+                            "passed": bool(qa_rep.passed),
+                            "threshold": TRANSITION_SCORE_THRESHOLD,
+                            "violations": list(qa_rep.violations),
+                            "corrective_prompt": str(qa_rep.corrective_prompt),
+                            "inspected_by": str(qa_rep.inspected_by),
+                        })
+
                         heal_suffix = " [HEAL VERIFIED]" if attempt > 1 and qa_rep.passed else ""
                         logger.info(
                             f"Transition Boundary QA [Block {i-1} -> {i}]: score={qa_rep.continuity_score:.2f} "
@@ -361,6 +401,22 @@ async def execute_grok_flow_production(
                 if not dry_run:
                     await asyncio.sleep(4.0 * attempt)
         block_paths.append(block_file)
+
+    # Write visual transition QA report (including any failed transition logs)
+    qa_report_path = out_dir / "qa_report.json"
+    failed_transitions = [r for r in qa_evaluations if not r.get("passed")]
+    qa_summary = {
+        "project_title": project_title,
+        "threshold": TRANSITION_SCORE_THRESHOLD,
+        "total_transitions_inspected": len(qa_evaluations),
+        "passed_count": len(qa_evaluations) - len(failed_transitions),
+        "failed_count": len(failed_transitions),
+        "overall_passed": len(failed_transitions) == 0,
+        "failed_transitions": failed_transitions,
+        "transitions": qa_evaluations,
+    }
+    write_qa_report(qa_summary, qa_report_path)
+    logger.info(f"Transition QA report written -> {qa_report_path} (inspected={len(qa_evaluations)}, failed={len(failed_transitions)})")
     # Step 3: FFmpeg Assembly, Dual-Stage SFX & Foley Bed, Karaoke Subtitles
     logger.info("[3/3] Mixing broadcast audio bed, procedural SFX foley, and subtitles with FFmpeg...")
     target_len = round(measured_duration + config.TAIL_HOLD, 3)
@@ -370,38 +426,32 @@ async def execute_grok_flow_production(
     sfx_cache_dir = out_dir / "audio" / "sfx"
     sfx_cache_dir.mkdir(parents=True, exist_ok=True)
     try:
-        sfx_prov = get_sfx_provider(sfx_provider or os.getenv("SFX_PROVIDER", "ffmpeg_lavfi"))
+        prov_name = "ffmpeg_lavfi" if dry_run else (sfx_provider or os.getenv("SFX_PROVIDER", "gradio_space"))
+        sfx_prov = get_sfx_provider(prov_name)
         curr_t = 0.0
         for sc_idx, sc in enumerate(aligned_scenes):
             sc_dur = float(sc.get("duration", block_duration))
-            txt = f"{sc.get('narration', '')} {sc.get('visual_prompt', '')}".lower()
-            foley_req = None
-            if any(k in txt for k in ("sonar", "ping", "submarine", "depth", "ocean", "trench")):
-                foley_req = ("abyssal submarine sonar ping", 2.0)
-            elif any(k in txt for k in ("glitch", "spark", "circuit", "cyber", "terminal", "hack", "retinal")):
-                foley_req = ("cybernetic electric glitch burst", 1.2)
-            elif any(k in txt for k in ("airlock", "vent", "steam", "hiss", "pressure", "depressuriz", "decompression", "vacuum")):
-                foley_req = ("pressurized valve airlock hiss", 1.8)
-            elif any(k in txt for k in ("metal", "blade", "sword", "clash", "portcullis", "shield", "arrow", "rampart")):
-                foley_req = ("iron metal clash impact", 1.5)
-            elif any(k in txt for k in ("slam", "door", "lock", "deadbolt", "impact", "crash", "collision")):
-                foley_req = ("sub-bass impact door slam", 1.8)
-            elif any(k in txt for k in ("whoosh", "sprint", "whip", "leap", "burst", "hatch")):
-                foley_req = ("cinematic camera whip whoosh transition", 1.5)
-            elif any(k in txt for k in ("heartbeat", "pulse", "decibel", "breath", "whisper", "creeping")):
-                foley_req = ("deep tension heartbeat pulse", 2.2)
-            elif any(k in txt for k in ("rain", "wind", "storm", "fog", "corridor", "drone", "radiation")):
-                foley_req = ("atmospheric wind drone", 2.5)
-
-            if foley_req:
-                f_prompt, f_dur = foley_req
+            category_match = extract_sfx_category(sc)
+            if category_match:
+                f_prompt = category_match.audiogen_prompt
+                f_dur = category_match.duration
+                f_cat = category_match.category
+                tags = category_match.tags
                 asset = await sfx_prov.resolve_asset(
-                    {"prompt": f_prompt, "duration": min(f_dur, sc_dur), "asset_id": f"sfx_sc{sc_idx+1:02d}"},
+                    {
+                        "prompt": f_prompt,
+                        "duration": min(f_dur, sc_dur),
+                        "asset_id": f"sfx_sc{sc_idx+1:02d}_{f_cat}",
+                        "tags": tags,
+                        "category": f_cat,
+                    },
                     cache_dir=sfx_cache_dir,
                 )
                 sfx_cues.append({
                     "cue_id": asset.get("asset_id", f"cue_{sc_idx}"),
                     "local_path": str(asset["local_path"]),
+                    "category": f_cat,
+                    "prompt": f_prompt,
                     "start": round(curr_t, 3),
                     "end": round(min(target_len, curr_t + min(f_dur, sc_dur)), 3),
                     "gain_db": -12.0,
@@ -418,8 +468,16 @@ async def execute_grok_flow_production(
             mood=mood,
             duration_seconds=measured_duration + config.TAIL_HOLD + 2.0,
             output_dir=str(out_dir / "audio"),
+            dry_run=dry_run,
         )
         music_path = Path(generated_bed)
+
+    logger.info(
+        f"[AUDIO] 3 Audio Layers Active in Final Mix:\n"
+        f"  • Layer 1 (TTS Voiceover): {voice_provider.upper()} ({measured_duration:.2f}s, {len(words)} timed words)\n"
+        f"  • Layer 2 (Background Music Bed): {music_path.name if music_path else 'None'} (-14 LUFS, TTS Sidechain Ducked)\n"
+        f"  • Layer 3 (SFX Foley): {len(sfx_cues)} cues via {sfx_prov.__class__.__name__}"
+    )
 
     captions_path: Path | None = None
     if not no_captions:
@@ -433,6 +491,20 @@ async def execute_grok_flow_production(
         )
         captions_path = out_dir / "captions.ass"
         captions_path.write_text(ass_content, encoding="utf-8")
+
+    # Render explicit broadcast 3-layer master audio track
+    master_audio_path = out_dir / "audio" / "master_audio_3layer.wav"
+    try:
+        if not dry_run and vo_path.is_file():
+            editor.mix_3_audio_layers(
+                vo_path=vo_path,
+                music_path=music_path,
+                sfx_cues=sfx_cues,
+                out_path=master_audio_path,
+                target_duration=target_len,
+            )
+    except Exception as exc:
+        logger.debug("3-layer audio track render skipped: %s", exc)
 
     final_mp4 = out_dir / "final_film.mp4"
     editor.render(
@@ -466,5 +538,36 @@ async def execute_grok_flow_production(
         world_state=world_state.to_dict() if 'world_state' in locals() and hasattr(world_state, 'to_dict') else None,
     )
 
+    # Step 4: YouTube Thumbnail Automation (Phase 4 / R4 Standard)
+    thumbnail_path = out_dir / "thumbnail.jpg"
+    try:
+        from services.thumbnail_generator import extract_climax_frame, generate_thumbnail
+
+        climax_frame_img = None
+        # Select climax video block (~72% duration mark in catastrophe/UDSE structure)
+        if block_paths:
+            climax_idx = min(len(block_paths) - 1, max(0, int(len(block_paths) * 0.72)))
+            climax_block = block_paths[climax_idx]
+            if climax_block.is_file():
+                climax_frame_img = extract_climax_frame(climax_block)
+                if climax_frame_img is not None:
+                    kf_climax = out_dir / "keyframes" / "climax_frame.jpg"
+                    climax_frame_img.convert("RGB").save(kf_climax, "JPEG")
+        elif final_mp4.is_file():
+            climax_frame_img = extract_climax_frame(final_mp4, position_ratio=0.72)
+
+        if climax_frame_img is None and hero_plate_path and hero_plate_path.is_file():
+            climax_frame_img = hero_plate_path
+
+        generate_thumbnail(
+            base_image=climax_frame_img,
+            title_text=project_title,
+            output_path=thumbnail_path,
+        )
+        logger.info(f"Generated YouTube thumbnail -> {thumbnail_path}")
+    except Exception as thumb_err:
+        logger.warning(f"Thumbnail generation notice: {thumb_err}")
+
     logger.info(f"Production successfully completed! Final film: {final_mp4}")
     return final_mp4
+

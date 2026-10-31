@@ -93,7 +93,7 @@ def test_aspect_ratio_smart_endings():
 
 
 def test_text_sanitizer_edge_cases():
-    """Verify regex stripper removes all metadata directives."""
+    """Verify regex stripper removes all metadata directives while preserving legitimate words."""
     dirty_script = (
         "Act 1: Scene 03 - [Sound of heavy sirens] You grab the wrench. "
         "(whispering) Keep your head down. Narrator: The radiation spikes [SFX: Geiger counter]."
@@ -103,6 +103,10 @@ def test_text_sanitizer_edge_cases():
     assert "[" not in clean and "]" not in clean
     assert "Act 1" not in clean
     assert "Narrator:" not in clean
+
+    # Ensure words containing 'part', 'scene', 'act' as subwords are not corrupted
+    assert sanitize_spoken_text("grey particulate fallout and radioactive particles") == "grey particulate fallout and radioactive particles"
+    assert sanitize_spoken_text("You enact the emergency protocol") == "You enact the emergency protocol"
 
 
 def test_lavfi_8_archetypes_synthesis():

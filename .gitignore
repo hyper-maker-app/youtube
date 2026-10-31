@@ -236,6 +236,11 @@ web_marketplace/attachments/
 
 # Output directories & media
 out/
+archive/
+sequences/*.json
+*.db-shm
+*.db-wal
+.agents/
 engine/.env
 *.mp4
 *.wav

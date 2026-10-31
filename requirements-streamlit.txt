@@ -1,3 +1,0 @@
-# Local Streamlit install — same stack as Streamlit Community Cloud
-# (Cloud always installs the repo-root requirements.txt)
--r requirements.txt

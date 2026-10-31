@@ -1,0 +1,153 @@
+{
+  "version": "1.0",
+  "license": "Creative Commons 0 (CC0)",
+  "assets": {
+    "explosion_01": {
+      "category": "explosion",
+      "query": "volcano eruption blast",
+      "path": "assets/sfx/explosion/explosion_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "explosion_02": {
+      "category": "explosion",
+      "query": "distant massive detonation",
+      "path": "assets/sfx/explosion/explosion_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "explosion_03": {
+      "category": "explosion",
+      "query": "shockwave thump",
+      "path": "assets/sfx/explosion/explosion_03.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "earthquake_rumble_01": {
+      "category": "earthquake_rumble",
+      "query": "deep subterranean seismic rumble",
+      "path": "assets/sfx/earthquake_rumble/earthquake_rumble_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "earthquake_rumble_02": {
+      "category": "earthquake_rumble",
+      "query": "earthquake low frequency vibration",
+      "path": "assets/sfx/earthquake_rumble/earthquake_rumble_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "tsunami_water_01": {
+      "category": "tsunami_water",
+      "query": "violent ocean surge water roar",
+      "path": "assets/sfx/tsunami_water/tsunami_water_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "tsunami_water_02": {
+      "category": "tsunami_water",
+      "query": "tidal wave wall of water crashing",
+      "path": "assets/sfx/tsunami_water/tsunami_water_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "alarm_siren_01": {
+      "category": "alarm_siren",
+      "query": "emergency klaxon air raid siren",
+      "path": "assets/sfx/alarm_siren/alarm_siren_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "alarm_siren_02": {
+      "category": "alarm_siren",
+      "query": "evacuation alarm distant wail",
+      "path": "assets/sfx/alarm_siren/alarm_siren_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "debris_crumble_01": {
+      "category": "debris_crumble",
+      "query": "building concrete collapse rubble",
+      "path": "assets/sfx/debris_crumble/debris_crumble_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "debris_crumble_02": {
+      "category": "debris_crumble",
+      "query": "shattering masonry stone fall",
+      "path": "assets/sfx/debris_crumble/debris_crumble_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "hull_creak_01": {
+      "category": "hull_creak",
+      "query": "heavy steel vault door groan",
+      "path": "assets/sfx/hull_creak/hull_creak_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "hull_creak_02": {
+      "category": "hull_creak",
+      "query": "submarine bulkhead pressure creak",
+      "path": "assets/sfx/hull_creak/hull_creak_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "pyroclastic_wind_01": {
+      "category": "pyroclastic_wind",
+      "query": "howling volcanic ash gale",
+      "path": "assets/sfx/pyroclastic_wind/pyroclastic_wind_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "pyroclastic_wind_02": {
+      "category": "pyroclastic_wind",
+      "query": "cataclysmic firestorm wind",
+      "path": "assets/sfx/pyroclastic_wind/pyroclastic_wind_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "whoosh_transition_01": {
+      "category": "whoosh_transition",
+      "query": "fast air displacement cinematic whip",
+      "path": "assets/sfx/whoosh_transition/whoosh_transition_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "whoosh_transition_02": {
+      "category": "whoosh_transition",
+      "query": "heavy low whoosh impact",
+      "path": "assets/sfx/whoosh_transition/whoosh_transition_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "metal_impact_01": {
+      "category": "metal_impact",
+      "query": "heavy steel gate slam",
+      "path": "assets/sfx/metal_impact/metal_impact_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "metal_impact_02": {
+      "category": "metal_impact",
+      "query": "shipping container collision",
+      "path": "assets/sfx/metal_impact/metal_impact_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "glass_shatter_01": {
+      "category": "glass_shatter",
+      "query": "high rise window shockwave shatter",
+      "path": "assets/sfx/glass_shatter/glass_shatter_01.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    },
+    "glass_shatter_02": {
+      "category": "glass_shatter",
+      "query": "reinforcing glass fracture",
+      "path": "assets/sfx/glass_shatter/glass_shatter_02.wav",
+      "license": "CC0",
+      "source": "curated_archive"
+    }
+  }
+}

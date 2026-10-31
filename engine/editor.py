@@ -712,6 +712,92 @@ def build_audio_filter(
         f"aformat=sample_rates={r}:channel_layouts=stereo[aout]"
     )
     return stmts
+
+
+# --------------------------------------------------------------------------------------
+# Standalone 3 Audio Layers Mix (TTS + Ducked Music + SFX Foley)
+# --------------------------------------------------------------------------------------
+
+def mix_3_audio_layers(
+    vo_path: Path | str,
+    music_path: Path | str | None,
+    sfx_cues: list[dict] | None = None,
+    out_path: Path | str | None = None,
+    target_duration: float | None = None,
+    ffmpeg: str | None = None,
+) -> Path:
+    """Explicitly assemble and render the 3 audio layers into a broadcast master audio track.
+    
+    Layers:
+      Layer 1: Spoken Voiceover (TTS)
+      Layer 2: Background Music Bed (sidechain ducked under speech, -14 LUFS normalized)
+      Layer 3: Procedural SFX Foley Cues (spatialized / timed)
+      
+    Outputs a broadcast-compliant 48 kHz stereo PCM/WAV file normalized to -14 LUFS.
+    """
+    ffmpeg_bin = ffmpeg or config.resolve_ffmpeg()
+    vo = Path(vo_path)
+    if not vo.is_file():
+        raise FileNotFoundError(f"Voiceover track not found: {vo}")
+
+    mus = Path(music_path) if music_path and Path(music_path).is_file() else None
+    have_music = mus is not None
+    sfx_cues = sfx_cues or []
+
+    if target_duration is None:
+        info = probe(vo, ffmpeg=ffmpeg_bin)
+        target_len = float(info.duration or 10.0)
+    else:
+        target_len = float(target_duration)
+
+    dest = Path(out_path) if out_path else vo.parent / "audio_3layers_master.wav"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    vo_index = 0
+    music_index = 1 if have_music else None
+    base_sfx_offset = 2 if have_music else 1
+
+    validated_sfx: list[dict] = []
+    for cue in sfx_cues:
+        c_path = Path(str(cue.get("local_path") or ""))
+        if not c_path.is_file():
+            continue
+        c_start = float(cue.get("start", 0.0))
+        c_end = float(cue.get("end", c_start + 1.0))
+        if c_end > target_len:
+            c_end = round(target_len, 3)
+        if c_end <= c_start:
+            continue
+        validated_sfx.append(dict(cue, start=c_start, end=c_end, input_index=base_sfx_offset + len(validated_sfx)))
+
+    audio_filter_stmts = build_audio_filter(
+        vo_index=vo_index,
+        music_index=music_index,
+        sfx_inputs=validated_sfx,
+    )
+    filtergraph = ";\n".join(audio_filter_stmts)
+
+    cmd = [ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-y"]
+    cmd += ["-i", str(vo)]
+    if have_music:
+        cmd += ["-i", str(mus)]
+    for cue in validated_sfx:
+        cmd += ["-i", str(cue["local_path"])]
+
+    cmd += [
+        "-filter_complex", filtergraph,
+        "-map", "[aout]",
+        "-t", f"{target_len:.3f}",
+        "-c:a", "pcm_s16le",
+        "-ar", "48000",
+        "-ac", "2",
+        str(dest),
+    ]
+
+    subprocess.run(cmd, check=True)
+    return dest
+
+
 # --------------------------------------------------------------------------------------
 
 def build_filtergraph(

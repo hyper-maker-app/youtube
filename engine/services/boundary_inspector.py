@@ -32,16 +32,82 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+TRANSITION_SCORE_THRESHOLD: float = 0.80
+
+
 @dataclass
 class BoundaryQAReport:
     """Evaluation result of cross-block visual transition."""
 
     continuity_score: float  # 0.0 to 1.0
-    passed: bool  # True if score >= 0.85
+    passed: bool  # True if score >= TRANSITION_SCORE_THRESHOLD (0.80)
     violations: list[str] = field(default_factory=list)
     corrective_prompt: str = ""
     triplet_bytes: bytes | None = None
     inspected_by: str = "opencv_histogram"
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert QA report to serializable dict without raw image bytes."""
+        return {
+            "continuity_score": round(float(self.continuity_score), 3),
+            "passed": bool(self.passed),
+            "threshold": TRANSITION_SCORE_THRESHOLD,
+            "violations": list(self.violations),
+            "corrective_prompt": str(self.corrective_prompt),
+            "inspected_by": str(self.inspected_by),
+        }
+
+
+def write_qa_report(
+    report_data: BoundaryQAReport | dict[str, Any] | list[Any],
+    output_path: Path | str,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> Path:
+    """Write visual transition QA report or failed transition logs to qa_report.json."""
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    if isinstance(report_data, BoundaryQAReport):
+        payload: dict[str, Any] = {
+            "threshold": TRANSITION_SCORE_THRESHOLD,
+            "report": report_data.to_dict(),
+            "overall_passed": report_data.passed,
+            "failed_transitions": [] if report_data.passed else [report_data.to_dict()],
+        }
+    elif isinstance(report_data, list):
+        failed = [
+            item.to_dict() if isinstance(item, BoundaryQAReport) else item
+            for item in report_data
+            if (isinstance(item, BoundaryQAReport) and not item.passed)
+            or (isinstance(item, dict) and not item.get("passed", True))
+        ]
+        all_items = [
+            item.to_dict() if isinstance(item, BoundaryQAReport) else item
+            for item in report_data
+        ]
+        payload = {
+            "threshold": TRANSITION_SCORE_THRESHOLD,
+            "total_inspections": len(all_items),
+            "passed_count": len(all_items) - len(failed),
+            "failed_count": len(failed),
+            "overall_passed": len(failed) == 0,
+            "failed_transitions": failed,
+            "transitions": all_items,
+        }
+    elif isinstance(report_data, dict):
+        payload = dict(report_data)
+        if "threshold" not in payload:
+            payload["threshold"] = TRANSITION_SCORE_THRESHOLD
+    else:
+        payload = {"data": str(report_data), "threshold": TRANSITION_SCORE_THRESHOLD}
+
+    if metadata:
+        payload.update(metadata)
+
+    out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    logger.info(f"Visual Boundary QA report written -> {out}")
+    return out
 
 
 def load_image_unicode(path: Path) -> np.ndarray | None:
@@ -144,6 +210,7 @@ async def inspect_transition_boundary(
     api_key: str | None = None,
     model_name: str | None = None,
     dry_run: bool = False,
+    report_path: Path | str | None = None,
 ) -> BoundaryQAReport:
     """Inspect the cross-block boundary between two consecutive video blocks."""
     composite, jpeg_bytes = build_boundary_triplet_image(
@@ -152,7 +219,10 @@ async def inspect_transition_boundary(
 
     # In dry-run mode, immediately use fast algorithmic OpenCV correlation on synthetic test frames
     if dry_run:
-        return _inspect_with_opencv(composite, block_n_video, block_n_plus_1_video, jpeg_bytes)
+        rep = _inspect_with_opencv(composite, block_n_video, block_n_plus_1_video, jpeg_bytes)
+        if report_path:
+            write_qa_report(rep, report_path)
+        return rep
 
     gemini_key = api_key or os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
     gemini_model = model_name or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
@@ -182,7 +252,7 @@ async def inspect_transition_boundary(
                     "Return ONLY valid JSON matching this schema:\n"
                     "{\n"
                     '  "continuity_score": float (0.0 to 1.0),\n'
-                    '  "passed": bool (true if score >= 0.85),\n'
+                    f'  "passed": bool (true if score >= {TRANSITION_SCORE_THRESHOLD:.2f}),\n'
                     '  "violations": [string],\n'
                     '  "corrective_prompt": string (empty if passed, else prompt fix)\n'
                     "}"
@@ -196,14 +266,19 @@ async def inspect_transition_boundary(
                 if cleaned.startswith("```"):
                     cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.MULTILINE).strip()
                 data = json.loads(cleaned)
-                return BoundaryQAReport(
-                    continuity_score=float(data.get("continuity_score", 0.90)),
-                    passed=bool(data.get("passed", True)),
+                score = float(data.get("continuity_score", 0.90))
+                passed = bool(data.get("passed", score >= TRANSITION_SCORE_THRESHOLD))
+                rep = BoundaryQAReport(
+                    continuity_score=score,
+                    passed=passed,
                     violations=list(data.get("violations", [])),
                     corrective_prompt=str(data.get("corrective_prompt", "")),
                     triplet_bytes=jpeg_bytes,
                     inspected_by=f"gemini_web2api_pro ({sidecar_model})",
                 )
+                if report_path:
+                    write_qa_report(rep, report_path)
+                return rep
             finally:
                 tmp_path.unlink(missing_ok=True)
     except Exception as sidecar_err:
@@ -212,12 +287,18 @@ async def inspect_transition_boundary(
     # 2. Second priority: Official GenAI SDK if API key configured
     if gemini_key and len(jpeg_bytes) > 500:
         try:
-            return await _inspect_with_gemini_flash(jpeg_bytes, gemini_key, gemini_model)
+            rep = await _inspect_with_gemini_flash(jpeg_bytes, gemini_key, gemini_model)
+            if report_path:
+                write_qa_report(rep, report_path)
+            return rep
         except Exception as exc:
             logger.warning(f"Gemini Flash visual boundary QA failed ({exc}). Falling back to CV.")
 
     # 3. Third priority: Algorithmic OpenCV Fallback
-    return _inspect_with_opencv(composite, block_n_video, block_n_plus_1_video, jpeg_bytes)
+    rep = _inspect_with_opencv(composite, block_n_video, block_n_plus_1_video, jpeg_bytes)
+    if report_path:
+        write_qa_report(rep, report_path)
+    return rep
 
 
 async def _inspect_with_gemini_flash(
@@ -246,9 +327,9 @@ async def _inspect_with_gemini_flash(
             "Return valid JSON matching this exact structure:\n"
             "{\n"
             '  "continuity_score": float between 0.0 and 1.0,\n'
-            '  "passed": boolean (true if continuity_score >= 0.85),\n'
+            f'  "passed": boolean (true if continuity_score >= {TRANSITION_SCORE_THRESHOLD:.2f}),\n'
             '  "violations": list of strings describing any continuity breaks,\n'
-            '  "corrective_prompt": string suggesting specific prompt additions to fix the transition if score < 0.85\n'
+            f'  "corrective_prompt": string suggesting specific prompt additions to fix the transition if score < {TRANSITION_SCORE_THRESHOLD:.2f}\n'
             "}"
         )
         contents = [
@@ -264,7 +345,7 @@ async def _inspect_with_gemini_flash(
 
     res = await asyncio.to_thread(_sync_call)
     score = float(res.get("continuity_score", 0.90))
-    passed = bool(res.get("passed", score >= 0.85))
+    passed = bool(res.get("passed", score >= TRANSITION_SCORE_THRESHOLD))
     violations = list(res.get("violations", []))
     corrective = str(res.get("corrective_prompt", ""))
 

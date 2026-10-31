@@ -15,7 +15,7 @@ import re
 
 # Compile high-performance regex patterns
 _HEADING_PATTERN = re.compile(
-    r"\b(?:Act|Scene|Part|Chapter|Bölüm)\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|first|second|third|viii|vii|vi|iv|v|ix|x|iii|ii|i)\s*[:\-–]?\s*",
+    r"\b(?:Act|Scene|Part|Chapter|Bölüm)\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|first|second|third|viii|vii|vi|iv|v|ix|x|iii|ii|i)\b\s*[:\-–]?\s*",
     re.IGNORECASE,
 )
 
