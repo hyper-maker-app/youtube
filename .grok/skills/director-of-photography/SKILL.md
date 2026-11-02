@@ -158,3 +158,6 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 ---
 
 *Director of Photography v3.8.6 — Grok 4.6 · motivated light · physics-aware camera · motif lock*
+
+## Learned Production Invariants (Adversarial Feedback)
+- **[Scene 12]**: Avoid extreme close-ups of human hands interacting with freezing/melting surfaces to prevent AI hand distortion artifacts.

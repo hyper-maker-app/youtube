@@ -103,3 +103,10 @@ Generative AI video models (Google Veo, Sora, Grok Imagine) have known failure m
 5. **Situational & Atmospheric Framing:** Prioritize helmet visor HUDs, bunker peepholes, periscopes, rain-streaked blast glass, and silhouette backlighting to eliminate uncanny AI facial artifacts.
 6. **Clean Narration Gateway:** Strip metadata, scene markers, and bracketed sound effects before passing to voice synthesis.
 7. **Strict CTA Isolation:** Subscribe / follow CTAs are banned from Scenes 1 through 37. Exactly one CTA is permitted in the final sentence of Scene 38.
+
+## Learned Production Invariants (Adversarial Feedback)
+
+- **[Scene 30]**: Ensure cryogenic phenomena respect atmospheric phase boundaries and human survival safety constraints.
+
+- **[Scene 12]**: Avoid extreme close-ups of struggling hands or fingers in AI video prompts to prevent deformation artifacts.
+- **[Scene s012]**: Keep extreme close-ups of human hands interacting with objects broad enough to prevent AI anatomical deformity.

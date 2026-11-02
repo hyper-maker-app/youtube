@@ -237,10 +237,10 @@ def test_catastrophe_procedural_scenes_certified_grade_a_plus():
 
 def test_produce_film_cli_adversarial_gate_plan_only(monkeypatch: pytest.MonkeyPatch):
     """Verify produce-film with --plan-only runs adversarial review and certifies Grade A+."""
-    monkeypatch.setenv("XAI_API_KEY", "")
     from typer.testing import CliRunner
     from tools.cinematic_studio_cli import app
 
+    monkeypatch.setenv("XAI_API_KEY", "")
     runner = CliRunner()
     result = runner.invoke(
         app,
@@ -259,10 +259,10 @@ def test_produce_film_cli_adversarial_gate_plan_only(monkeypatch: pytest.MonkeyP
 
 def test_user_confirmation_gate_rejection_halts(monkeypatch: pytest.MonkeyPatch):
     """Verify user can reject physical render confirmation and halt safely."""
-    monkeypatch.setenv("XAI_API_KEY", "")
     from typer.testing import CliRunner
     from tools.cinematic_studio_cli import app
 
+    monkeypatch.setenv("XAI_API_KEY", "")
     runner = CliRunner()
     # Provide 'n' as input to typer.confirm
     result = runner.invoke(
@@ -277,3 +277,161 @@ def test_user_confirmation_gate_rejection_halts(monkeypatch: pytest.MonkeyPatch)
     )
     assert result.exit_code == 0, f"CLI command failed: {result.stdout}"
     assert "Physical production halted by user" in result.stdout
+
+
+def test_screenplay_healer_heals_critical_defects_even_when_initial_score_equals_target():
+    """Verify healer continues until scorecard.passed is True even if total_score == 90."""
+    reviewer = ScreenplayReviewer()
+    healer = ScreenplayHealer(reviewer=reviewer, target_score=90)
+
+    # Screenplay with 15+25+20+15+15 = 90 pts, but 0/10 on POV (critical defect -> passed=False)
+    scenes_score_90_unpassed = [
+        {
+            "id": 1,
+            "narration": "You stand on the porch as the sun vanishes with 8.3 minutes delay.",
+            "visual_prompt": "Low-angle shot of weathered leather boots on porch, atmospheric lighting.",
+            "duration": 8.0,
+            "micro_math": "8.3 minutes delay",
+            "recommended_tts_speed": 1.15,
+        },
+        {
+            "id": 2,
+            "narration": "Traffic outside has stopped completely as Day 1 permanent freeze begins.",
+            "visual_prompt": "Wide silhouette shot of city highway without mirrors or readable text.",
+            "duration": 8.0,
+            "micro_math": "Day 1 freeze",
+            "recommended_tts_speed": 1.15,
+        },
+        {
+            "id": 3,
+            "narration": "The subway shelters hold survivors during month one at minus seventy degrees.",
+            "visual_prompt": "Atmospheric dolly inside dark station with frost on iron rails.",
+            "duration": 8.0,
+            "micro_math": "Month 1 -70C",
+            "recommended_tts_speed": 1.15,
+        },
+        {
+            "id": 4,
+            "narration": "Year 1 leaves oceans locked beneath thick ice crust across the world.",
+            "visual_prompt": "Slow atmospheric dolly across massive vault door sealed with turn-wheels.",
+            "duration": 8.0,
+            "micro_math": "Year 1 ice crust",
+            "recommended_tts_speed": 1.15,
+        },
+        {
+            "id": 5,
+            "narration": "Earth drifts into the cosmic void under untamed starfields. You must subscribe to the channel now if you want to survive the next planetary simulation.",
+            "visual_prompt": "Wide view of frozen Earth drifting beneath the Milky Way.",
+            "duration": 8.0,
+            "micro_math": "Cosmic drift",
+            "recommended_tts_speed": 1.15,
+        },
+    ]
+
+    initial_card = reviewer.review(scenes_score_90_unpassed)
+    assert initial_card.total_score >= 90
+    assert initial_card.passed is False  # Fails due to pov_invariants < 8
+    assert initial_card.grade == "Grade A"
+
+    heal_res = healer.heal(scenes_score_90_unpassed)
+    assert heal_res.iterations >= 1
+    assert heal_res.final_scorecard.passed is True
+    assert heal_res.final_scorecard.total_score == 100
+    assert heal_res.final_scorecard.grade == "Grade A+"
+    assert all(s["narration"].startswith(("You ", "Your ")) for s in heal_res.repaired_scenes)
+
+
+def test_gemini_fail_closed_gate_raises_when_unauthorized(monkeypatch):
+    """Verify that gemini_webapi failure strictly raises GeminiWebAPIUnavailableError if fallback not authorized."""
+    from engine.services.screenplay_reviewer import GeminiWebAPIUnavailableError
+
+    def mock_call_gemini_down(prompt, timeout=120.0):
+        raise RuntimeError("Simulated Gemini daemon connection refused")
+
+    monkeypatch.setattr("engine.providers.gemini_webapi.call_gemini_chat", mock_call_gemini_down)
+
+    reviewer = ScreenplayReviewer(xai_api_key="mock-key", allow_deepmind_fallback=False)
+    compact_scenes = [{"scene_id": 1, "duration": 8.0, "narration": "You stand outside.", "visual_prompt": "Prompt"}]
+
+    with pytest.raises(GeminiWebAPIUnavailableError) as exc_info:
+        reviewer._consult_gemini_critique(compact_scenes, title="Test", genre="catastrophe", deterministic_defects=[])
+
+    assert "Fail-Closed Invariant Active" in str(exc_info.value)
+
+
+def test_gemini_authorized_fallback_returns_structured_scorecard(monkeypatch):
+    """Verify that when explicitly authorized, DeepMind fallback provides valid structured scorecard."""
+    def mock_call_gemini_down(prompt, timeout=120.0):
+        raise RuntimeError("Simulated Gemini daemon connection refused")
+
+    monkeypatch.setattr("engine.providers.gemini_webapi.call_gemini_chat", mock_call_gemini_down)
+
+    reviewer = ScreenplayReviewer(xai_api_key="mock-key", allow_deepmind_fallback=True)
+    compact_scenes = [{"scene_id": 1, "duration": 8.0, "narration": "You stand outside.", "visual_prompt": "Prompt"}]
+
+    res = reviewer._consult_gemini_critique(compact_scenes, title="Test", genre="catastrophe", deterministic_defects=["Defect 1"])
+    assert "screenplay_score" in res
+    assert res["screenplay_score"] <= 100
+    assert "defects" in res
+
+
+def test_robust_json_extractor_handles_chatter_and_fences():
+    """Verify RobustJsonExtractor extracts JSON from markdown blocks and noisy LLM responses."""
+    from engine.services.screenplay_reviewer import extract_json_payload
+
+    noisy_response = """
+    Certainly! Here is my detailed review of the 38 scenes:
+    ```json
+    {
+      "screenplay_score": 92,
+      "grade": "Grade A+",
+      "defects": []
+    }
+    ```
+    I hope this audit helps your production!
+    """
+    parsed = extract_json_payload(noisy_response)
+    assert parsed.get("screenplay_score") == 92
+    assert parsed.get("grade") == "Grade A+"
+    assert parsed.get("defects") == []
+
+
+def test_skill_reinforcement_deduplication_and_cap(tmp_path: Path):
+    """Verify SkillReinforcementService deduplicates rules and protects file line bounds."""
+    from engine.services.skill_reinforcement import SkillReinforcementService
+
+    # Create dummy skill
+    skill_dir = tmp_path / "catastrophe-director"
+    skill_dir.mkdir(parents=True)
+    skill_file = skill_dir / "SKILL.md"
+    skill_file.write_text(
+        "---\nname: catastrophe-director\ndescription: test\n---\n\n# Catastrophe Director\nLine 1\n",
+        encoding="utf-8",
+    )
+
+    service = SkillReinforcementService(skills_dir=tmp_path)
+    res1 = service.apply_learned_rule("catastrophe-director", "Ocean water latent heat delays cooling", scene_id=12)
+    assert res1["applied"] is True
+
+    # Duplicate attempt
+    res2 = service.apply_learned_rule("catastrophe-director", "Ocean water latent heat delays cooling", scene_id=12)
+    assert res2["applied"] is False
+    assert "Deduplicated" in res2["reason"]
+
+
+def test_skill_loader_hot_reload(tmp_path: Path):
+    """Verify SkillLoader.reload() dynamically refreshes memory cache upon disk modification."""
+    skill_dir = tmp_path / "test-skill"
+    skill_dir.mkdir(parents=True)
+    skill_file = skill_dir / "SKILL.md"
+    skill_file.write_text("---\nname: test-skill\ndescription: Initial description\n---\nInitial content", encoding="utf-8")
+
+    loader = SkillLoader(skills_dir=tmp_path)
+    assert loader.get_skill("test-skill")["description"] == "Initial description"
+
+    # Modify file
+    skill_file.write_text("---\nname: test-skill\ndescription: Updated description\n---\nUpdated content", encoding="utf-8")
+    loader.reload()
+    assert loader.get_skill("test-skill")["description"] == "Updated description"
+
+

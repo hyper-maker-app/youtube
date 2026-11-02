@@ -114,3 +114,6 @@ Before physical video rendering, every screenplay must achieve Grade A+ certific
 6. 2nd-Person POV Invariant (10 pts)
 
 Failing screenplays are autonomously repaired by `ScreenplayHealer` before user rendering confirmation.
+
+## Learned Production Invariants (Adversarial Feedback)
+- **[Scene 19]**: Every scene narration must strictly maintain 2nd-person POV starting with 'You' or 'Your'.

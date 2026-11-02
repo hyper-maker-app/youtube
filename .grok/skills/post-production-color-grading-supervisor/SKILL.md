@@ -158,3 +158,6 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 ---
 
 *Color Grading Supervisor v3.8.6 — Grok 4.6 / v9-4p5 · emotion + skin + stitch-safe unity*
+
+## Learned Production Invariants (Adversarial Feedback)
+- **[Scene s005]**: Avoid generating explicit UI text or computer screens in video diffusion prompts to prevent warping artifacts.

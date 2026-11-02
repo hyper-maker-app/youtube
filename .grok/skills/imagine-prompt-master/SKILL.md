@@ -120,3 +120,6 @@ Fully compatible with Grok Build CLI, `cinematic_studio_cli.py` prompt workflows
 ---
 
 *Enhanced for Grok 4.6 + dual Imagine Video 1.0 & 1.5 Native support — Cinematic Studio v4.5*
+
+## Learned Production Invariants (Adversarial Feedback)
+- **[Scene 16]**: Never include legible gauges, dials, or numerical readouts in AI video prompts to avoid corrupted text artifacts.

@@ -6,7 +6,7 @@ set "FLOW_WINDOW_MODE="
 if "%FLOW_AUTOMATION%"=="1" set "FLOW_WINDOW_MODE=--start-minimized"
 echo [1/2] Arka planda acik kalan izole FlowCDPProfile surecleri temizleniyor (Ana Chrome pencerelerinize DOKUNULMAZ)...
 powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { $_.CommandLine -match 'FlowCDPProfile' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
-timeout /t 1 /nobreak >nul
+ping -n 2 127.0.0.1 >nul
 
 echo [2/2] Google Flow izole Chrome oturumu (Port 9223) baslatiliyor...
 start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" ^

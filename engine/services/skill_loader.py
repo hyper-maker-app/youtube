@@ -68,6 +68,12 @@ class SkillLoader:
                 return parts[2].strip()
         return content.strip()
 
+    def reload(self) -> None:
+        """Clear cached skill metadata and re-index all skills from disk (Hot-Reload)."""
+        self._cache.clear()
+        self._index_all_skills()
+        logger.info("Hot-reloaded %d skills from %s", len(self._cache), self.skills_dir)
+
     def get_skill(self, slug: str) -> dict[str, str] | None:
         """Return indexed skill details by slug."""
         return self._cache.get(slug)
@@ -199,11 +205,13 @@ class SkillLoader:
 _DEFAULT_LOADER: SkillLoader | None = None
 
 
-def get_skill_loader() -> SkillLoader:
-    """Return singleton SkillLoader instance."""
+def get_skill_loader(force_reload: bool = False) -> SkillLoader:
+    """Return singleton SkillLoader instance, optionally forcing reload."""
     global _DEFAULT_LOADER
     if _DEFAULT_LOADER is None:
         _DEFAULT_LOADER = SkillLoader()
+    elif force_reload:
+        _DEFAULT_LOADER.reload()
     return _DEFAULT_LOADER
 
 

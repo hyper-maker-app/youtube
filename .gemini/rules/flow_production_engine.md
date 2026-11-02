@@ -18,3 +18,9 @@
      b) Link them as reference plates in the project's handoff packet (`sequences/<slug>_handoff.json`).
      c) Feed them directly into `produce-film` so they become the visual anchor for Google Flow video generation.
    - Never generate images and leave them abandoned in the chat artifact directory without connecting them to the video production pipeline.
+
+4. **Chrome CDP (Port 9223) & Gemini WebAPI (Port 8085) Execution Protocol:**
+   - For dual-judge adversarial review (Grok xAI + live Google Gemini) and physical Veo rendering, Chrome CDP must run on port `9223` with isolated profile `%LOCALAPPDATA%\Google\Chrome\FlowCDPProfile`.
+   - **How to Keep Chrome Alive (Preventing Windows Job Object Kill):**
+     When running via agent command tool, ALWAYS execute `python scripts/keep_chrome_alive.py` with `IsDaemon=true` and `WaitMsBeforeAsync=500`. This holds `proc.wait()` so Windows process tree cleaners do not terminate Chrome.
+   - **WebAPI Daemon (Port 8085):** Call `gemini_webapi.sync_cookies_sync(cdp_port=9223)` followed by `gemini_webapi.ensure_server_running(force_refresh=True)`. Verify connection before running production. Full guide: `docs/guides/CHROME_CDP_AND_GEMINI_WEBAPI_GUIDE.md`.

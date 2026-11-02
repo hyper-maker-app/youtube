@@ -63,6 +63,60 @@ def sync_cookies_sync(cdp_port: int = 9223) -> str:
     return asyncio.run(extract_google_cookies(cdp_port))
 
 
+def is_cdp_port_open(port: int = 9223) -> bool:
+    """Check if Chrome CDP port is actively listening."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(1.0)
+    res = s.connect_ex(("127.0.0.1", port))
+    s.close()
+    return res == 0
+
+
+def ensure_chrome_cdp_running(cdp_port: int = 9223) -> None:
+    """Ensure Chrome is running with remote debugging enabled on cdp_port (Self-Healing Auto-Launch)."""
+    if is_cdp_port_open(cdp_port):
+        return
+
+    logger.info("Chrome CDP port %d is closed. Auto-spawning isolated Flow Chrome daemon...", cdp_port)
+    runner_script = ROOT / "scripts" / "keep_chrome_alive.py"
+    if not runner_script.is_file():
+        runner_script = ROOT.parent / "scripts" / "keep_chrome_alive.py"
+
+    if runner_script.is_file():
+        cmd = [sys.executable, str(runner_script)]
+    else:
+        user_data = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\FlowCDPProfile")
+        chrome_exe = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+        cmd = [
+            chrome_exe,
+            f"--remote-debugging-port={cdp_port}",
+            f"--user-data-dir={user_data}",
+            "--disable-blink-features=AutomationControlled",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "https://gemini.google.com",
+            "https://flow.google.com",
+        ]
+
+    flags = (subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP) if os.name == "nt" else 0
+    subprocess.Popen(
+        cmd,
+        creationflags=flags,
+        close_fds=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    for _ in range(20):
+        time.sleep(0.5)
+        if is_cdp_port_open(cdp_port):
+            logger.info("Chrome CDP port %d is now verified open and active.", cdp_port)
+            return
+
+    logger.warning("Chrome CDP port %d could not be confirmed open within timeout.", cdp_port)
+
+
 def is_server_alive() -> bool:
     """Check if the gemini-web2api daemon is responding on port 8085."""
     try:
@@ -77,7 +131,9 @@ def is_server_alive() -> bool:
 
 
 def ensure_server_running(cdp_port: int = 9223, force_refresh: bool = False) -> None:
-    """Ensure gemini-web2api daemon is alive, syncing cookies and spawning if necessary."""
+    """Ensure gemini-web2api daemon is alive, auto-launching Chrome CDP, syncing cookies, and spawning if necessary."""
+    ensure_chrome_cdp_running(cdp_port=cdp_port)
+
     if force_refresh:
         kill_server()
     elif is_server_alive():

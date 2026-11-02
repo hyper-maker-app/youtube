@@ -134,6 +134,7 @@ def produce_film(
     continue_from: Optional[str] = typer.Option(None, "--continue-from", help="Directory or path to previous episode continuity handoff to thaw state"),
     simulate_defect_block: Optional[int] = typer.Option(None, "--simulate-defect-block", help="Simulate a visual continuity breach on block N to test Director Agent HEAL re-generation loop"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Automatically confirm physical video rendering without prompting"),
+    allow_deepmind_fallback: bool = typer.Option(False, "--allow-deepmind-fallback", help="Allow fallback to DeepMind heuristic if gemini_webapi is unavailable"),
 ) -> None:
     """Produce a complete cinematic film: Grok Studio AI Brain -> Flow CDP Video -> Voice Provider -> FFmpeg Assembly."""
     slug = sanitize_slug(title)
@@ -248,37 +249,121 @@ def produce_film(
 
     # Phase 1.5: Adversarial Review & Auto-Healing (Grok & Gemini Quality Gate)
     console.print("\n[bold magenta][1.5/3] Running Adversarial Screenplay Audit & Auto-Healer...[/bold magenta]")
-    from engine.services.screenplay_reviewer import ScreenplayReviewer
+    from engine.services.screenplay_reviewer import ScreenplayReviewer, GeminiWebAPIUnavailableError
     from engine.services.screenplay_healer import ScreenplayHealer
 
-    reviewer = ScreenplayReviewer(xai_api_key=xai_key)
-    scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=False)
+    allow_deepmind = allow_deepmind_fallback
+    reviewer = ScreenplayReviewer(xai_api_key=xai_key, allow_deepmind_fallback=allow_deepmind)
+    initial_scenes_snapshot = copy.deepcopy(scenes)
+
+    try:
+        scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=bool(xai_key))
+    except GeminiWebAPIUnavailableError:
+        console.print("\n[bold red][FAIL-CLOSED USER GATE][/bold red] [yellow]gemini_webapi (Chrome CDP port 9223) is unavailable or timed out.[/yellow]")
+        proceed_fallback = typer.confirm("gemini_webapi bağlantısı kurulamadı. DeepMind alternatif protokolüne geçilsin mi?", default=False)
+        if not proceed_fallback:
+            console.print("[bold red]İşlem kullanıcı tarafından durduruldu (Fail-Closed). gemini_webapi veya Chrome CDP (port 9223) oturumunu kontrol edin.[/bold red]")
+            raise typer.Exit(code=1)
+        allow_deepmind = True
+        reviewer = ScreenplayReviewer(xai_api_key=xai_key, allow_deepmind_fallback=True)
+        scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=bool(xai_key))
+
+    initial_ai_critique = scorecard.ai_critique
+    reinforcement_records = []
+
+    if scorecard.ai_critique:
+        console.print(Panel(
+            scorecard.ai_critique.strip(),
+            title="[bold yellow]Adversarial Reviewer Critique (Grok xAI & Google Gemini)[/bold yellow]",
+            border_style="yellow",
+        ))
 
     if not scorecard.passed:
-        console.print(f"  [yellow]Initial audit score: {scorecard.total_score}/100 ({scorecard.grade}) with {len(scorecard.defects)} defect(s). Initiating Auto-Healer...[/yellow]")
+        console.print(f"  [yellow]Initial audit score: {scorecard.total_score}/100 ({scorecard.grade}) with {len(scorecard.defects)} defect(s). Initiating Full-Context Auto-Healer...[/yellow]")
         healer = ScreenplayHealer(reviewer=reviewer, xai_api_key=xai_key, target_score=90)
-        heal_res = healer.heal(scenes, title=title, genre=genre)
+        heal_res = healer.heal(scenes, title=title, genre=genre, consult_ai=bool(xai_key))
         scenes = heal_res.repaired_scenes
         scorecard = heal_res.final_scorecard
+        if not scorecard.ai_critique:
+            scorecard.ai_critique = initial_ai_critique
+        reinforcement_records = heal_res.reinforcement_records
         for log_line in heal_res.repair_log:
             console.print(f"    [dim]{log_line}[/dim]")
     else:
         console.print(f"  [green]Initial audit passed directly: {scorecard.total_score}/100 ({scorecard.grade})[/green]")
 
-    console.print(Panel(
-        f"[bold green][CERTIFIED] Screenplay Certified Grade A+ ({scorecard.total_score}/100)![/bold green]\n\n"
-        f"[b]Project Title:[/b] {title}\n"
-        f"[b]Scenes / Duration:[/b] {len(scenes)} scenes / {duration}s ({aspect})\n"
-        f"[b]Audit Scores:[/b]\n"
-        f"  - CTA Isolation: {scorecard.category_scores.get('cta_isolation', 0)}/15 pts\n"
-        f"  - Veo Negative Guards: {scorecard.category_scores.get('veo_guardrails', 0)}/25 pts\n"
-        f"  - Thermodynamics: {scorecard.category_scores.get('thermodynamic_sanity', 0)}/20 pts\n"
-        f"  - Chronological Scale: {scorecard.category_scores.get('narrative_time_scale', 0)}/15 pts\n"
-        f"  - Causality Integrity: {scorecard.category_scores.get('causality_integrity', 0)}/15 pts\n"
-        f"  - 2nd-Person Invariant: {scorecard.category_scores.get('pov_invariants', 0)}/10 pts",
-        title="[CERTIFIED] Adversarial Screenplay Gate",
-        border_style="green"
-    ))
+    # Generate Comprehensive Transparent Raw Audit Report
+    artifacts_dir = _ROOT / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    report_file = artifacts_dir / "ADVERSARIAL_SCREENPLAY_PIPELINE_COMPLETE_REPORT.md"
+
+    # Build Before/After Diff Table
+    diff_lines = []
+    for idx, (orig, rep) in enumerate(zip(initial_scenes_snapshot, scenes)):
+        if orig.get("narration") != rep.get("narration") or orig.get("visual_prompt") != rep.get("visual_prompt"):
+            diff_lines.append(f"#### Scene {idx + 1}")
+            if orig.get("narration") != rep.get("narration"):
+                diff_lines.append(f"- **Before Narration:** {orig.get('narration')}")
+                diff_lines.append(f"- **After Narration:** {rep.get('narration')}")
+            if orig.get("visual_prompt") != rep.get("visual_prompt"):
+                diff_lines.append(f"- **Before Prompt:** {orig.get('visual_prompt')}")
+                diff_lines.append(f"- **After Prompt:** {rep.get('visual_prompt')}")
+            diff_lines.append("")
+
+    reinf_lines = []
+    if reinforcement_records:
+        for r in reinforcement_records:
+            reinf_lines.append(f"- **Skill:** `{r.get('skill_slug')}` | **Rule:** {r.get('rule')} (Lines: {r.get('line_count')})")
+    else:
+        reinf_lines.append("- No persistent skill modifications required (screenplay compliant with active guidelines).")
+
+    report_content = (
+        f"# Complete Adversarial Screenplay Audit & Closed-Loop Healing Report\n\n"
+        f"- **Project Title:** {title}\n"
+        f"- **Genre:** {genre}\n"
+        f"- **Total Scenes:** {len(scenes)} ({duration}s)\n"
+        f"- **Final Certification:** {scorecard.grade} ({scorecard.total_score}/100) — {'PASSED' if scorecard.passed else 'FAILED'}\n"
+        f"- **Dual-Judge Scores:** Grok = {scorecard.grok_score or 'N/A'}, Gemini = {scorecard.gemini_score or 'N/A'}\n\n"
+        f"## 1. Dual-Judge Evaluation Verdict\n\n"
+        f"{scorecard.ai_critique or 'Deterministic schema evaluation passed without critical defects.'}\n\n"
+        f"## 2. Raw Prompts and LLM Responses\n\n"
+        f"### A. Raw Compact Screenplay Payload (Sent to Judges)\n"
+        f"```json\n{scorecard.raw_prompt or 'N/A'}\n```\n\n"
+        f"### B. Judge 1 (xAI Grok) Raw Response\n"
+        f"```\n{scorecard.raw_grok_response or 'N/A'}\n```\n\n"
+        f"### C. Judge 2 (Google Gemini) Raw Response\n"
+        f"```\n{scorecard.raw_gemini_response or 'N/A'}\n```\n\n"
+        f"## 3. Healed Scenes Before vs After Comparison\n\n"
+        f"{chr(10).join(diff_lines) if diff_lines else 'No scene modifications were required.'}\n\n"
+        f"## 4. Closed-Loop Skill Reinforcement Log\n\n"
+        f"{chr(10).join(reinf_lines)}\n"
+    )
+    report_file.write_text(report_content, encoding="utf-8")
+    console.print(f"  + Transparent Audit Report written -> [dim]{report_file}[/dim]")
+
+    if scorecard.passed:
+        console.print(Panel(
+            f"[bold green][CERTIFIED] Screenplay Certified Grade A+ ({scorecard.total_score}/100)![/bold green]\n\n"
+            f"[b]Project Title:[/b] {title}\n"
+            f"[b]Scenes / Duration:[/b] {len(scenes)} scenes / {duration}s ({aspect})\n"
+            f"[b]Audit Scores:[/b]\n"
+            f"  - CTA Isolation: {scorecard.category_scores.get('cta_isolation', 0)}/15 pts\n"
+            f"  - Veo Negative Guards: {scorecard.category_scores.get('veo_guardrails', 0)}/25 pts\n"
+            f"  - Thermodynamics: {scorecard.category_scores.get('thermodynamic_sanity', 0)}/20 pts\n"
+            f"  - Chronological Scale: {scorecard.category_scores.get('narrative_time_scale', 0)}/15 pts\n"
+            f"  - Causality Integrity: {scorecard.category_scores.get('causality_integrity', 0)}/15 pts\n"
+            f"  - 2nd-Person Invariant: {scorecard.category_scores.get('pov_invariants', 0)}/10 pts",
+            title="[CERTIFIED] Adversarial Screenplay Gate",
+            border_style="green"
+        ))
+    else:
+        console.print(Panel(
+            f"[bold red][FAILED] Screenplay Audit Incomplete: {scorecard.grade} ({scorecard.total_score}/100)[/bold red]\n\n"
+            f"[b]Project Title:[/b] {title}\n"
+            f"[b]Defects ({len(scorecard.defects)}):[/b]\n" + "\n".join(f"  - {d}" for d in scorecard.defects[:5]),
+            title="[AUDIT WARNING] Screenplay Quality Gate",
+            border_style="red"
+        ))
 
     # Save handoff packet
     handoff_packet = {
@@ -287,6 +372,7 @@ def produce_film(
         "episode": episode,
         "duration": duration,
         "aspect": aspect,
+        "ai_critique": scorecard.ai_critique,
         "scenes": scenes,
     }
     handoff_path = sequences_dir / f"{slug}_handoff.json"
