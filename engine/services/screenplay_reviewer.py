@@ -53,13 +53,13 @@ class GeminiWebAPIUnavailableError(RuntimeError):
 
 
 def extract_json_payload(raw_text: str) -> dict[str, Any]:
-    """RobustJsonExtractor: Extracts and parses JSON from raw LLM responses with chatter or markdown fences."""
+    """RobustJsonExtractor: Extracts and parses JSON from raw LLM responses with chatter, markdown fences, or unescaped LaTeX/backslashes."""
     if not raw_text or not raw_text.strip():
         return {}
 
     cleaned = raw_text.strip()
-    # Check for markdown code fences
-    fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned, re.IGNORECASE)
+    # Check for markdown code fences (even if unclosed)
+    fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)(?:```|$)", cleaned, re.IGNORECASE)
     candidate = fence_match.group(1).strip() if fence_match else cleaned
 
     # Locate outermost curly braces
@@ -67,18 +67,41 @@ def extract_json_payload(raw_text: str) -> dict[str, Any]:
     end = candidate.rfind("}")
     if start != -1 and end != -1 and end > start:
         candidate = candidate[start:end + 1]
+    elif start != -1 and end <= start:
+        candidate = candidate[start:] + "\n}"
 
+    # 1. First attempt: direct parse with strict=False (allows literal newlines inside strings)
     try:
-        return json.loads(candidate)
+        return json.loads(candidate, strict=False)
     except Exception as exc:
         logger.debug("First-pass JSON extraction failed (%s), attempting syntax repair...", exc)
-        # Remove trailing commas before closing braces/brackets
-        repaired = re.sub(r",\s*([\]}])", r"\1", candidate)
-        try:
-            return json.loads(repaired)
-        except Exception:
-            logger.warning("RobustJsonExtractor could not parse payload: %s", raw_text[:200])
-            return {}
+
+    # 2. Second attempt: sanitize invalid backslash escapes (e.g. LaTeX \circ, \text, \mu or Windows paths)
+    # Valid JSON escapes are: \" \\ \/ \b \f \n \r \t \uXXXX
+    repaired = re.sub(r'\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})', r'\\\\', candidate)
+    # Remove trailing commas before closing braces/brackets
+    repaired = re.sub(r",\s*([\]}])", r"\1", repaired)
+
+    try:
+        return json.loads(repaired, strict=False)
+    except Exception as exc2:
+        logger.debug("Second-pass escape repair failed (%s), attempting structural repair...", exc2)
+
+    # 3. Third attempt: balance unclosed quotes, brackets, braces
+    try:
+        quote_count = repaired.count('"') - repaired.count(r'\"')
+        if quote_count % 2 != 0:
+            repaired += '"'
+        open_braces = repaired.count('{') - repaired.count('}')
+        if open_braces > 0:
+            repaired += '}' * open_braces
+        open_brackets = repaired.count('[') - repaired.count(']')
+        if open_brackets > 0:
+            repaired += ']' * open_brackets
+        return json.loads(repaired, strict=False)
+    except Exception:
+        logger.warning("RobustJsonExtractor could not parse payload: %s", raw_text[:200])
+        return {}
 
 
 def build_compact_scenes_payload(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -269,18 +292,39 @@ class ScreenplayReviewer:
                 ai_critique_text = "\n\n".join(critique_parts)
 
         # Calculate Final Score (Pessimistic Scoring Gate when AI judges respond)
-        if grok_score is not None and gemini_score is not None:
-            total_score = min(grok_score, gemini_score)
-            passed = total_score >= 90 and grok_score >= 85 and gemini_score >= 85 and not has_critical_defects
-        elif grok_score is not None:
-            total_score = min(deterministic_score, grok_score)
-            passed = total_score >= 90 and not has_critical_defects
-        elif gemini_score is not None:
-            total_score = min(deterministic_score, gemini_score)
-            passed = total_score >= 90 and not has_critical_defects
-        else:
+        if not consult_ai:
             total_score = deterministic_score
             passed = total_score >= 90 and not has_critical_defects
+        else:
+            # AI judges were consulted
+            if grok_score is not None and gemini_score is not None:
+                total_score = min(grok_score, gemini_score)
+                passed = (
+                    total_score >= 90
+                    and grok_score >= 85
+                    and gemini_score >= 85
+                    and deterministic_score >= 90
+                    and not has_critical_defects
+                )
+            elif grok_score is not None and not self.xai_api_key:
+                total_score = min(deterministic_score, grok_score)
+                passed = total_score >= 90 and grok_score >= 85 and not has_critical_defects
+            elif gemini_score is not None and not self.xai_api_key:
+                # Only Gemini configured (no xAI API key provided)
+                total_score = min(deterministic_score, gemini_score)
+                passed = total_score >= 90 and gemini_score >= 85 and not has_critical_defects
+            elif grok_score is not None and gemini_score is None:
+                total_score = min(deterministic_score, grok_score)
+                passed = False
+                all_defects.append("[Judge Fail-Closed] Gemini judge did not return a valid score.")
+            elif gemini_score is not None and grok_score is None:
+                total_score = min(deterministic_score, gemini_score)
+                passed = False
+                all_defects.append("[Judge Fail-Closed] Grok judge did not return a valid score (timed out or error).")
+            else:
+                total_score = deterministic_score
+                passed = False
+                all_defects.append("[Judge Fail-Closed] Neither Grok nor Gemini judge returned a valid score.")
 
         if passed and total_score >= 90:
             grade = "Grade A+"
@@ -551,7 +595,8 @@ class ScreenplayReviewer:
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=90) as resp:
+        timeout = int(os.getenv("XAI_JUDGE_TIMEOUT", "180"))
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             raw_text = data["choices"][0]["message"]["content"]
             parsed = extract_json_payload(raw_text)

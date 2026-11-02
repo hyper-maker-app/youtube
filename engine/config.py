@@ -18,7 +18,9 @@ OUT_ROOT = ROOT / "out"
 # override=True: this project pins its own model/endpoint in .env, and the surrounding
 # Claude Code process injects its own ANTHROPIC_* (e.g. ANTHROPIC_MODEL=claude-sonnet-5)
 # into the environment, which would otherwise silently win over .env.
-load_dotenv(ROOT / ".env", override=True)
+# Under pytest, do NOT override explicitly monkeypatched variables.
+is_testing = bool(os.getenv("PYTEST_CURRENT_TEST"))
+load_dotenv(ROOT / ".env", override=not is_testing)
 
 
 # --------------------------------------------------------------------------------------

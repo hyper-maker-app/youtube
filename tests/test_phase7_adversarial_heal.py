@@ -435,3 +435,57 @@ def test_skill_loader_hot_reload(tmp_path: Path):
     assert loader.get_skill("test-skill")["description"] == "Updated description"
 
 
+def test_robust_json_extractor_handles_latex_and_invalid_escapes():
+    """Verify RobustJsonExtractor safely sanitizes LaTeX math and invalid escape backslashes."""
+    from engine.services.screenplay_reviewer import extract_json_payload
+
+    latex_payload = r"""```json
+    {
+      "screenplay_score": 92,
+      "grade": "Grade A",
+      "critique_text": "Condensation at $-183^\circ\text{C}$ with viscosity $\mu=1.2$ and path C:\temp\run",
+      "defects": [
+        {
+          "scene_id": "s038",
+          "issue": "Needs trailing comma cleanup",
+        }
+      ],
+    }
+    ```"""
+    parsed = extract_json_payload(latex_payload)
+    assert parsed.get("screenplay_score") == 92
+    assert parsed.get("grade") == "Grade A"
+    assert "$-183" in parsed.get("critique_text", "")
+    assert len(parsed.get("defects", [])) == 1
+
+
+def test_pessimistic_gate_strict_fail_closed_when_judge_fails(monkeypatch):
+    """Verify that when consult_ai=True, Grade A+ is blocked if any judge fails or times out."""
+    reviewer = ScreenplayReviewer(xai_api_key="mock-key")
+    scenes = generate_catastrophe_scenes(title="What if 1000 Volcanoes Erupted at Once", duration=60, aspect="16:9")
+
+    # Case 1: Both judges respond with high scores -> Grade A+ certified
+    monkeypatch.setattr(reviewer, "_consult_grok_critique", lambda *a, **k: {"screenplay_score": 92, "defects": []})
+    monkeypatch.setattr(reviewer, "_consult_gemini_critique", lambda *a, **k: {"screenplay_score": 90, "defects": []})
+    card_both = reviewer.review(scenes, title="Test", genre="catastrophe", consult_ai=True)
+    assert card_both.passed is True
+    assert card_both.grade == "Grade A+"
+    assert card_both.total_score == 90
+
+    # Case 2: Grok times out (None) while Gemini gives 95 -> Must FAIL closed, NO fake Grade A+
+    monkeypatch.setattr(reviewer, "_consult_grok_critique", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("Grok timed out")))
+    card_grok_fail = reviewer.review(scenes, title="Test", genre="catastrophe", consult_ai=True)
+    assert card_grok_fail.passed is False
+    assert card_grok_fail.grade != "Grade A+"
+    assert any("Grok judge did not return a valid score" in d for d in card_grok_fail.defects)
+
+    # Case 3: Gemini fails (None) while Grok gives 95 -> Must FAIL closed, NO fake Grade A+
+    monkeypatch.setattr(reviewer, "_consult_grok_critique", lambda *a, **k: {"screenplay_score": 95, "defects": []})
+    monkeypatch.setattr(reviewer, "_consult_gemini_critique", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("Gemini down")))
+    card_gemini_fail = reviewer.review(scenes, title="Test", genre="catastrophe", consult_ai=True)
+    assert card_gemini_fail.passed is False
+    assert card_gemini_fail.grade != "Grade A+"
+    assert any("Gemini judge did not return a valid score" in d for d in card_gemini_fail.defects)
+
+
+

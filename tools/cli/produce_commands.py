@@ -295,7 +295,8 @@ def produce_film(
     # Generate Comprehensive Transparent Raw Audit Report
     artifacts_dir = _ROOT / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    report_file = artifacts_dir / "ADVERSARIAL_SCREENPLAY_PIPELINE_COMPLETE_REPORT.md"
+    project_report_file = artifacts_dir / f"{slug}_adversarial_report.md"
+    latest_report_file = artifacts_dir / "ADVERSARIAL_SCREENPLAY_PIPELINE_COMPLETE_REPORT.md"
 
     # Build Before/After Diff Table
     diff_lines = []
@@ -338,8 +339,9 @@ def produce_film(
         f"## 4. Closed-Loop Skill Reinforcement Log\n\n"
         f"{chr(10).join(reinf_lines)}\n"
     )
-    report_file.write_text(report_content, encoding="utf-8")
-    console.print(f"  + Transparent Audit Report written -> [dim]{report_file}[/dim]")
+    project_report_file.write_text(report_content, encoding="utf-8")
+    latest_report_file.write_text(report_content, encoding="utf-8")
+    console.print(f"  + Transparent Audit Report written -> [dim]{project_report_file}[/dim]")
 
     if scorecard.passed:
         console.print(Panel(
@@ -373,6 +375,14 @@ def produce_film(
         "duration": duration,
         "aspect": aspect,
         "ai_critique": scorecard.ai_critique,
+        "adversarial_review": {
+            "passed": scorecard.passed,
+            "grade": scorecard.grade,
+            "total_score": scorecard.total_score,
+            "grok_score": scorecard.grok_score,
+            "gemini_score": scorecard.gemini_score,
+            "defects_count": len(scorecard.defects),
+        },
         "scenes": scenes,
     }
     handoff_path = sequences_dir / f"{slug}_handoff.json"
