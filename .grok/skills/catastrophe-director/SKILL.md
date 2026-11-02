@@ -106,6 +106,156 @@ Generative AI video models (Google Veo, Sora, Grok Imagine) have known failure m
 
 ## Learned Production Invariants (Adversarial Feedback)
 
+- **[Scene s034]**: Justify multi-stage planetary catastrophes with a coherent causal chain.
+
+- **[Scene s032]**: Account for thermal shock limits when characters transition between extreme temperature zones.
+
+- **[Scene s030]**: Separate individual gas condensation thresholds (O2 vs N2) accurately in extreme cold scripts.
+
+- **[Scene s027]**: Strictly verify atmospheric gas phase boundaries before prompting air condensation.
+
+- **[Scene s025]**: Ensure mass conservation between boiled-away vapor and subsequent ice/water states.
+
+- **[Scene s022]**: Sequence atmospheric phase changes in strict thermodynamic order.
+
+- **[Scene s020]**: Ensure temperature hyperbole remains physically bounded and internally consistent across scenes.
+
+- **[Scene s019]**: Keep geological temperatures within plausible subterranean and magma bounds for human proximity.
+
+- **[Scene s013]**: Verify all comparative temperature math against actual household appliance standards.
+
+- **[Scene s010]**: Respect thermal inertia and latent heat timelines in post-catastrophe cooling beats.
+
+- **[Scene s009]**: Account for latent heat release when modeling post-boil atmospheric cooling.
+
+- **[Scene s001]**: Avoid instantaneous basin-scale water level changes without a sustained, massive energy mechanism.
+
+- **[Scene 34]**: One catastrophe, one energy source, one end-state: do not bolt a rogue-planet freeze onto an ocean-boil opener.
+
+- **[Scene 32]**: 400°C water/steam is a kill boundary; the camera may look at it, the body may not enter it.
+
+- **[Scene 30]**: Liquefy O2 at −183°C and N2 at −196°C as separate events, never as one mixed rain.
+
+- **[Scene 27]**: Do not depict air condensing until oxygen’s 1-atm boiling point is actually reached.
+
+- **[Scene 25]**: Mass is conserved: boiled oceans cannot later appear as a thin global ice lid unless the water’s fate is explicitly tracked.
+
+- **[Scene 22]**: Phase-change beats must fire in temperature order: H2O freeze, then CO2 snow, then O2 rain, then N2 rain.
+
+- **[Scene 20]**: Temperature multipliers must be computed from real oven and magma values and must remain survivable at the camera position.
+
+- **[Scene 19]**: Never let a human-scale character enter or approach 5000°C conduits; use hydrothermal ~400°C only as a distant, unsurvivable heat source.
+
+- **[Scene 14]**: Fuel phase-change limits beat cinematic cold numbers; analog gauges must have blank unreadable faces.
+
+- **[Scene 13]**: Every everyday comparison figure must use the real reference value, not room temperature masquerading as a freezer.
+
+- **[Scene 10]**: Planetary temperature swings after ocean-scale phase changes take years or longer, never hours.
+
+- **[Scene 9]**: Condensing steam heats the environment; a boiled ocean cannot become a freeze by 'clearing.'.
+
+- **[Scene 1]**: Never flash-boil a planetary ocean in-frame without an energy budget, a lethal-steam standoff, and geological—not cinematic-second—timescales.
+
+- **[Scene 34]**: Orbital status is a conserved plot fact; do not change the planet’s dynamical environment without a depicted mechanism.
+
+- **[Scene 32]**: Once PPE fails at a lethal temperature boundary, the character cannot continue acting in that environment.
+
+- **[Scene 30]**: Cryogenic air must be split by species boiling points and partial pressures; never rain mixed liquid air on an exposed character at −183°C.
+
+- **[Scene 27]**: Air condensation imagery is reserved for temperatures and partial pressures that actually liquefy O2 or N2.
+
+- **[Scene 25]**: Water inventory is conserved unless an escape mechanism is shown; ice thickness must match that inventory.
+
+- **[Scene 22]**: Phase-change events must fire the first time the named temperature is crossed, then stay in the new phase.
+
+- **[Scene 20]**: Multipliers against everyday objects must equal the scene's stated absolute temperature.
+
+- **[Scene 19]**: Label heat sources by real reservoirs: vents ~400°C, magma ~1,000°C, core ~5,000°C, and never let the protagonist occupy the last two.
+
+- **[Scene 13]**: Every relative-temperature simile must be computed in a single unit system and match the stated absolute value.
+
+- **[Scene 10]**: Planetary temperature checkpoints must respect heat capacity and latent heat; no multi-tens-of-degrees surface swings inside an hour after an ocean-scale phase change.
+
+- **[Scene 9]**: Condensation warms the environment by latent heat and restores liquid inventory; cooling requires an independent heat-loss pathway.
+
+- **[Scene 6]**: Mass of water moved into the atmosphere must be converted into pressure, optical depth, and survivability before any personal sensation beat.
+
+- **[Scene 4]**: Gases may smother and scald but must not be staged with the inertia or coherent face of a liquid surge.
+
+- **[Scene 1]**: A catastrophe screenplay may have only one primary energy source, and every later beat must be a consequence of that source.
+
+- **[Scene s030]**: Verify exact boiling and condensation points for atmospheric gases before scripting cryogenic weather phenomena.
+
+- **[Scene s009]**: Phase changes like steam condensation release significant latent heat; cooling must respect thermodynamic energy balances.
+
+- **[Scene s001]**: Never sequence opposite climate end-states (boil-away vs. interstellar freeze) without an explicitly rendered, physically sound causal link.
+
+- **[Scene s034]**: Orbital state is an initial condition; do not change it off-screen in the last act.
+
+- **[Scene s032]**: If ΔT exceeds suit design limits, the character dies; costume damage cannot substitute for lethal heat load.
+
+- **[Scene s030]**: Air liquefaction must use each gas’s own boiling point; do not rain ‘air’ as a single fluid.
+
+- **[Scene s025]**: Water mass is conserved on-screen: boiled, escaped, rained, or frozen—never all four.
+
+- **[Scene s022]**: Atmospheric collapse must follow condensation temperatures in order: H2O, then CO2, then O2, then N2.
+
+- **[Scene s019]**: Never let a character occupy a volume hotter than suit/material limits; quote magma, vent, and core temperatures as distinct reservoirs.
+
+- **[Scene s013]**: Every stated temperature delta must use the correct reference object; never borrow a room-temp offset for a freezer comparison.
+
+- **[Scene s009]**: Phase-change scenes must conserve enthalpy: condensation heats the surroundings; evaporative boil-off stores heat in vapor until that vapor is lost or rains out.
+
+- **[Scene s001]**: A catastrophe spine may have only one primary energy arrow; boiling and deep-freeze require opposite heat budgets and cannot share a timeline without a shown mechanism.
+
+- **[Scene 36]**: Keep existential climaxes grounded in personal 2nd-person stakes.
+
+- **[Scene 34]**: Preserve second-person narrative continuity throughout macro-scale planetary shots.
+
+- **[Scene 30]**: Enforce strict second-person narrative locks for all atmospheric descriptions.
+
+- **[Scene 26]**: Never drop second-person framing during expository scene openings.
+
+- **[Scene 25]**: Maintain second-person POV across all time-jump scene transitions.
+
+- **[Scene 20]**: Keep thermal comparisons physically consistent with character survivability limits.
+
+- **[Scene 19]**: Ground underground geothermal exploration in realistic geological temperature ranges.
+
+- **[Scene 13]**: Verify all comparative freezer math and temperature differentials before finalizing script dialogue.
+
+- **[Scene 9]**: Ensure thermodynamic continuity between phase changes in catastrophic scenarios.
+
+- **[Scene 36]**: Thematic cosmic lines must still open with You/Your; no epoch-as-subject openers.
+
+- **[Scene 34]**: Do not declare Earth a rogue planet without a prior causal scene, and never open that declaration without You/Your.
+
+- **[Scene 32]**: Human-present vent scenes must stay outside the lethal envelope; 400 C water is observation-only.
+
+- **[Scene 30]**: Air-liquefaction scenes must split O2 and N2 by their actual boiling points and account for pressure drop.
+
+- **[Scene 30]**: Environmental spectacle must still be grammatically owned by You/Your on beat one.
+
+- **[Scene 26]**: Thin sea ice does not equal a frozen-solid ocean; last-liquid-water claims require a shell thick enough to isolate pockets.
+
+- **[Scene 26]**: Cutaway science shots still require a You/Your grammatical subject on the first words.
+
+- **[Scene 25]**: Once oceans boil away they cannot reappear as frozen oceans unless the script explicitly returns that same water.
+
+- **[Scene 25]**: Time-skip captions are forbidden as openers; encode elapsed time inside a You/Your sentence.
+
+- **[Scene 22]**: Phase-change beats (CO2 snow, O2 rain) must occur at first passage through that temperature, never after colder scenes.
+
+- **[Scene 22]**: Every narration must begin with You or Your; no scene may open on an object, time jump, or landscape.
+
+- **[Scene 20]**: Never use times-hotter multipliers unless the product is computed and still survivable/on-model.
+
+- **[Scene 19]**: Geothermal survival scenes must use reachable heat (vents, springs, decay heat) well below magma/core temperatures.
+
+- **[Scene 13]**: Every temperature analogy must be recomputed in a single unit against a real reference before lock.
+
+- **[Scene 9]**: Boil, rain, freeze, and ice-shield beats must conserve the same water mass and heat, never invent a second ocean.
+
 - **[Scene 30]**: Ensure cryogenic phenomena respect atmospheric phase boundaries and human survival safety constraints.
 
 - **[Scene 12]**: Avoid extreme close-ups of struggling hands or fingers in AI video prompts to prevent deformation artifacts.

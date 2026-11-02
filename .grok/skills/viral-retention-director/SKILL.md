@@ -116,4 +116,12 @@ Before physical video rendering, every screenplay must achieve Grade A+ certific
 Failing screenplays are autonomously repaired by `ScreenplayHealer` before user rendering confirmation.
 
 ## Learned Production Invariants (Adversarial Feedback)
+
+- **[Scene s026]**: Maintain strict 2nd-person bodily containment; never cut to external or orbital viewpoints when the viewer is explicitly framed inside an enclosed space.
+
+- **[Scene s026]**: 2nd-person narration may only describe photons that could reach the protagonist’s eyes unless an explicit cutaway label is used.
+
+- **[Scene 37]**: Never exit the viewer's perspective prior to the call-to-action conclusion.
+
+- **[Scene 37]**: Penultimate scenes must keep 2nd-person lock so the final CTA still lands inside the viewer's body.
 - **[Scene 19]**: Every scene narration must strictly maintain 2nd-person POV starting with 'You' or 'Your'.

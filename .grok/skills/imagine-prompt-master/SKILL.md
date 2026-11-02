@@ -122,4 +122,24 @@ Fully compatible with Grok Build CLI, `cinematic_studio_cli.py` prompt workflows
 *Enhanced for Grok 4.6 + dual Imagine Video 1.0 & 1.5 Native support — Cinematic Studio v4.5*
 
 ## Learned Production Invariants (Adversarial Feedback)
+
+- **[Scene s014]**: Prohibit readable gauges, dials, and UI text in Veo prompts to avoid text deformation.
+
+- **[Scene s007]**: Never prompt distinct crowds or human faces in catastrophe scenes to prevent Veo generation artifacts.
+
+- **[Scene 7]**: Crowd chaos must be staged as silhouettes or empty infrastructure; never prompt identifiable fleeing faces.
+
+- **[Scene 28]**: No close faces, visors, or reflective eye-line surfaces; helmets are shown from rear/three-quarter with opaque glass.
+
+- **[Scene 14]**: Never put gauges, HUDs, clocks, or any potentially readable markings in the visual prompt.
+
+- **[Scene 7]**: Never prompt recognizable human faces or readable crowd detail; keep survivors as silhouettes or implied off-frame presence.
+
+- **[Scene s014]**: Never put gauges, timers, or readable numerals in a Veo plate, even if ‘frozen’ or analog.
+
+- **[Scene s007]**: No readable faces, visors, or crowd identity: silhouette-only humans for Veo catastrophe plates.
+
+- **[Scene 14]**: No gauges, HUDs, clocks, or numeral-bearing props in Veo prompts—even analog, even frozen.
+
+- **[Scene 7]**: Never prompt identifiable faces or crowded people; use silhouettes, scale figures, and empty wreckage only.
 - **[Scene 16]**: Never include legible gauges, dials, or numerical readouts in AI video prompts to avoid corrupted text artifacts.

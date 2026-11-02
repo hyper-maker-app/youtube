@@ -176,3 +176,8 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 ---
 
 *Narrative Arc Strategist v3.8.6 — Grok 4.6 / v9-4p5 · emotion drives pacing · every shot earns its place*
+
+## Learned Production Invariants (Adversarial Feedback)
+
+- **[Scene 16]**: Do not spend consecutive scenes on the same thermodynamic trend unless each scene introduces a new mechanism or irreversible choice.
+- **[Scene s016]**: Each scene must introduce a new phase, location, or decision—not only a lower thermometer reading.

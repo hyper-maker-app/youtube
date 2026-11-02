@@ -160,4 +160,14 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 *Director of Photography v3.8.6 — Grok 4.6 · motivated light · physics-aware camera · motif lock*
 
 ## Learned Production Invariants (Adversarial Feedback)
+
+- **[Scene s028]**: Keep helmet visors and masks in profile or backlit silhouette to eliminate reflection and facial warping traps.
+
+- **[Scene s014]**: Never prompt for gauges, dials, or text-bearing instruments to prevent Veo text hallucinations.
+
+- **[Scene s007]**: Avoid crowds of people in motion prompts to prevent Veo facial distortion and identity morphing.
+
+- **[Scene 14]**: Never prompt for readable gauges, dials, or text to maintain clean video generation.
+
+- **[Scene 7]**: Avoid crowd shots with visible faces in catastrophe prompts to prevent Veo generation artifacts.
 - **[Scene 12]**: Avoid extreme close-ups of human hands interacting with freezing/melting surfaces to prevent AI hand distortion artifacts.
