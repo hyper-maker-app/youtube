@@ -1,68 +1,112 @@
-# 🎬 Hyper Maker Cinematic Studio (v4.3)
-### Grok 4.6 Multi-Agent Brain × Google Flow CDP Factory × Deepgram Aura-2
+# 🎬 Hyper Maker Cinematic Studio (v4.6)
+### Autonomous Procedural Catastrophe & Micro-Survival Documentary Factory
+**Grok 4.6 Multi-Agent Brain × Google Flow CDP (Veo 3.1) × Remotion Motion Graphics × Deepgram Aura-2**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub: hyper-maker-app/youtube](https://img.shields.io/badge/GitHub-hyper--maker--app%2Fyoutube-181717.svg?logo=github)](https://github.com/hyper-maker-app/youtube)
-[![Release: v4.3](https://img.shields.io/badge/Engine-v4.3_Production--Grade-green.svg)](docs/plans/grok_v4_rearchitecture_plan.md)
-[![Model: Grok 4.6](https://img.shields.io/badge/AI_Brain-Grok_4.6-orange.svg)](https://x.ai)
+[![Engine: v4.6 Production-Grade](https://img.shields.io/badge/Engine-v4.6_Production--Grade-green.svg)](AGENTS.md)
+[![AI Brain: Grok 4.6](https://img.shields.io/badge/AI_Brain-Grok_4.6_Orchestration-orange.svg)](https://x.ai)
+[![Adversarial Review: Dual--Judge](https://img.shields.io/badge/Adversarial_Gate-Grok_4.6_×_Gemini_3.1_Pro-yellow.svg)](scripts/run_live_critique.py)
 [![Physical Engine: Flow CDP](https://img.shields.io/badge/Video_Engine-Google_Flow_CDP_(Port_9223)-red.svg)](chrome_flow.bat)
-[![Audio: Deepgram Aura-2](https://img.shields.io/badge/Voice-Deepgram_Aura--2-purple.svg)](https://deepgram.com)
-
-**Hyper Maker Cinematic Studio** is an autonomous AI-driven cinematic production studio and episodic YouTube series factory. It fuses high-level **xAI Grok 4.6 multi-agent narrative orchestration** with a physical **Google Flow CDP (Veo / Imagen 3)** rendering bridge, **Deepgram Aura-2** voiceover, and **FFmpeg broadcast post-production**.
+[![Motion Graphics: Remotion 60FPS](https://img.shields.io/badge/B--Roll-Remotion_Motion_Graphics-61dafb.svg)](engine/services/remotion_bridge.py)
+[![Voice: Deepgram Aura-2](https://img.shields.io/badge/Voice-Deepgram_Aura--2-purple.svg)](https://deepgram.com)
+[![Audio Master: FFmpeg -14 LUFS](https://img.shields.io/badge/Master-FFmpeg_Broadcast_Audio-black.svg)](engine/editor.py)
 
 ---
 
-## 🌟 Key Architecture & Capabilities
+**Hyper Maker Cinematic Studio** is an autonomous, end-to-end AI film factory designed to produce broadcast-quality **procedural catastrophe, high-retention survival, and "What If" scientific documentaries** for YouTube.
+
+By shedding the uncanny-valley traps of AI humanoid characters, the studio pivots to **extreme physical forces, macro instrument gauges, atmospheric environmental tension, 100% parametric Remotion 60 FPS motion graphics HUDs**, and **Veo 3.1 physical rendering via Google Flow CDP**.
+
+---
+
+## 🌋 The Catastrophe & Survival Paradigm Shift
+
+Traditional generative AI cinema struggles with drifting facial features, uncanny synthetic acting, and inconsistent wardrobe continuity. **Hyper Maker v4.6 eliminates this failure mode by design:**
+
+1. **Zero Human Face Uncanny Valley (Noun-First Framing):** Eliminates deformed faces by focusing cinematic cameras on macro tool grips, pressure gauges, vibrating titanium bulkheads, door peepholes, backlit rain silhouettes, and seismic shockwaves.
+2. **Second-Person Singular POV ("You"):** Strict 2nd-person immersion (`"You have 14 minutes before the thermal pulse reaches the bunker door..."`) with an immediate crisis hook inside the first 3 seconds.
+3. **Micro-Survival Mathematics:** Replaces generic dialogue with concrete physical metrics: remaining oxygen milliliters, caloric deficits, decibel survival thresholds (< 15 dB), and hydrostatic bar pressure.
+4. **Dual-Layer Visual Cadence:** Alternates hyper-photorealistic Veo 3.1 cinematic footage with 60 FPS parametric data maps, geospatial storm radar overlays, and tactical HUD telemetry curves.
+
+---
+
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Brain["Grok 4.6 Studio Brain (25-Agent Core)"]
-        A["Series Architect (3-Act Pacing)"] --> B["Character DNA & Wardrobe Lock"]
-        B --> C["Universal Declarative State Engine (UDSE v4.3)"]
-        C --> D["AST Dispatch Linter & Prompt Compiler"]
+    subgraph Brain["1. Grok 4.6 Studio Brain & Specialized Directors"]
+        A["Topic / Premise Prompt"] --> B["Specialized Director Skill\n(DeepSea / Planetary / Urban / Micro-Survival)"]
+        B --> C["Universal Declarative State Engine (UDSE v4.3)\n5-Stage Time Escalation & Metric Math"]
+        C --> D["Screenplay Linter & Prompt Compiler\n(Strict 2nd Person · Noun Rule · Sanitized Text)"]
     end
 
-    subgraph Factory["Physical Execution Factory (engine/)"]
-        D --> E["Deepgram Aura-2 Voiceover (Timed Words)"]
-        E --> F["DurationPacker (Veo 4/6/8/10s Alignment)"]
-        F --> G["Google Flow CDP Bridge (Port 9223)"]
-        G --> H["Transition Boundary QA (Triplet Inspection)"]
-        H -->|Delta Detected| I["Autonomous Director Agent (HEAL / CANONIZE)"]
-        I -->|HEAL: Reframe/Negative| G
-        I -->|CANONIZE: Ledger| C
+    subgraph DualJudge["2. Dual-Judge Adversarial Review & Healer Gate"]
+        D --> E["Pessimistic Dual-Judge Gate\n(Grok 4.6 Retention + Gemini 3.1 Pro Spatial/Physics)"]
+        E -->|Score < 90.0| F["Closed-Loop Healer Agent\n(Refine prompt contrast, repair pacing)"]
+        F --> E
+        E -->|Score >= 90.0 / Certified| G["Certified Screenplay Contract"]
     end
 
-    subgraph Assembly["Broadcast Delivery"]
-        G --> J["FFmpeg Broadcast Engine (-14 LUFS, Ducking)"]
-        E --> J
-        J --> K["Libass Karaoke Subtitles + Procedural Foley"]
-        K --> L["Final Master MP4 + Series Continuity State"]
+    subgraph ParallelFactory["3. Physical Factory Execution (engine/)"]
+        G --> H["Voiceover Engine\n(Deepgram Aura-2 / ElevenLabs / Azure TTS)"]
+        H --> I["DurationPacker\n(Veo 4s/6s/8s/10s Word-Quantized Slices)"]
+        I --> J["Google Flow CDP Bridge\n(Port 9223 Remote Debugger · Veo 3.1)"]
+        G --> K["Remotion Motion Graphics Engine\n(60 FPS Parametric Storm Maps & Telemetry HUDs)"]
+    end
+
+    subgraph QA["4. Boundary QA & Self-Healing"]
+        J --> L["Transition Boundary QA (Triplet Inspection)"]
+        L -->|Defect / Severance| M["Autonomous Director Agent\n(HEAL via Scoped Negative / CANONIZE)"]
+        M --> J
+    end
+
+    subgraph Assembly["5. Broadcast Assembly & Delivery"]
+        L --> N["FFmpeg 7.0 Broadcast Master\n(-14 LUFS True Peak · Sidechain Ducking)"]
+        K --> N
+        H --> N
+        N --> O["Procedural Foley Synthesizers\n(Whoosh · Sub-bass Thud · Heartbeat)"]
+        O --> P["Libass Timed Karaoke Subtitles\n(100% English Invariant)"]
+        P --> Q["Final Broadcast MP4 (16:9 Master)"]
+        P --> R["Auto-Multiplexed 9:16 YouTube Shorts Cut"]
     end
 ```
 
-### 1. Universal Declarative State Engine (UDSE v4.3)
-* **Entity-Attribute Binding (EAB):** Binds adjectives and material states strictly to discrete entity IDs, preventing diffusion models from misattributing attributes across objects.
-* **Metric Spatial Partitioning:** Breaks coplanar ambiguity (e.g. separates door on Z=0 plane from window on left wall at 2.1m offset).
-* **Contrastive Material Anchoring (CMA):** Anchors what an object IS by explicitly contrasting what it is NOT (e.g., solid 44mm quarter-sawn oak slab, zero glass, zero sidelights).
-* **AST Dispatch Linter:** Statically scans prompts before submission; blocks any unpartitioned material co-occurrence at the code level.
+---
 
-### 2. Autonomous Director Agent (HEAL vs CANONIZE vs HYBRID)
-* **4-Orthogonal-Axis Evaluation:** Inspects visual transitions across Ontology, Geometry/Axis (180° rule), Causal Continuity, and Narrative Utility.
-* **Severity Taxonomy (`SEV0` to `SEV6`):**
-  - **`SEV0`–`SEV1` (Cosmetic / Emergent Wear):** Triggers `CANONIZE` — crops a Token-Still, records into `WorldState.delta_ledger`, and injects only into downstream shots where that entity is visible.
-  - **`SEV2` (Prop Shift):** Triggers `HYBRID` — freezes legal entities, repairs defective regions in tighter framing.
-  - **`SEV3`–`SEV6` (Ontology / Axis Breach):** Triggers surgical `HEAL` — applies scoped negatives (`glass door, French door`), tightens camera perspective (`tighter_mcu`), and enforces a 2-attempt cap without uncontrolled downstream screenplay rewrites.
+## ⚡ Key Architectural Innovations
 
-### 3. Google Flow CDP Physical Render Engine
-* Direct Chromium remote debugging connection (**Port 9223**) with zero third-party cloud credit drain.
-* Native resolution of discrete Veo duration tiers (`4.0s`, `6.0s`, `8.0s`, `10.0s`).
-* Self-healing browser session lifecycle (`BrowserLease` with generation counters to eliminate zombie callbacks).
-* Graceful capability degradation (`PROMPT_CANON` fallback when raw file-upload ingress is gated).
+### 1. Google Flow CDP Physical Render Engine (Port 9223)
+* **Direct Chromium Remote Debugging:** Controls Google Flow directly over Chrome DevTools Protocol (`localhost:9223`) with **zero third-party API token waste**.
+* **Auto-Healing Browser Session:** `BrowserLease` lifecycle management with generational counters detects frozen generations, handles network reconnects, and automatically restarts dead tabs.
+* **Discrete Veo Duration Quantization:** Maps scene narration beats dynamically to native Veo block lengths (`4.0s`, `6.0s`, `8.0s`, `10.0s`).
 
-### 4. Broadcast Audio & Subtitle Master
-* **Deepgram Aura-2 Timed Alignment:** Synchronizes discrete Veo video blocks to speech timelines using `DurationPacker` and frame-quantized timebases (`AUDIO_TB=1/48000`, `VIDEO_TB=1/24`).
-* **Procedural SFX & Foley:** Dual-stage acoustic layer combining Hugging Face Spaces (`TangoFlux`, `AudioGen`) with procedural FFmpeg Lavfi synthesizers (whoosh, sub-bass thud, tension heartbeat, metallic impact).
-* **Libass Karaoke Subtitles:** Dynamic color highlight per timed word with 100% English invariant.
+### 2. Pessimistic Dual-Judge Adversarial Review
+* **Two Independent AI Evaluators:**
+  * **xAI Grok 4.6 / Grok 4.20:** Grades 3-second hook retention, emotional escalation, pacing, and viral audience psychology.
+  * **Gemini 3.1 Pro:** Evaluates scientific plausibility, thermodynamic scaling, metric mathematics, and Veo spatial geometry.
+* **Fail-Closed Certification Gate:** A screenplay **must achieve $\ge 90.0$** composite score from both judges to unlock physical video rendering.
+* **RobustJsonExtractor:** Hardened JSON recovery parser that handles raw LaTeX math escapes (`\mu`, `\Delta`), unescaped quotes, and nested payloads without breaking execution.
+
+### 3. Remotion Parametric Motion Graphics Engine (60 FPS)
+* **Zero Hardcoding Invariant:** React/Remotion templates contain **zero static cities, fixed dates, or hardcoded telemetry**. Everything is 100% dynamically driven via JSON payloads.
+* **Broadcast HUD Compositions:**
+  * `GeospatialStormMap` (`storm-map`): Multi-spectral radar isobar curves, kinetic front boundaries, and satellite thermal sweeps.
+  * `TelemetryCurve` (`telemetry`): Exponential resource decay curves, decibel alert bars, and oxygen depletion count-ups.
+  * `VolcanoSeismicMap` (`volcano-map`): Hypocenter depth meters, volcanic ash dispersion envelopes, and Richter magnitude graphs.
+
+### 4. Specialized Catastrophe & Survival Directing Suite
+* **`catastrophe-director`:** Master director orchestrating 5-stage timeline catastrophe escalation.
+* **`deepsea-survival-director`:** 1,100 bar Mariana Trench implosion mechanics, acoustic shadow evasion, and titanium sphere buckling.
+* **`planetary-catastrophe-director`:** NASA/USGS kinetic asteroid impact scaling, megatsunami shoaling dynamics, and volcanic winter physics.
+* **`urban-infiltration-director`:** SCADA grid cascade collapses, metropolitan blackouts, and $< 15\text{ dB}$ acoustic discipline.
+* **`micro-survival-director`:** Post-disaster void crawling, FEMA/Kızılay structural entrapment protocols, and calorie rationing mathematics.
+
+### 5. Broadcast Audio Master & Subtitle Factory
+* **Multi-Provider TTS:** Native support for **Deepgram Aura-2** (timed word timestamps), **ElevenLabs**, and **Azure Speech**.
+* **Spoken Text Sanitizer Gateway:** Automatically purges script metadata (`Act 1:`, `Scene 02:`) and bracketed sound effects (`[Explosion]`, `(whispering)`) before sending to TTS.
+* **Procedural Foley Layer:** Dual-stage sound design combining Hugging Face Spaces (`TangoFlux`, `AudioGen`) with procedural FFmpeg `lavfi` synthesizers (sub-bass impacts, riser sweeps, tension drones).
+* **Automated YouTube Shorts Multiplexing (`--export-shorts`):** Simultaneously renders both the horizontal 16:9 broadcast master and a centered 9:16 vertical cut for YouTube Shorts.
 
 ---
 
@@ -70,75 +114,114 @@ flowchart TD
 
 ### 1. Prerequisites
 - **Python 3.11+**
-- **FFmpeg 7.0+** installed and added to `PATH`
-- **Google Chrome** launched with remote debugging enabled on port 9223:
-  ```powershell
-  # Launch Chrome Flow Profile
-  .\chrome_flow.bat
-  ```
+- **FFmpeg 7.0+** installed and available in `PATH`
+- **Node.js 20+** (for Remotion motion graphics B-roll rendering)
+- **Google Chrome** launched with remote debugging enabled:
 
-### 2. Environment Configuration
-Copy `.env.example` to `engine/.env` and configure your API keys:
-```bash
-cp .env.example engine/.env
-```
-Ensure the following variables are set:
-```ini
-XAI_API_KEY=xai-...
-XAI_MODEL=grok-4.6
-DEEPGRAM_API_KEY=...
-GEMINI_MODEL=gemini-3.5-flash-lite
-PLAYWRIGHT_CDP_PORT=9223
+```powershell
+# Launch dedicated Chrome Flow profile on port 9223
+.\chrome_flow.bat
 ```
 
-### 3. Verifying the Engine
-Check that Chrome CDP is reachable:
+Verify Chrome CDP connection:
 ```powershell
 curl.exe http://127.0.0.1:9223/json/version
 ```
 
-### 4. Character DNA Setup
-Initialize and lock your character DNA profile:
-```powershell
-python tools/cinematic_studio_cli.py dna init "The Barricaded Survivor" `
-  --core "Survival horror protagonist barricaded in a hallway" `
-  --clothing "Dark tactical utility jacket, leather gloves" `
-  --anchor "forged steel pry-bar"
-
-python tools/cinematic_studio_cli.py dna lock "The Barricaded Survivor"
+### 2. Environment Configuration
+Copy `.env.example` to `engine/.env` and configure your API credentials:
+```bash
+cp .env.example engine/.env
+```
+Ensure your keys are populated:
+```ini
+XAI_API_KEY=xai-...
+XAI_MODEL=grok-4.6
+DEEPGRAM_API_KEY=...
+ELEVENLABS_API_KEY=...
+PLAYWRIGHT_CDP_PORT=9223
 ```
 
-### 5. Running Production
+---
 
-#### A. Pre-Production Planning (Zero Cost / No Render)
+## 🎥 Running Production
+
+### A. Pre-Production Screenplay Planning (Zero Cost / No Render)
+Generates the 5-stage timeline screenplay, passes through the Dual-Judge Adversarial Gate, and outputs the production packet without triggering video render:
 ```powershell
-python tools/cinematic_studio_cli.py produce-film "Project Rigor Mortis Episode 01" `
-  --genre "Survival Horror" `
-  --duration 74 `
+python tools/cinematic_studio_cli.py produce-film "What If 1000 Volcanoes Erupt Simultaneously" `
+  --genre "planetary catastrophe" `
+  --duration 300 `
   --plan-only
 ```
 
-#### B. Dry-Run Offline Simulation (Test Assembly & Linter)
+### B. Dry-Run Offline Simulation
+Simulates full timeline duration packing, audio bed assembly, and Remotion motion graphics integration offline:
 ```powershell
-python tools/cinematic_studio_cli.py produce-film "Project Rigor Mortis Episode 01" `
-  --genre "Survival Horror" `
-  --duration 74 `
+python tools/cinematic_studio_cli.py produce-film "Abyssal Trench Submersible Entrapment" `
+  --genre "deepsea survival" `
+  --duration 180 `
   --dry-run
 ```
 
-#### C. Full Live Physical Render (Veo + Deepgram + FFmpeg)
+### C. Full Physical Broadcast Render (Veo 3.1 + Remotion + Deepgram + FFmpeg)
+Renders all Veo video clips via Google Flow CDP, generates 60 FPS motion graphics B-roll, synthesizes voiceover, and masters the film:
 ```powershell
-python tools/cinematic_studio_cli.py produce-film "Project Rigor Mortis Episode 01" `
-  --genre "Survival Horror" `
-  --duration 74 `
-  --voice-provider deepgram
+python tools/cinematic_studio_cli.py produce-film "Planetary Power Grid Collapse" `
+  --genre "urban infiltration" `
+  --duration 300 `
+  --voice-provider deepgram `
+  --export-shorts
 ```
 
-Output files will be generated under `out/<project-slug>/`:
-- `final_film.mp4`: Final broadcast master video.
-- `series_bible.json`: Structured 25-agent production bible.
-- `captions.ass`: Libass styled karaoke subtitles.
-- `continuity_state.json`: Sealed telemetry and WorldState snapshot for next episode continuation.
+All master assets will be placed in `out/<project-slug>/`:
+- `final_film.mp4`: 1080p 16:9 Broadcast Master Video (-14 LUFS, sidechain ducked).
+- `final_film_shorts.mp4`: 9:16 Vertical cut for YouTube Shorts.
+- `captions.ass`: Word-level karaoke Libass styled subtitles.
+- `screenplay.json`: Dual-judge certified screenplay with Veo prompt tags and Remotion payloads.
+- `continuity_state.json`: Sealed physical telemetry ledger for multi-episode series continuation.
+
+---
+
+## 📊 Remotion Motion Graphics CLI
+
+You can independently preview and render broadcast-quality 60 FPS HUD motion graphics B-roll:
+
+```powershell
+# Render Geospatial Radar Storm Map
+python tools/cinematic_studio_cli.py motion-graphics storm-map `
+  --title "SUPERCELL TRACKER: CATEGORY 5" `
+  --coordinates "29.97°N, 90.07°W" `
+  --output "out/storm_radar.mp4"
+
+# Render Telemetry HUD Resource Curve
+python tools/cinematic_studio_cli.py motion-graphics telemetry `
+  --title "PRIMARY OXYGEN DEPLETION" `
+  --metric "O2 CONCENTRATION" `
+  --unit "%" `
+  --critical-threshold 19.5 `
+  --output "out/oxygen_telemetry.mp4"
+```
+
+---
+
+## 🧪 Testing & Verification
+
+Run the comprehensive regression and contract test suites:
+
+```powershell
+# Run screenplay contract and fail-closed gate tests
+pytest tests/test_screenplay_contracts.py -v
+
+# Run Remotion motion graphics bridge tests
+pytest tests/test_remotion_broll_pipeline.py -v
+
+# Run duration packing and boundary inspection tests
+pytest tests/test_duration_packer.py tests/test_final_qa_regressions.py -v
+
+# Run live dual-judge adversarial critique benchmark
+python scripts/run_live_critique.py
+```
 
 ---
 
@@ -146,28 +229,37 @@ Output files will be generated under `out/<project-slug>/`:
 
 ```
 GROK_CINEMATIC_STUDIO/
-├── characters/             # Character DNA profiles and Hero visual reference plates
-├── config/                 # Engine presets, model matrices, and plugin packs
+├── .gemini/rules/          # Multi-agent execution & Zero-Hardcode invariant rules
+├── .grok/skills/           # 25-Agent Core + 5 Catastrophe/Survival Director skills
+│   ├── catastrophe-director/
+│   ├── deepsea-survival-director/
+│   ├── micro-survival-director/
+│   ├── planetary-catastrophe-director/
+│   └── urban-infiltration-director/
 ├── engine/                 # Physical execution factory
-│   ├── providers/          # Flow CDP browser, Grok LLM, Deepgram TTS, FFmpeg SFX
-│   ├── services/           # Series Architect, Director Agent, Prompt Compiler, Boundary QA
+│   ├── motion_graphics/    # Remotion React 60 FPS parametric compositions
+│   ├── providers/          # Flow CDP (Playwright), Grok LLM, Deepgram TTS, Gemini WebAPI
+│   ├── services/           # Dual-Judge Reviewer, Screenplay Linter, Text Sanitizer, Remotion Bridge
 │   ├── editor.py           # FFmpeg broadcast master editor (-14 LUFS, sidechain ducking)
 │   ├── captions.py         # Libass karaoke subtitle generator
 │   └── flow_bridge.py      # End-to-end factory bridge
-├── sequences/              # Generated handoff packets and scene specifications
-├── tools/                  # CLI suite (produce_commands.py, dna_commands.py, models.py)
-├── references/             # Architectural standards, ADR records, and production protocols
-└── chrome_flow.bat         # Chrome CDP launcher for Google Flow on port 9223
+├── scripts/                # Live critique benchmarking & verification tools
+├── tests/                  # Pipeline contract, motion graphics, and screenplay regression tests
+├── tools/                  # CLI suite (produce_commands.py, motion_commands.py, models.py)
+├── references/             # Viral Second-Person Protocol v4.0, ADR logs, and Model Layer specs
+└── chrome_flow.bat         # 1-Click Chrome CDP remote debugger launcher (port 9223)
 ```
 
 ---
 
-## 📜 Architectural Decisions (ADR)
-- **ADR-090 Zero-Hardcoding Mandate:** Strict separation of narrative logic from production code. Scene content is strictly schema-driven; no hardcoded story text inside engine code.
-- **Protocol v4.0 Retention & Foley Standard:** 100% English invariant, 2nd-person POV ("You"), crisis hook within first 3 seconds, micro-survival mathematics.
-- **UDSE v4.3 State Engine:** Deterministic EAB and contrastive material clauses preventing Veo diffusion bleed.
+## 📜 Architectural Decisions & Principles
+
+- **ADR-090 Pure Engine Invariant (Zero Hardcode):** Python engines and Remotion TSX templates contain **zero narrative text, dialogue lines, or hardcoded coordinates**. Everything is schema-driven.
+- **Protocol v4.0 Retention & Foley Standard:** 100% English invariant, strict 2nd-person singular POV ("You"), in-media-res crisis hook in the first 3 seconds, and dual-layer procedural foley.
+- **Fail-Closed Dual-Judge Gate:** Automatic abort of physical video rendering unless both Grok 4.6 and Gemini 3.1 Pro certify the screenplay with a score $\ge 90.0$.
 
 ---
 
 ## 📄 License
 This project is open-source under the [MIT License](LICENSE).
+Grok Imagine Cinematic Studio is an independent community project and is not officially affiliated with xAI or Google.
