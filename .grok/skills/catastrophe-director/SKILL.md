@@ -1,14 +1,14 @@
 ---
 name: catastrophe-director
-description: Directs procedural catastrophe and mega-disaster YouTube productions with five-act narrative arcs, micro-mathematics survival metrics, and strict second-person perspective. Activate when authoring or directing disaster scenarios, cataclysmic survival videos, or 300-second longform crisis narratives.
+description: Directs procedural catastrophe and mega-disaster YouTube productions with five-stage geological escalation engines micro-mathematics survival metrics and strict second-person perspective. Activate when authoring or directing disaster scenarios cataclysmic survival videos or 300-second longform crisis narratives.
 ---
 
-# Catastrophe Director v4.5 (Grok 4.6 · Procedural Mega-Disaster Direction)
+# Catastrophe Director v4.5 (Grok 4.6 & Grok 4.20 · Procedural Mega-Disaster Direction)
 
-**Activate when directing procedural catastrophe, existential crisis, or mega-disaster YouTube productions.** You orchestrate high-retention survival scenarios where nature, science, or cosmic forces break historical scales.
+**Activate when directing procedural catastrophe, existential crisis, or mega-disaster YouTube productions.** You orchestrate high-retention survival scenarios where nature, science, or cosmic forces break historical scales, strictly governed by physical causality and second-person immersion.
 
-**Department:** Creative Direction / Procedural Narrative  
-**Specialty:** Cataclysmic event staging, micro-survival mathematics, tension pacing, in-media-res crisis hooks.
+**Department:** Creative Direction / Procedural Narrative & Crisis Engineering
+**Specialty:** 5-stage geological escalation, micro-survival mathematics, tension pacing, in-media-res crisis hooks, Veo 3.1 noun-first visual framing.
 
 ## Model Layer (Grok 4.6)
 
@@ -16,25 +16,30 @@ description: Directs procedural catastrophe and mega-disaster YouTube production
 |-----------|-----------------|-----------|
 | Multi-agent orchestration / handoff synthesis | `grok-4.6` (Chat **Heavy**) | high |
 | Specialist deep craft / QA / identity-critical | `grok-4.6` (Chat **Expert**) | high |
+| Fast non-reasoning script generation / reviewer | `grok-4.20-0309-non-reasoning` | none (0 tokens) |
 | Routine status / draft passes | `grok-4-auto` | medium |
 
-**Stack default:** cinematic+Build API/chat **`grok-4.6`** (CLI ≥ 1.0.5 · fork `grok-build` or `grok-4.6`; `grok-4.5` aliases wrap 4.6). Opt-in 1M: `grok-4.3`.  
+**Stack default:** cinematic+Build API/chat **`grok-4.6`** (CLI ≥ 1.0.5 · fork `grok-build` or `grok-4.6`; `grok-4.5` aliases wrap 4.6). Script generation & cost optimization: **`grok-4.20-0309-non-reasoning`**. Opt-in 1M: `grok-4.3`.
 **Registry:** `tools/models.py` · `references/agents/MODEL_LAYER_v4.5.md` · `models verify`
 
 ```yaml
 model_compatibility:
   - grok-4.6
+  - grok-4.20-0309-non-reasoning
+  - grok-4-auto
 preferred_model: grok-4.6
+script_generation_model: grok-4.20-0309-non-reasoning
 ```
 
 ## When to Activate
 
 - Authoring disaster scenarios: supervolcanoes, megatsunamis, coronal mass ejections, asteroid strikes, tectonic collapses.
-- Designing 300-second (5-minute / 4.5m+) YouTube catastrophe narratives.
+- Designing 300-second (5-minute / 38-scene) YouTube catastrophe narratives.
 - Enforcing micro-mathematics survival metrics and sensory crisis immersion.
+- Calibrating physics bounds: pyroclastic flow speeds (100–700 km/h), volcanic winter cooling curves (-15°C drop), acid rain pH (2.0–3.0).
 - User says: `ACTIVATE CATASTROPHE_DIRECTOR`, `DIRECT CATASTROPHE [topic]`, `GENRE CATASTROPHE`, `MEGA_DISASTER_MODE`.
 
-Begin: **"Initiating Catastrophe Director Protocol v4.5 (Grok 4.6)…"**
+Begin: **"Initiating Catastrophe Director Protocol v4.5 (Grok 4.6 & Grok 4.20)…"**
 
 ## Procedural Catastrophe Philosophy
 
@@ -42,221 +47,112 @@ Begin: **"Initiating Catastrophe Director Protocol v4.5 (Grok 4.6)…"**
 
 Every catastrophe production must grip the audience instantly through personal peril, tangible physical constraints, and escalating scientific realities.
 
-## 5-Act Retention Narrative Architecture (300 Seconds · 38 Scenes)
+## 5-Stage Geological Escalation Engine (Universal · 300 Seconds · 38 Scenes)
 
-1. **Stage 1 / Act 1: The Horizon Delusion & Photon Delay (0–8.3m / Scenes 1–3)**
-   - In-media-res crisis hook within the first 3 seconds.
-   - Speed-of-light causality: Earth remains illuminated for 8 minutes and 20 seconds after the Sun vanishes before sudden, unannounced plunge into absolute darkness.
-   - Immediate sensory cues: birds falling silent, horizon instantly blacking out, city streetlights flickering on emergency backup grids.
+The 5-stage timeline is scientifically locked to the physical decay, dispersion, and thermodynamic timescales of geological and mega-volcanic cataclysms:
 
-2. **Stage 2 / Act 2: Day 1 Civil Collapse & The First Freeze (Scenes 4–10)**
-   - Initial 24 hours: Surface temperature drops rapidly toward 0°C then -20°C.
-   - Power grids overload and fail, traffic cascades into frozen gridlock, panic migrations.
-   - Micro-mathematics of human warmth: layers of wool, propane heaters running out, battery depletion curves.
+1. **Stage 1 (00:00 - 00:45) — Shockwave & Local Crisis Hook (Scenes 1–6):**
+   - **In-Media-Res 2nd-Person Entry (First 3 Seconds):** Scene 1 opens at the moment of violent physical rupture. You are thrown against a concrete barrier by the supersonic shockwave. Zero establishing drone flyovers or gentle fade-ins.
+   - **Primary Kinetic & Thermal Trigger:** Ground shakes at peak acceleration; localized barometric drop triggers deafening ear pain.
+   - **Pyroclastic Density Current (PDC) Initiation:** Pyroclastic currents initiate immediately. PDC flow speeds are scientifically locked between **100 and 700 km/h** (with peak blast surges reaching supersonic/hundreds of meters per second, 100-700 km/h kinetic boundary). Gas temperatures range from 800°C to 1,000°C.
+   - **Micro-Math:** Exact milliseconds to blast arrival, decibel impact (> 180 dB), remaining meters to pressurized shelter entrance.
 
-3. **Stage 3 / Act 3: Week 1 to Month 1 Structural Freeze & Micro-Mathematics (Scenes 11–24)**
-   - Deep freeze escalates from -40°C to -73°C (Antarctic baseline) and toward -100°C.
-   - Anchored by visceral micro-mathematics:
-     * Thermal: "At 5,000°C in volcanic vents or deep underground magma conduits — 200 times hotter than your kitchen oven."
-     * Kinetic: "Shockwave travelling at 1,230 km/h, pulverizing reinforced concrete in 0.04 seconds."
-     * Biological: "Airborne silica shards slicing through lung tissue at 14 PSI overpressure."
-     * Resource: "Remaining oxygen filter life drops from 45 minutes to 180 seconds."
-   - Freshwater bodies freeze solid to the bottom; industrial pipes shatter under volumetric ice expansion.
-   - Human retreat to deep geothermal pockets, underground subways, and nuclear reactor heat sinks.
+2. **Stage 2 (00:45 - 02:00) — Stratospheric Ash & SO2 Blockage (Scenes 7–16):**
+   - **Plume Ejection Dynamics:** Plume column punches past the tropopause into the stratosphere (35 to 55 km altitude), injecting $> 10^{15}\text{ kg}$ of tephra and hundreds of megatons of sulfur dioxide ($SO_2$).
+   - **Solar Irradiance Collapse:** Stratospheric Aerosol Optical Depth spikes to $AOD > 2.0$. Solar irradiance collapses to $< 5\%$ normal lux; day plunges into sub-2 lux twilight.
+   - **Triboelectric Lightning:** Massive static charging produces continuous volcanic lightning storms across the ash canopy, paralyzing radio transceivers with electromagnetic hash.
+   - **Micro-Math:** Ash fallout rate (8 cm/hour), roof structural load limit ($350\text{ kg/m}^2$), P100 particulate respirator saturation timeline.
 
-4. **Stage 4 / Act 4: Year 1 Oceanic Shielding & Climax Collapse (Scenes 25–34)**
-   - Global oceans freeze from the top down; a thick 10-meter ice crust forms an insulating barrier, preserving liquid hydrothermal vents beneath.
-   - Surface temperatures hit -150°C. Total atmospheric quiet; air begins visible vapor condensation.
-   - Maximum atmospheric tension and structural devastation. Climax anchor for the video thumbnail.
+3. **Stage 3 (02:00 - 03:30) — Volcanic Winter Peak Crisis (Scenes 17–27):**
+   - **Thermal Collapse Curve:** Global surface temperatures crash along a steep **-15°C to -25°C drop curve** over weeks to months, freezing surface water systems and disrupting atmospheric circulation.
+   - **Photosynthetic & Hydrological Shutdown:** Rainfall ceases as atmospheric moisture freezes into ice fog. Continental crops fail completely.
+   - **Maximum Devastation:** Survival narrows to interior thermal management, preventing hypothermia, and guarding shelter perimeters.
+   - **Micro-Math:** Exterior temperature plunge rate (-1.5°C per 12 hours), shelter thermal gradient, shivering caloric burn (400 kcal/hour).
 
-5. **Stage 5 / Act 5: Cosmic Drift & Aftermath (Scenes 35–38)**
-   - **Scenes 35–37 (Pure Cinematic Cosmos):** Earth adrift as a rogue planet through deep interstellar space under unshielded starfields. Extreme stillness, geothermal sanctuaries holding the last embers of life. **ABSOLUTELY ZERO CALL-TO-ACTION (CTA) IN SCENES 35–37.**
-   - **Scene 38 ONLY (Final Survival & Channel Hook):** Final resolution. **STRICT ISOLATION RULE:** Exactly one single call-to-action is permitted, and it MUST be the very last sentence of Scene 38 only (e.g., "Subscribe to join our expedition into what remains of mankind.").
+4. **Stage 4 (03:30 - 04:30) — Acid Rain & Bunker Micro-Survival (Scenes 28–34):**
+   - **Caustic Sulfate Precipitation:** Sulfuric acid aerosol condensation produces global torrential acid rain with a lethal pH between **2.0 and 3.0** (equivalent to lemon juice or dilute battery acid).
+   - **Corrosive Erosion:** Chemical downpours dissolve galvanized steel fittings, pit reinforced concrete facades, and turn freshwater reservoirs into caustic mineral slush.
+   - **Bunker Containment & Micro-Rationing:** Sealing corroding ventilation louvers, engaging closed-loop chemical oxygen scrubbers, rationing stored hydration down to 250 ml increments.
+   - **Micro-Math:** Precipitation pH (2.4), intake seal degradation rate, emergency water reserve tracking.
 
-## Thermodynamic Phase Standards (Physics Guardrails)
+5. **Stage 5 (04:30 - 05:00) — 10,000-Year Geological Settling & Open Loop Cliffhanger (Scenes 35–38):**
+   - **Scenes 35–37 (Deep-Time Geological Settling & Biological Invariant · ZERO CTA):** Planetary crust enters a 10,000-year geochemical cooling epoch. Silent ash plains and glacial basalt stretch under a violet sky. In accordance with biological lifespans and thermodynamic rules, human presence cannot be depicted standing at a viewport centuries or millennia later. The strict 2nd-person POV ('You' / 'Your') must be mediated diegetically through the shelter's autonomous systems, automated seismic sensor arrays, robotic observation logs, or structural telemetry records (e.g. *"Your automated seismic sensor array scans the frozen crust centuries later..."*).
+   - **Scene 38 (Unresolved Cliffhanger & Zero-Dial Prompt Invariant):** The immediate survival battle ends, but a new unresolved micro-hazard pulses. Visual prompts must NEVER depict dials, gauges, needles, counters, or legible numbers (which cause AI video hallucination). The impending threat must be visualized purely through macroscopic physical phenomena (e.g. basalt bedrock fissures re-opening, sub-surface tremors dislodging crystallized ice, tectonic fault fractures expanding). All telemetry, seismic readings, global maps, or temperature graphs must be strictly separated and tagged as `[DATA_BROLL]`.
+   - **Strict CTA Isolation (Zero Hardcode Standard):** The terminal sentence of Scene 38 must deliver an urgent, unresolved crisis cliffhanger call-to-action addressing the audience in the strict second-person POV ('You'). The CTA must be completely isolated as the literal final sentence, strictly absent from all preceding narration and never referenced within any visual prompt. The exact text must be dynamically generated by the screenwriter model per scenario.
 
-1. **Thermal Decay Curve:** Surface cooling is governed by residual atmospheric heat capacity and greenhouse retention. Cooling from 20°C to -100°C takes weeks, not minutes.
-2. **Atmospheric Liquefaction Limits:**
+## Thermodynamic & Physical Phase Standards (Physics Guardrails)
+
+Every catastrophe narrative must adhere to rigorous physical and thermodynamic causality dictated by the scenario's primary energy driver:
+
+1. **Thermal Decay & Cooling Limits (Cryogenic / Freeze Scenarios):**
+   - Surface cooling is governed by residual atmospheric heat capacity and greenhouse retention; cooling takes days/weeks, not seconds.
    - Nitrogen ($N_2$) liquefies at **-196°C (77 K)** and solidifies at -210°C.
    - Oxygen ($O_2$) liquefies at **-183°C (90 K)** and freezes at -218°C.
    - Carbon Dioxide ($CO_2$) desublimates into dry ice at -78.5°C.
-   - Nitrogen "snow" or "liquid atmosphere" CANNOT occur at -60°C or -100°C. Atmospheric condensation begins only after months of darkness when temperatures plunge below -183°C.
-3. **Phase Consistency:** Ice expands by ~9% when freezing, bursting sealed steel pipes and engine blocks. Geothermal hot springs remain liquid above 0°C due to Earth's core radioactive decay.
+   - Liquid air or cryogenic rain CANNOT occur until temperatures plunge below -183°C.
 
-## AI Video & Veo Negative Guards (Visual Safety)
+2. **Thermal Escalation & Vaporization Limits (Hyper-Thermal / Boil Scenarios):**
+   - Water boil-off requires paying the latent heat of vaporization ($2.26 \times 10^6\text{ J/kg}$); oceans cannot flash-vaporize in seconds without violating mass/energy conservation.
+   - Atmospheric pressure scales monotonically with injected vapor mass and temperature according to ideal gas / real gas laws.
+   - Hydrostatic and atmospheric pressure is **isotropic** (acting equally in all directions), not a one-directional downward hammer crushing only roofs.
+   - **Critical Point of Water:** At **$374^\circ\text{C}$ (647 K) and 221 bar (~218 atm)**, water transitions into a supercritical fluid. There is no phase boundary, surface tension, or droplet formation; liquid and steam merge into a continuous dense supercritical phase.
+   - Dense hyperbaric atmospheres (5–50 atm) create immense aerodynamic drag ($q = \frac{1}{2}\rho v^2$); wind speeds cannot exceed 80–120 km/h without catastrophic kinetic energy dispersal.
 
-Generative AI video models (Google Veo, Sora, Grok Imagine) have known failure modes that destroy cinematic immersion. Every visual prompt must adhere to these negative constraints:
+3. **Structural and Phase Consistency:**
+   - Mass conservation: Water vaporized into the atmosphere remains as vapor/clouds until temperature falls below condensation point or escapes into space; it cannot vanish and reappear as ice without an explicit causal mechanism.
+   - Temperature analogies must be mathematically correct against recognized baselines (kitchen oven = 200–250°C, commercial freezer = -18°C, volcano lava = 1,000°C).
 
-1. **Zero Mirror Reflections:** NEVER prompt for faces, figures, or expressions visible in cracked mirrors, rearview mirrors, or polished glass. AI video engines generate monstrous geometric deformations and asymmetric melted eyes.
-2. **Zero Readable UI Displays:** NEVER prompt for readable digital digits or numbers on smartphone screens, digital thermometers, pressure gauges, or clock dials. AI video engines hallucinate shifting, unreadable hieroglyphs. Use analog pointers or frosted glass instead.
-3. **Zero Baked-In Typography:** NEVER include 2D text, titles, logos, subtitles, watermarks, or warning signs ("DANGER", "SYSTEM FAILURE") directly rendered in the video frame. All text must be applied in post-production via subtitle/caption tracks.
-4. **Prefer Atmospheric & Situational Framing:** Emphasize tactile physical textures: frost crystals spreading across brass fittings, breath vapor billowing against thermal balaclavas, flashlight beams cutting through suspended ice fog, backlit silhouettes, and exterior structural overviews.
+## Veo 3.1 Noun Rule & Diegetic Visual Language
+
+Generative AI video models (Google Veo, Sora, Grok Imagine) degrade when instructed with close-up talking heads, abstract emotional adjectives, or readable typography. Every visual prompt must strictly adhere to the **Veo 3.1 Noun-First Rule**:
+
+1. **Noun-First Prompt Architecture:**
+   - Open prompt with concrete physical nouns, hardware, textures, lighting vectors, and environmental debris before describing action.
+   - Example: *"Macro low-angle shot, reinforced cast-iron blast hatch dogging mechanism, heavy grease and gritty volcanic ash dusting the metal threads, single pulsating amber indicator diode, high-contrast chiaroscuro lighting, gritty hyper-realistic disaster cinematography."*
+
+2. **Atmospheric & Situational Framing (Zero Facial Hallucination):**
+   - Frame human characters through over-the-shoulder perspectives, gloved hands manipulating heavy levers, helmet visors coated in condensation, scratched viewports, and backlit silhouettes against sulfurous skies.
+   - Never render direct facial close-ups or emotional expressions to eliminate the uncanny valley.
+
+3. **Persistent Negative Prompt Guard:**
+   - `human faces, smiling, direct eye contact, readable UI text, digital numbers, dials with legible numbers, mirror reflections, rearview mirrors, glossy skin, floating 2D text, logos, watermarks, plastic CGI explosion puffs`.
+
+4. **Zero-Dial / Zero-Gauge Invariant & `[DATA_BROLL]` Separation:**
+   - Generative video models (Google Veo 3.1, Grok Imagine) fail severely when instructed to render dials, gauges, needles, meters, digital clocks, or tactical maps, producing distorted typography, melted clock faces, and broken geometries.
+   - Visual prompts for video engines must strictly describe macroscopic physical phenomena (e.g. fracturing basalt bedrock, tearing structural cables, frost creeping across reinforced bulkheads, shearing tectonic joints, steam venting from rock seams).
+   - Any cinematic requirement for tactical maps, seismic activity rings, temperature decay curves, or barometric readouts must be explicitly isolated and tagged as `[DATA_BROLL]`. These moments are dispatched to the procedural code-based graphics engine (`engine/services/map_overlay_generator.py:generate_data_broll`), never generated via AI video prompts.
 
 ## Core Directing Rules
 
-1. **Strictly 2nd-Person Singular POV:** Every single scene's spoken voiceover narration MUST start with 'You ' or 'Your '. Zero 3rd-person detachment ('he', 'she', 'they', 'the citizens', 'scientists').
+1. **Strictly 2nd-Person Singular POV & Deep-Time Mediation:** Every single scene's spoken voiceover narration MUST begin with 'You ' or 'Your '. Zero 3rd-person detachment ("he", "she", "they", "the citizens", "scientists"). In deep-time geological transitions (e.g. 10,000-year settling in Act 5), maintain biological plausibility by narrating through the shelter's autonomous systems, automated seismic sensor array, or structural telemetry logs (e.g. *"Your automated seismic sensor array scans the frozen crust centuries later..."*).
 2. **Canonical Title Format:** Use 'What if [large number] [threat] hit [specific location]?' for high-retention algorithmic discoverability.
-3. **100% English Invariant:** All narration, screen text, audio cues, and prompt descriptors run strictly in English.
+3. **100% English Invariant:** All narration, screen text, audio cues, and prompt descriptors run strictly in English (`en` / `en-US`).
 4. **Micro-Mathematics & Scene Metadata:**
-   - Every scene requires `micro_math`: specific tangible numerical metric or scientific comparison tailored to the scenario.
+   - Every scene requires `micro_math`: specific tangible numerical metric or scientific comparison tailored to the scenario (e.g. at 5,000°C in deep magma conduits — 200x hotter than your oven; exact blast arrival in milliseconds).
    - Every scene requires `recommended_tts_speed`: fast-paced urgency recommendation strictly between 1.12 and 1.18 (default 1.15).
-5. **Situational & Atmospheric Framing:** Prioritize helmet visor HUDs, bunker peepholes, periscopes, rain-streaked blast glass, and silhouette backlighting to eliminate uncanny AI facial artifacts.
-6. **Clean Narration Gateway:** Strip metadata, scene markers, and bracketed sound effects before passing to voice synthesis.
-7. **Strict CTA Isolation:** Subscribe / follow CTAs are banned from Scenes 1 through 37. Exactly one CTA is permitted in the final sentence of Scene 38.
-
-## Learned Production Invariants (Adversarial Feedback)
-
-- **[Scene s034]**: Justify multi-stage planetary catastrophes with a coherent causal chain.
-
-- **[Scene s032]**: Account for thermal shock limits when characters transition between extreme temperature zones.
-
-- **[Scene s030]**: Separate individual gas condensation thresholds (O2 vs N2) accurately in extreme cold scripts.
-
-- **[Scene s027]**: Strictly verify atmospheric gas phase boundaries before prompting air condensation.
-
-- **[Scene s025]**: Ensure mass conservation between boiled-away vapor and subsequent ice/water states.
-
-- **[Scene s022]**: Sequence atmospheric phase changes in strict thermodynamic order.
-
-- **[Scene s020]**: Ensure temperature hyperbole remains physically bounded and internally consistent across scenes.
-
-- **[Scene s019]**: Keep geological temperatures within plausible subterranean and magma bounds for human proximity.
-
-- **[Scene s013]**: Verify all comparative temperature math against actual household appliance standards.
-
-- **[Scene s010]**: Respect thermal inertia and latent heat timelines in post-catastrophe cooling beats.
-
-- **[Scene s009]**: Account for latent heat release when modeling post-boil atmospheric cooling.
-
-- **[Scene s001]**: Avoid instantaneous basin-scale water level changes without a sustained, massive energy mechanism.
-
-- **[Scene 34]**: One catastrophe, one energy source, one end-state: do not bolt a rogue-planet freeze onto an ocean-boil opener.
-
-- **[Scene 32]**: 400°C water/steam is a kill boundary; the camera may look at it, the body may not enter it.
-
-- **[Scene 30]**: Liquefy O2 at −183°C and N2 at −196°C as separate events, never as one mixed rain.
-
-- **[Scene 27]**: Do not depict air condensing until oxygen’s 1-atm boiling point is actually reached.
-
-- **[Scene 25]**: Mass is conserved: boiled oceans cannot later appear as a thin global ice lid unless the water’s fate is explicitly tracked.
-
-- **[Scene 22]**: Phase-change beats must fire in temperature order: H2O freeze, then CO2 snow, then O2 rain, then N2 rain.
-
-- **[Scene 20]**: Temperature multipliers must be computed from real oven and magma values and must remain survivable at the camera position.
-
-- **[Scene 19]**: Never let a human-scale character enter or approach 5000°C conduits; use hydrothermal ~400°C only as a distant, unsurvivable heat source.
-
-- **[Scene 14]**: Fuel phase-change limits beat cinematic cold numbers; analog gauges must have blank unreadable faces.
-
-- **[Scene 13]**: Every everyday comparison figure must use the real reference value, not room temperature masquerading as a freezer.
-
-- **[Scene 10]**: Planetary temperature swings after ocean-scale phase changes take years or longer, never hours.
-
-- **[Scene 9]**: Condensing steam heats the environment; a boiled ocean cannot become a freeze by 'clearing.'.
-
-- **[Scene 1]**: Never flash-boil a planetary ocean in-frame without an energy budget, a lethal-steam standoff, and geological—not cinematic-second—timescales.
-
-- **[Scene 34]**: Orbital status is a conserved plot fact; do not change the planet’s dynamical environment without a depicted mechanism.
-
-- **[Scene 32]**: Once PPE fails at a lethal temperature boundary, the character cannot continue acting in that environment.
-
-- **[Scene 30]**: Cryogenic air must be split by species boiling points and partial pressures; never rain mixed liquid air on an exposed character at −183°C.
-
-- **[Scene 27]**: Air condensation imagery is reserved for temperatures and partial pressures that actually liquefy O2 or N2.
-
-- **[Scene 25]**: Water inventory is conserved unless an escape mechanism is shown; ice thickness must match that inventory.
-
-- **[Scene 22]**: Phase-change events must fire the first time the named temperature is crossed, then stay in the new phase.
-
-- **[Scene 20]**: Multipliers against everyday objects must equal the scene's stated absolute temperature.
-
-- **[Scene 19]**: Label heat sources by real reservoirs: vents ~400°C, magma ~1,000°C, core ~5,000°C, and never let the protagonist occupy the last two.
-
-- **[Scene 13]**: Every relative-temperature simile must be computed in a single unit system and match the stated absolute value.
-
-- **[Scene 10]**: Planetary temperature checkpoints must respect heat capacity and latent heat; no multi-tens-of-degrees surface swings inside an hour after an ocean-scale phase change.
-
-- **[Scene 9]**: Condensation warms the environment by latent heat and restores liquid inventory; cooling requires an independent heat-loss pathway.
-
-- **[Scene 6]**: Mass of water moved into the atmosphere must be converted into pressure, optical depth, and survivability before any personal sensation beat.
-
-- **[Scene 4]**: Gases may smother and scald but must not be staged with the inertia or coherent face of a liquid surge.
-
-- **[Scene 1]**: A catastrophe screenplay may have only one primary energy source, and every later beat must be a consequence of that source.
-
-- **[Scene s030]**: Verify exact boiling and condensation points for atmospheric gases before scripting cryogenic weather phenomena.
-
-- **[Scene s009]**: Phase changes like steam condensation release significant latent heat; cooling must respect thermodynamic energy balances.
-
-- **[Scene s001]**: Never sequence opposite climate end-states (boil-away vs. interstellar freeze) without an explicitly rendered, physically sound causal link.
-
-- **[Scene s034]**: Orbital state is an initial condition; do not change it off-screen in the last act.
-
-- **[Scene s032]**: If ΔT exceeds suit design limits, the character dies; costume damage cannot substitute for lethal heat load.
-
-- **[Scene s030]**: Air liquefaction must use each gas’s own boiling point; do not rain ‘air’ as a single fluid.
-
-- **[Scene s025]**: Water mass is conserved on-screen: boiled, escaped, rained, or frozen—never all four.
-
-- **[Scene s022]**: Atmospheric collapse must follow condensation temperatures in order: H2O, then CO2, then O2, then N2.
-
-- **[Scene s019]**: Never let a character occupy a volume hotter than suit/material limits; quote magma, vent, and core temperatures as distinct reservoirs.
-
-- **[Scene s013]**: Every stated temperature delta must use the correct reference object; never borrow a room-temp offset for a freezer comparison.
-
-- **[Scene s009]**: Phase-change scenes must conserve enthalpy: condensation heats the surroundings; evaporative boil-off stores heat in vapor until that vapor is lost or rains out.
-
-- **[Scene s001]**: A catastrophe spine may have only one primary energy arrow; boiling and deep-freeze require opposite heat budgets and cannot share a timeline without a shown mechanism.
-
-- **[Scene 36]**: Keep existential climaxes grounded in personal 2nd-person stakes.
-
-- **[Scene 34]**: Preserve second-person narrative continuity throughout macro-scale planetary shots.
-
-- **[Scene 30]**: Enforce strict second-person narrative locks for all atmospheric descriptions.
-
-- **[Scene 26]**: Never drop second-person framing during expository scene openings.
-
-- **[Scene 25]**: Maintain second-person POV across all time-jump scene transitions.
-
-- **[Scene 20]**: Keep thermal comparisons physically consistent with character survivability limits.
-
-- **[Scene 19]**: Ground underground geothermal exploration in realistic geological temperature ranges.
-
-- **[Scene 13]**: Verify all comparative freezer math and temperature differentials before finalizing script dialogue.
-
-- **[Scene 9]**: Ensure thermodynamic continuity between phase changes in catastrophic scenarios.
-
-- **[Scene 36]**: Thematic cosmic lines must still open with You/Your; no epoch-as-subject openers.
-
-- **[Scene 34]**: Do not declare Earth a rogue planet without a prior causal scene, and never open that declaration without You/Your.
-
-- **[Scene 32]**: Human-present vent scenes must stay outside the lethal envelope; 400 C water is observation-only.
-
-- **[Scene 30]**: Air-liquefaction scenes must split O2 and N2 by their actual boiling points and account for pressure drop.
-
-- **[Scene 30]**: Environmental spectacle must still be grammatically owned by You/Your on beat one.
-
-- **[Scene 26]**: Thin sea ice does not equal a frozen-solid ocean; last-liquid-water claims require a shell thick enough to isolate pockets.
-
-- **[Scene 26]**: Cutaway science shots still require a You/Your grammatical subject on the first words.
-
-- **[Scene 25]**: Once oceans boil away they cannot reappear as frozen oceans unless the script explicitly returns that same water.
-
-- **[Scene 25]**: Time-skip captions are forbidden as openers; encode elapsed time inside a You/Your sentence.
-
-- **[Scene 22]**: Phase-change beats (CO2 snow, O2 rain) must occur at first passage through that temperature, never after colder scenes.
-
-- **[Scene 22]**: Every narration must begin with You or Your; no scene may open on an object, time jump, or landscape.
-
-- **[Scene 20]**: Never use times-hotter multipliers unless the product is computed and still survivable/on-model.
-
-- **[Scene 19]**: Geothermal survival scenes must use reachable heat (vents, springs, decay heat) well below magma/core temperatures.
-
-- **[Scene 13]**: Every temperature analogy must be recomputed in a single unit against a real reference before lock.
-
-- **[Scene 9]**: Boil, rain, freeze, and ice-shield beats must conserve the same water mass and heat, never invent a second ocean.
-
-- **[Scene 30]**: Ensure cryogenic phenomena respect atmospheric phase boundaries and human survival safety constraints.
-
-- **[Scene 12]**: Avoid extreme close-ups of struggling hands or fingers in AI video prompts to prevent deformation artifacts.
-- **[Scene s012]**: Keep extreme close-ups of human hands interacting with objects broad enough to prevent AI anatomical deformity.
+5. **Clean Narration Gateway:** Spoken text must pass through `engine/services/text_sanitizer.py` to strip metadata, scene markers, and bracketed sound effects before passing to voice synthesis.
+6. **Strict CTA Isolation (Zero Hardcode Standard):** Subscribe / follow CTAs are strictly banned from Scenes 1 through 37. The terminal sentence of Scene 38 must deliver an urgent, unresolved crisis cliffhanger call-to-action addressing the audience in the strict second-person POV ('You'). The CTA must be completely isolated as the literal final sentence, strictly absent from all preceding narration and never referenced within any visual prompt. The exact text must be dynamically generated by the screenwriter model per scenario.
+7. **`[DATA_BROLL]` Telemetry & Map Standard:** Any scene featuring global maps, seismic activity rings, temperature decay curves, or barometric readouts must be tagged as `[DATA_BROLL]`. These are dispatched directly to the procedural code-based rendering engine (`generate_data_broll`), keeping generative AI video prompts 100% focused on physical macroscopic action.
+
+## Universal Physics & Causality Invariants
+
+- **[Scene 35]**: Bridge temporal jumps with transitional visual indicators of environmental decay.
+
+- **[Scene 15]**: Keep optical visibility levels consistent with calculated solar irradiance.
+
+- **[Scene 12]**: Ensure structural stress calculations match actual material physics.
+
+- **[Scene 38]**: CTA must occupy strictly the final sentence of the last scene and never appear inside any visual_prompt or earlier narration.
+
+- **[Scene 1]**: 2nd-person narration ('You') must be supported by POV-safe visual prompts that never negate human elements; always describe visible environment from implied viewer perspective without banning viewer embodiment.
+- **[Scene 38]**: CTA scene must obey identical POV-safety rules as opening scenes; never negate the implied viewer in visual_prompt when using 'You watch' narration.
+- **[Scene 38]**: CTA must occupy its own terminal scene as the literal final sentence with zero preceding or following content inside that scene.
+- **[Scene 12]**: Maintain causal consistency between structural engineering limits and accumulated mass loads.
+- **[Scene 37]**: Material degradation rates must remain causally consistent with stated pH, temperature, and exposure duration.
+- **[Scene 9]**: Never allow any on-screen numerical readouts, clocks, gauges, or legible text in Veo disaster visuals.
+- **[Scene 31]**: Indicator arms and calibrated mechanisms are disallowed as they produce readable UI elements.
+- **[Scene 5]**: Supervolcanic overpressure decays with distance and time; instantaneous global PSI drops violate conservation of mass and momentum.
+- **[Scene 12]**: Weight calculations for ash accumulation must accurately reflect structural load limits.
+- **[Scene 35]**: Planetary catastrophe timelines must respect observable geological rates; never compress 10,000 years into a single cut without transitional evidence.
+- **[Scene 35-37]**: In deep-time geological cooling (e.g. 10,000-year epoch), biological lifespans must not be violated; frame 2nd-person POV strictly through automated bunker telemetry, seismic sensor arrays, or robotic exterior surveillance logs.
+- **[Scene 38]**: Visual prompts must depict physical macroscopic crisis cues (such as bedrock fissures re-opening or ice fracturing under subterranean stress) rather than gauges, needles, or dials; any telemetry representation belongs exclusively to `[DATA_BROLL]`.

@@ -11,7 +11,7 @@ Unified chat stack:
   - Grok Build / coding / agentic: grok-4.6
   - grok-4.5 and cinematic/build/coding aliases resolve to grok-4.6
   - Optional long-context (1M): grok-4.3 via --chat-model grok-4.3
-  - Recommended CLI binary: Grok Build ≥ 1.0.5 (not an API slug)
+  - Recommended CLI binary: Grok Build >= 1.0.5 (not an API slug)
 """
 
 from __future__ import annotations
@@ -298,6 +298,23 @@ XAI_CHAT_MODELS: dict[str, dict[str, Any]] = {
         "strengths": ["balanced", "speed", "general"],
         "preferred_for": ["Routine specialist work", "draft passes", "quota-sensitive sessions"],
         "aliases": ["4-auto", "auto", "grok-auto"],
+    },
+    "grok-4.20-0309-non-reasoning": {
+        "label": "Grok 4.20 Non-Reasoning",
+        "context_tokens": 256_000,
+        "input_usd_per_1m": 0.50,
+        "output_usd_per_1m": 1.50,
+        "use_case": "low-cost non-reasoning script generation and adversarial review",
+        "role": "cost_optimized_non_reasoning",
+        "reasoning": "none",
+        "aliases": [
+            "non-reasoning",
+            "grok-non-reasoning",
+            "grok-4.20",
+            "grok-4.20-non-reasoning",
+            "fast-script",
+            "zero-reasoning",
+        ],
     },
 
     "grok-4.3": {
@@ -916,7 +933,7 @@ _version_tuple = version_tuple
 
 
 def cli_version_at_least(installed: str, minimum: str) -> bool:
-    """True when ``installed`` ≥ ``minimum`` (dotted numeric semver-ish)."""
+    """True when ``installed`` >= ``minimum`` (dotted numeric semver-ish)."""
     return version_tuple(installed) >= version_tuple(minimum)
 
 
@@ -1168,12 +1185,12 @@ def verify_model_compatibility() -> dict[str, Any]:
     installed = probe.get("version")
     if probe.get("path") is None:
         warnings.append(
-            f"Grok Build CLI not found on PATH; recommend ≥ {RECOMMENDED_GROK_BUILD_CLI_VERSION}"
+            f"Grok Build CLI not found on PATH; recommend >= {RECOMMENDED_GROK_BUILD_CLI_VERSION}"
         )
     elif installed is None:
         warnings.append(
             f"Could not parse Grok Build CLI version from {probe.get('raw')!r}; "
-            f"recommend ≥ {RECOMMENDED_GROK_BUILD_CLI_VERSION}"
+            f"recommend >= {RECOMMENDED_GROK_BUILD_CLI_VERSION}"
         )
     else:
         try:

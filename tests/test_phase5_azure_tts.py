@@ -283,5 +283,5 @@ def test_cli_produce_film_recognizes_azure_voice_provider():
         "produce-film",
         "--help",
     ]
-    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
     assert "azure" in res.stdout

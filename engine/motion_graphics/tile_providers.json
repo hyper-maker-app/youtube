@@ -1,0 +1,5 @@
+{
+  "esri_world_imagery": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  "carto_dark": "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+  "carto_positron": "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+}

@@ -93,6 +93,16 @@ Always inject these universal AI video negative guards to prevent common synthes
 3. **Baked-in Graphic Ban:** Zero text watermarks, 2D titles, channel logos, lower-thirds, or banner overlays inside video prompt text.
 4. **Universal Video Negative String:**
    `"worst quality, normal quality, low quality, low res, blurry, distorted face, asymmetric eyes, melted face, duplicate faces, mirror reflection face, readable digital text on phone screen, legible numbers on digital display, baked-in subtitles, watermark, logo, cartoonish, 3d render plastic look"`
+5. **Veo 3.1 Noun Rule & Zero-Human Invariant:** In-media-res catastrophe rendering suffers severe uncanny-valley defects with human facial features, eyes, and limbs. Only prompt concrete diegetic environments, atmospheric weather, macro physical mechanisms, and backlit silhouettes. Zero recognizable human faces, portraits, eyes, teeth, smiles, or crowds in positive prompts.
+6. **Veo 3.1 Permanent Negative Prompt Barricade:**
+   Every visual prompt passed to Google Flow CDP / Veo 3.1 MUST append the locked permanent negative barricade:
+   `--no human, face, eyes, hands, limbs, crowd, person, silhouette of person, cartoon, 3d render, watermark, text, logo, blur, deformed geometry`
+7. **Veo 3.1 Shot Duration Ceiling (5.2s Maximum Rule):**
+   In Google Flow CDP (Port 9223) and Veo 3.1, fluid, smoke, and atmospheric simulations experience temporal coherence collapse beyond 5.2 seconds. No visual shot prompt may exceed 5.2s; durations strictly snap to `[4.0, 5.0, 5.2]` seconds. Scenes exceeding 5.2s must be divided into sub-shots (e.g. 8s -> 4.0s + 4.0s or 10s -> 5.0s + 5.0s).
+8. **Dial, Gauge, Needle, Clock & Map Ban (`[DATA_BROLL]` Routing):**
+   - AI video models (Google Veo, Sora, Grok Imagine) must NEVER be prompted with needles, dials, meters, gauges, counters, digital clocks, legible text, or tactical maps. Prompting these items causes severe generative artifacts: melted indicators, garbled numbers, distorted fonts, and unnatural geometry.
+   - All visual prompts must depict macroscopic physical phenomena (e.g. cracking bedrock, frost creeping across steel plates, tearing cables, billowing steam, buckling structural beams).
+   - Any cinematic or narrative requirement for technical telemetry, tectonic maps, temperature decline graphs, or barometric readouts MUST be isolated as `[DATA_BROLL]` and routed to the deterministic code-based graphics engine (`engine/services/map_overlay_generator.py`).
 
 ## Core Responsibilities
 
@@ -123,23 +133,14 @@ Fully compatible with Grok Build CLI, `cinematic_studio_cli.py` prompt workflows
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-- **[Scene s014]**: Prohibit readable gauges, dials, and UI text in Veo prompts to avoid text deformation.
-
-- **[Scene s007]**: Never prompt distinct crowds or human faces in catastrophe scenes to prevent Veo generation artifacts.
-
-- **[Scene 7]**: Crowd chaos must be staged as silhouettes or empty infrastructure; never prompt identifiable fleeing faces.
-
-- **[Scene 28]**: No close faces, visors, or reflective eye-line surfaces; helmets are shown from rear/three-quarter with opaque glass.
-
-- **[Scene 14]**: Never put gauges, HUDs, clocks, or any potentially readable markings in the visual prompt.
-
-- **[Scene 7]**: Never prompt recognizable human faces or readable crowd detail; keep survivors as silhouettes or implied off-frame presence.
-
-- **[Scene s014]**: Never put gauges, timers, or readable numerals in a Veo plate, even if ‘frozen’ or analog.
-
 - **[Scene s007]**: No readable faces, visors, or crowd identity: silhouette-only humans for Veo catastrophe plates.
-
 - **[Scene 14]**: No gauges, HUDs, clocks, or numeral-bearing props in Veo prompts—even analog, even frozen.
-
 - **[Scene 7]**: Never prompt identifiable faces or crowded people; use silhouettes, scale figures, and empty wreckage only.
 - **[Scene 16]**: Never include legible gauges, dials, or numerical readouts in AI video prompts to avoid corrupted text artifacts.
+- **[Scene 5]**: All numerical quantities and measurements stay in narration/micro_math; never prompt on-camera instruments, gauges, dials, or needles. Route all data visualizations to [DATA_BROLL].
+- **[Scene 12]**: Ban on-screen temperature/pressure readouts, dials, gauges, and needles of any kind; convey environmental state exclusively through macroscopic physical damage (cracking concrete, frosting metal, structural deformation), routing any telemetry or readings to [DATA_BROLL].
+- **[Veo Video Prompt Standard]**: Strictly forbid dials, gauges, needles, counters, digital clocks, legible text, or maps in Veo visual prompts; delegate all telemetry and maps to [DATA_BROLL] code-based graphics engine.
+- **[Scene 32]**: Limit complex thermal glow effects and heavy heat distortion in close-up prompts to maintain Veo rendering stability.
+- **[Scene 13]**: Never describe gloves, hands, or body parts in any visual_prompt even if negated; keep every shot 100% object/mechanism-only.
+- **[Scene 31]**: Never embed production instructions or repeated framing descriptors inside visual_prompts; they bake in as unwanted text overlays.
+- **[Scene 9]**: Avoid explicit temporal countdowns in narration when rendering strict visual prompts.

@@ -1,0 +1,36 @@
+{
+  "name": "grok-cinematic-motion-graphics",
+  "version": "1.0.0",
+  "description": "High-end broadcast Remotion motion graphics engine for Grok Cinematic Studio",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "remotion render",
+    "preview": "remotion preview",
+    "compositions": "remotion compositions",
+    "test": "node --test tests/*.test.cjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "remotion",
+    "motion-graphics",
+    "telemetry",
+    "geospatial",
+    "hud",
+    "broadcast"
+  ],
+  "author": "Grok Cinematic Studio",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "lucide-react": "^1.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.4.5"
+  }
+}

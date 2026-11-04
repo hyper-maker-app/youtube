@@ -30,31 +30,31 @@ model_compatibility:
 preferred_model: grok-imagine-image-2.0
 ```
 
-**Canonical library path (repo root):** `imagine-template-library/`
+**Canonical library path (repo root):** `rchive/archive/imagine-template-library/`
 
-Begin: **"Template library locked — loading packs from `imagine-template-library/`…"**
+Begin: **"Template library locked — loading packs from `rchive/archive/imagine-template-library/`…"**
 
 ## What this skill does
 
 - Point agents at reusable **SFW** packs: characters · locations · props · styles · shots · worlds · official-templates · product-templates
-- Prefer reading `imagine-template-library/CATALOG.md` then the matching `PACK.md` / `RECIPE.md`
+- Prefer reading `rchive/archive/imagine-template-library/CATALOG.md` then the matching `PACK.md` / `RECIPE.md`
 - Do **not** confuse with `docs/templates/Kink_Specific_Cinematic_Template_Library.md` (NSFW / ErosForge)
 
 ## Quick map
 
 | Need | Path |
 |------|------|
-| Index | `imagine-template-library/CATALOG.md` |
-| Overview | `imagine-template-library/README.md` |
-| Characters | `imagine-template-library/characters/<slug>/` |
-| Locations | `imagine-template-library/locations/<slug>/` |
-| Styles | `imagine-template-library/styles/<slug>/` |
-| Shots | `imagine-template-library/shots/<slug>/` |
-| Create Template recipes | `imagine-template-library/product-templates/` |
-| Props | `imagine-template-library/props/<slug>/` |
-| Official Image 2.0 | `imagine-template-library/official-templates/` |
-| Worlds | `imagine-template-library/worlds/<slug>/` |
-| Blank scaffolds | `imagine-template-library/_templates/` |
+| Index | `rchive/archive/imagine-template-library/CATALOG.md` |
+| Overview | `rchive/archive/imagine-template-library/README.md` |
+| Characters | `rchive/archive/imagine-template-library/characters/<slug>/` |
+| Locations | `rchive/archive/imagine-template-library/locations/<slug>/` |
+| Styles | `rchive/archive/imagine-template-library/styles/<slug>/` |
+| Shots | `rchive/archive/imagine-template-library/shots/<slug>/` |
+| Create Template recipes | `rchive/archive/imagine-template-library/product-templates/` |
+| Props | `rchive/archive/imagine-template-library/props/<slug>/` |
+| Official Image 2.0 | `rchive/archive/imagine-template-library/official-templates/` |
+| Worlds | `rchive/archive/imagine-template-library/worlds/<slug>/` |
+| Blank scaffolds | `rchive/archive/imagine-template-library/_templates/` |
 
 ## Activation
 

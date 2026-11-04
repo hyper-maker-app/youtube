@@ -56,14 +56,24 @@ This workspace is designed for advanced **Grok 4.5** agent workflows, with heavy
 > 3. **No Orphan Image Generations:** If character hero plates or concept art are generated, DO NOT leave them abandoned in chat artifacts. They MUST be saved into `characters/<character_slug>_hero.jpg` and linked into `sequences/<project>_handoff.json` as visual references for Google Flow CDP.
 > 4. **Never Confuse "Flow":** When the user asks to produce via "Flow", they mean the Google Flow CDP factory (`engine/flow_bridge.py`), NEVER generic ComfyUI or standalone Grok Imagine web prompts.
 
-## PURE ENGINE INVARIANT: ZERO HARDCODED DIRECTIVES IN ENGINES (CRITICAL)
+## MANDATORY MULTI-AGENT SUBAGENT DELEGATION & REVIEW PROTOCOL (CRITICAL)
 
 > [!IMPORTANT]
-> **ZERO HARDCODE IN ENGINES & ABSOLUTE SKILL AUTONOMY**:
-> Python engines (`engine/`, `tools/`) MUST NEVER hardcode creative narrative text, visual styles, camera instructions, timeline scales, or negative prompts in Python strings.
-> 1. **All Intelligence in `.grok/skills/`:** Every directing rule, 5-stage timeline progression, thermodynamic phase standard, Veo negative guard, and CTA policy lives strictly in `.grok/skills/*.md`.
-> 2. **Engines are Pure Pipelines:** `SkillLoader` and narrative services are pure execution pipelines (I/O, formatting, schema enforcement, API calls).
-> 3. **Nothing Overrides Skills:** No Python code may override, hard-wrap, or shadow directives defined in the Markdown skill files or reference guides.
+> **SUBAGENT DELEGATION, INDEPENDENT AUDIT & LEAD VERIFICATION PIPELINE**:
+> When executing any engineering plan, feature integration, or multi-step technical implementation in this workspace:
+> 1. **Modular Workstream Decomposition:** The main agent MUST break down the implementation plan into distinct, modular parts.
+> 2. **Dedicated Specialized Subagents:** Each part MUST be dispatched to a separate, specialized subagent (`invoke_subagent`) focused strictly on its domain (e.g. Skill Specialist, Engine/API Specialist, Remotion Motion Graphics Specialist, Flow CDP/Editor Pipeline Specialist).
+> 3. **Independent Auditor / QA Subagent Review (Mandatory):** After all implementation subagents complete their assigned parts, an independent **Auditor / QA Reviewer Subagent** MUST be invoked to inspect all changed files, verify zero-hardcode compliance, run automated tests (`pytest`, `npm test`, CLI tests), and actively fix any defects or regressions.
+> 4. **Lead Agent Final Sanity Check & User Presentation:** Only after the Auditor Subagent confirms a clean pass does the Main Lead Agent perform the final verification, end-to-end sanity checks, and present the final results clearly to the user.
+
+## PURE ENGINE & SKILL INVARIANT: ABSOLUTE ZERO HARDCODE (CRITICAL)
+
+> [!IMPORTANT]
+> **ABSOLUTE ZERO HARDCODE ACROSS ENGINES, SKILLS, TEMPLATES & COMPONENTS**:
+> 1. **Python Engines (`engine/`, `tools/`):** Python engines MUST NEVER hardcode creative narrative text, visual styles, camera instructions, scene lines, or word substitution dictionaries (e.g. `{"needle": "sensor"}`). Engines are strictly pure execution pipelines (I/O, formatting, schema enforcement, API calls, FFmpeg/Remotion execution).
+> 2. **Skill Files (`.grok/skills/*.md`):** Skills MUST NEVER contain hardcoded scene lines, artificial dialogues, or literal, word-for-word Call-to-Action (CTA) sentences (e.g. literal *"You must subscribe to the channel now..."*). All intelligence in skills must consist exclusively of **universal directing principles, thermodynamic/physical laws, and structural/formal storytelling constraints**. CTA rules must be enforced as structural criteria (e.g. strict 2nd-person POV, terminal sentence of Scene 38, zero preceding mention, model-generated per scenario).
+> 3. **Motion Graphics & Remotion Templates:** React components must be 100% parametric (`props`). Absolutely zero hardcoded city coordinates, telemetry values, event counts, or headlines inside TSX/JSX components. All values must be driven dynamically by JSON payloads.
+> 4. **Nothing Overrides Skills:** No Python code may override, hard-wrap, or shadow directives defined in the Markdown skill files or reference guides.
 
 ## Directory Structure
 

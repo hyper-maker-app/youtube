@@ -1,0 +1,56 @@
+{
+  "GeospatialStormMap": {
+    "strings": [
+      "title",
+      "subtitle",
+      "coordinatesLabel",
+      "classification",
+      "timestampLabel",
+      "eventCountLabel",
+      "systemStatus"
+    ],
+    "numbers": [
+      "eventCount"
+    ],
+    "arrays": [
+      "metrics"
+    ],
+    "map": true
+  },
+  "TelemetryCurve": {
+    "strings": [
+      "metricName",
+      "unit",
+      "classification",
+      "timestampLabel",
+      "thresholdLabel",
+      "currentStatus"
+    ],
+    "numbers": [
+      "thresholdValue"
+    ],
+    "arrays": [
+      "dataPoints",
+      "summaryMetrics"
+    ]
+  },
+  "VolcanoSeismicMap": {
+    "strings": [
+      "volcanoName",
+      "classification",
+      "coordinatesLabel",
+      "alertLevel"
+    ],
+    "numbers": [
+      "magnitude",
+      "depthKm",
+      "seismicFrequencyHz",
+      "pWaveVelocity",
+      "sWaveVelocity"
+    ],
+    "arrays": [
+      "metrics"
+    ],
+    "map": true
+  }
+}

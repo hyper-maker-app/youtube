@@ -20,6 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import logging
+import math
 import os
 from pathlib import Path
 import re
@@ -104,6 +105,13 @@ def extract_json_payload(raw_text: str) -> dict[str, Any]:
         return {}
 
 
+def validate_judge_score(value: Any) -> int | float | None:
+    """Reject malformed, boolean, non-finite and out-of-range model scores."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return value if math.isfinite(value) and 0 <= value <= 100 else None
+
+
 def build_compact_scenes_payload(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Build compact, token-efficient JSON view of all scenes for dual-judge review."""
     return [
@@ -115,6 +123,9 @@ def build_compact_scenes_payload(scenes: list[dict[str, Any]]) -> list[dict[str,
             "camera": s.get("camera", {}),
             "micro_math": s.get("micro_math", ""),
             "sfx": s.get("sfx", ""),
+            "is_data_broll": s.get("is_data_broll", False),
+            "template_name": s.get("template_name", ""),
+            "data_payload": s.get("data_payload", {}),
         }
         for idx, s in enumerate(scenes)
     ]
@@ -179,9 +190,13 @@ class ScreenplayReviewer:
         self,
         xai_api_key: str | None = None,
         allow_deepmind_fallback: bool = False,
+        gemini_model: str = "gemini-3.1-pro",
+        grok_model: str = "grok-4.20-0309-non-reasoning",
     ) -> None:
         self.xai_api_key = xai_api_key
         self.allow_deepmind_fallback = allow_deepmind_fallback
+        self.gemini_model = gemini_model
+        self.grok_model = grok_model
 
     def review(
         self,
@@ -202,6 +217,20 @@ class ScreenplayReviewer:
 
         cat_scores: dict[str, int] = {}
         all_defects: list[str] = []
+        schema_defects: list[str] = []
+        for index, scene in enumerate(scenes, 1):
+            if scene.get("simulation_only"):
+                schema_defects.append(f"Scene {index}: simulation fixtures cannot receive production certification")
+            for key in ("narration", "visual_prompt"):
+                if not isinstance(scene.get(key), str) or not scene[key].strip():
+                    schema_defects.append(f"Scene {index}: {key} is required and must be non-empty")
+            if scene.get("is_data_broll") or "[DATA_BROLL]" in str(scene.get("visual_prompt", "")).upper():
+                try:
+                    from engine.services.remotion_bridge import validate_broll_payload
+                    validate_broll_payload(scene.get("template_name", ""), scene.get("data_payload", {}))
+                except (ValueError, TypeError, AttributeError) as exc:
+                    schema_defects.append(f"Scene {index}: invalid B-roll contract: {exc}")
+        all_defects.extend(schema_defects)
 
         # 1. CTA Isolation (15 pts)
         sc_cta, def_cta = self._audit_cta_isolation(scenes)
@@ -235,7 +264,8 @@ class ScreenplayReviewer:
 
         deterministic_score = sum(cat_scores.values())
         has_critical_defects = (
-            cat_scores.get("pov_invariants", 0) < 8
+            bool(schema_defects)
+            or cat_scores.get("pov_invariants", 0) < 8
             or cat_scores.get("cta_isolation", 0) < 12
             or cat_scores.get("veo_guardrails", 0) < 20
         )
@@ -258,18 +288,19 @@ class ScreenplayReviewer:
             if self.xai_api_key:
                 try:
                     grok_data = self._consult_grok_critique(compact_payload, title, genre, all_defects)
-                    grok_score = grok_data.get("screenplay_score")
+                    grok_score = validate_judge_score(grok_data.get("screenplay_score"))
                     raw_grok = grok_data.get("raw_response")
                     for d in grok_data.get("defects", []):
                         structured_defects.append(d)
                         all_defects.append(f"[Grok] Scene {d.get('scene_id')}: {d.get('issue')}")
                 except Exception as exc:
+                    grok_score = None
                     logger.warning("Grok judge critique failed: %s", exc)
 
             # Judge 2: Google Gemini (gemini_webapi via CDP port 9223)
             try:
                 gemini_data = self._consult_gemini_critique(compact_payload, title, genre, all_defects)
-                gemini_score = gemini_data.get("screenplay_score")
+                gemini_score = validate_judge_score(gemini_data.get("screenplay_score"))
                 raw_gemini = gemini_data.get("raw_response")
                 for d in gemini_data.get("defects", []):
                     structured_defects.append(d)
@@ -277,6 +308,7 @@ class ScreenplayReviewer:
             except GeminiWebAPIUnavailableError:
                 raise
             except Exception as exc:
+                gemini_score = None
                 logger.warning("Gemini judge critique failed: %s", exc)
 
             # Build dual-judge summary text
@@ -301,8 +333,8 @@ class ScreenplayReviewer:
                 total_score = min(grok_score, gemini_score)
                 passed = (
                     total_score >= 90
-                    and grok_score >= 85
-                    and gemini_score >= 85
+                    and grok_score >= 90
+                    and gemini_score >= 90
                     and deterministic_score >= 90
                     and not has_critical_defects
                 )
@@ -398,9 +430,13 @@ class ScreenplayReviewer:
 
         for i, s in enumerate(scenes):
             prompt = s.get("visual_prompt", "")
+            if s.get("is_data_broll") or "[DATA_BROLL]" in prompt.upper():
+                continue
+            # Only audit the positive prompt (exclude negative prompt after --no)
+            pos_prompt = prompt.split("--no")[0] if "--no" in prompt else prompt
 
             # 1. Mirror face reflections
-            mirror_match = _MIRROR_FACE_PATTERN.search(prompt)
+            mirror_match = _MIRROR_FACE_PATTERN.search(pos_prompt)
             if mirror_match:
                 defects.append(
                     f"Scene {i+1} visual prompt violates Veo safety: Requests mirror face reflection ('{mirror_match.group(0)}'). "
@@ -409,9 +445,9 @@ class ScreenplayReviewer:
                 score = max(0, score - 8)
 
             # 2. Readable UI / digits
-            ui_match = _UI_READABLE_PATTERN.search(prompt)
+            ui_match = _UI_READABLE_PATTERN.search(pos_prompt)
             if ui_match:
-                preceding = prompt[max(0, ui_match.start() - 10):ui_match.start()].lower()
+                preceding = pos_prompt[max(0, ui_match.start() - 10):ui_match.start()].lower()
                 if not any(k in preceding for k in ["no ", "zero ", "without "]):
                     defects.append(
                         f"Scene {i+1} visual prompt violates Veo safety: Requests readable digital UI screen text/numbers ('{ui_match.group(0)}'). "
@@ -420,7 +456,7 @@ class ScreenplayReviewer:
                     score = max(0, score - 8)
 
             # 3. Baked-in typography
-            text_match = _BAKED_TEXT_PATTERN.search(prompt)
+            text_match = _BAKED_TEXT_PATTERN.search(pos_prompt)
             if text_match:
                 defects.append(
                     f"Scene {i+1} visual prompt violates Veo safety: Requests baked-in typography/text graphic ('{text_match.group(0)}')."
@@ -540,7 +576,13 @@ class ScreenplayReviewer:
         deterministic_defects: list[str],
     ) -> dict[str, Any]:
         """Query Grok API to provide deep adversarial review across all scenes in compact JSON."""
-        model_name = os.getenv("XAI_CHAT_MODEL") or os.getenv("XAI_MODEL") or "grok-4.20-0309-non-reasoning"
+        model_name = self.grok_model or "grok-4.20-0309-non-reasoning"
+        try:
+            from tools.models import resolve_chat_model
+            model_name = resolve_chat_model(model_name)
+        except Exception:
+            if model_name in ("grok-4.20-non-reasoning", "grok-4.20"):
+                model_name = "grok-4.20-0309-non-reasoning"
 
         system_prompt = (
             "You are the Lead Adversarial Screenplay Reviewer & Scientific Director for Grok Imagine Cinematic Studio.\n"
@@ -644,11 +686,23 @@ class ScreenplayReviewer:
         # 1. Attempt connection via local gemini_webapi (Chrome CDP port 9223)
         try:
             from engine.providers.gemini_webapi import call_gemini_chat
-            raw_response = call_gemini_chat(prompt, timeout=120.0)
+            judge_model = self.gemini_model or "gemini-3.1-pro"
+
+            raw_response = call_gemini_chat(prompt, model=judge_model, timeout=35.0)
             if raw_response and raw_response.strip():
-                parsed = extract_json_payload(raw_response)
-                parsed["raw_response"] = raw_response
-                return parsed
+                # Filter out error screens if any slipped through
+                error_signatures = [
+                    "Sorry, something went wrong",
+                    "I'm having a hard time fulfilling your request",
+                    "I encountered an error doing what you asked",
+                    "I seem to be encountering an error",
+                    "An internal error has occurred",
+                ]
+                if not any(err in raw_response for err in error_signatures):
+                    parsed = extract_json_payload(raw_response)
+                    if parsed:
+                        parsed["raw_response"] = raw_response
+                        return parsed
         except Exception as exc:
             logger.warning("gemini_webapi connection failed: %s", exc)
 

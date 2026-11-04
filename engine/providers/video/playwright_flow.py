@@ -14,28 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 def sanitize_flow_prompt(prompt: str) -> str:
-    """Sanitize prompts to prevent false-positive safety refusals in Google Flow."""
-    clean = prompt
-    replacements = [
-        (r"\b(?:severed\s+limbs?|decapitat\w*|mutilat\w*|disembowel\w*|gore|visceral)\b", "shattered debris"),
-        (r"\b(?:arterial\s+spray|blood-soaked|pool\s+of\s+blood|bloody\s+mess)\b", "dark crimson reflections"),
-        (r"\b(?:sinking\s+teeth\s+into|tearing\s+flesh|biting\s+deep|flesh\s+tearing)\b", "lunging aggressively toward"),
-        (r"\b(?:suicide|self-harm|kill(?:ing)?)\b", "neutralizing"),
-        (r"\b(?:corpses?|dead\s+bodies)\b", "fallen figures"),
-        (r"\b(?:naked|nude)\b", "distressed tactical apparel"),
-        (r"\b(?:bones?\s+cracking|exposed\s+bone)\b", "fractured structure"),
-        (r"\b(?:pale\s+figure|pale\s+skin|pale\s+body|pale\s+corpse)\b", "reanimated subject in torn hospital uniform"),
-        (r"\b(?:erratic,\s*pale\s*figure)\b", "erratic shadowy subject in hospital uniform"),
-        (r"\b(?:pale|bare)\b", "shadowy"),
-        (r"\b(?:natural\s+body\s+momentum|body\s+momentum)\b", "natural physical momentum"),
-        (r"\b(?:infected\s+figure|infected\s+figures)\b", "hostile subject in torn hospital apparel"),
-        (r"\b(?:crowd\s+of\s+infected)\b", "surging horde in distressed attire"),
-        (r"\b(?:reanimated\s+patients?)\b", "shadowy figures in hospital scrubs"),
-        (r"\b(?:sweating,\s*dirt-streaked\s*face)\b", "weathered determined expression"),
-    ]
-    for pattern, repl in replacements:
-        clean = re.sub(pattern, repl, clean, flags=re.IGNORECASE)
-    return " ".join(clean.split())
+    """Normalize transport whitespace without rewriting the author's direction."""
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise ValueError("Flow motion_prompt must be a non-empty string")
+    return " ".join(prompt.split())
 
 
 class PlaywrightFlowVideoProvider(BaseVideoProvider):

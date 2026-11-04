@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -31,6 +32,15 @@ def _run(args: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(
         args, capture_output=True, text=True, encoding="utf-8", errors="replace"
     )
+
+
+
+def _write_render_graph(out_path: Path, graph: str) -> Path:
+    """Keep concurrent renders in one directory from replacing each other's graphs."""
+    with tempfile.NamedTemporaryFile(mode="w",encoding="utf-8",delete=False,
+            dir=out_path.parent,prefix=f"_{out_path.stem}_",suffix=".ffgraph") as stream:
+        stream.write(graph)
+        return Path(stream.name)
 
 
 # --------------------------------------------------------------------------------------
@@ -172,11 +182,14 @@ def verify_block_quality(
 # Video filter: normalize -> concat -> zoompan (explicit editorial reframes only)
 # --------------------------------------------------------------------------------------
 
-def _normalize_chain(idx: int, label: str, duration: float | None = None) -> str:
+def _normalize_chain(idx: int, label: str, duration: float | None = None, fps: int | None = None) -> str:
+    target_fps = fps or config.FPS
     trim_clause = f"trim=duration={duration:.3f},setpts=PTS-STARTPTS," if duration else ""
+    frame_clause = (f"tpad=stop_mode=clone:stop_duration={1 / target_fps:.6f},"
+                    f"trim=end_frame={round(duration * target_fps)},setpts=PTS-STARTPTS,") if duration else ""
     crop_y = "min((in_h-out_h)/2\\,(in_h-out_h)*0.18)" if config.WIDTH > config.HEIGHT else "(in_h-out_h)/2"
     return (
-        f"[{idx}:v]{trim_clause}fps={config.FPS},"
+        f"[{idx}:v]{trim_clause}fps={target_fps},{frame_clause}"
         f"scale={config.WIDTH}:{config.HEIGHT}:force_original_aspect_ratio=increase:flags=lanczos,"
         f"crop={config.WIDTH}:{config.HEIGHT}:(in_w-out_w)/2:{crop_y},setsar=1[{label}]"
     )
@@ -494,8 +507,14 @@ def build_video_filter(
     coverage: list[list[dict]] | None = None,
     editorial_plan: dict | list[dict] | None = None,
     terminal_payoff: bool = False,
+    enable_dcs: bool = False,
+    enable_countdown: bool = False,
+    countdown_seconds: float = 4.0,
+    countdown_text: str = "",
+    fps: int | None = None,
 ) -> list[str]:
     """Return the video-side filtergraph statements (list, joined with ';' by caller)."""
+    filter_fps = fps or config.FPS
     if boundaries is None:
         if block_durations and len(block_durations) == n_blocks:
             boundaries = [round(sum(block_durations[:i]), 3) for i in range(1, n_blocks)]
@@ -513,10 +532,10 @@ def build_video_filter(
     for i in range(n_blocks):
         lab = f"v{i}"
         dur = block_durations[i] if block_durations and i < len(block_durations) else None
-        stmts.append(_normalize_chain(i, lab, dur))
+        stmts.append(_normalize_chain(i, lab, dur, fps=filter_fps))
         labels.append(f"[{lab}]")
     tpad_clause = (
-        f",tpad=stop_mode=clone:stop_duration={config.TAIL_HOLD}"
+        f",fps=fps={filter_fps}:eof_action=pass,tpad=stop_mode=clone:stop={round(config.TAIL_HOLD * filter_fps)}"
         if config.TAIL_HOLD > 0.001
         else ""
     )
@@ -524,7 +543,7 @@ def build_video_filter(
     # cuts, not blended source frames that read as morphing.
     stmts.append(f"{''.join(labels)}concat=n={n_blocks}:v=1:a=0{tpad_clause}[cat]")
     cat_label = "cat"
-    stmts.append(f"[{cat_label}]setpts=N/{config.FPS}/TB[cat_pts]")
+    stmts.append(f"[{cat_label}]setpts=N/{filter_fps}/TB[cat_pts]")
     cat_label = "cat_pts"
 
     quads = normalize_quadrants(quadrants, n_blocks)
@@ -557,22 +576,173 @@ def build_video_filter(
     )
     stmts.append(
         f"[{cat_label}]zoompan=z='{zexpr}':x='{xexpr}':y='{yexpr}'"
-        f":d=1:s={config.WIDTH}x{config.HEIGHT}:fps={config.FPS}[zoom]"
+        f":d=1:s={config.WIDTH}x{config.HEIGHT}:fps={filter_fps}[zoom]"
     )
 
     chain: list[str] = []
     if final_polish:
+        eq_filter = (
+            DCS_FILTER_EXPR
+            if enable_dcs
+            else config.FINAL_EQ
+        )
         chain += [
             config.FINAL_UNSHARP,
             config.FINAL_GRAIN,
-            config.FINAL_EQ,
+            eq_filter,
             config.FINAL_VIGNETTE,
         ]
+    elif enable_dcs:
+        chain.append(DCS_FILTER_EXPR)
+
+    if enable_countdown:
+        if not countdown_text.strip():
+            raise ValueError("Countdown overlay requires explicit countdown_text")
+        clean_text = countdown_text.replace("\\", "\\\\").replace("'", "\\'").replace(":", "\\:")
+        chain.append(
+            f"drawtext=text='{clean_text}':"
+            "fontsize=h*0.045:fontcolor=0xFF2222:borderw=2:bordercolor=0x220000:"
+            "box=1:boxcolor=black@0.75:boxborderw=10:"
+            f"x=(w-text_w)/2:y=h*0.08:enable='between(t,0,{countdown_seconds:.3f})'"
+        )
+
     if captions_path is not None:
         chain.append(captions.ass_filter(captions_path))
 
     stmts.append(f"[zoom]{','.join(chain)}[vout]" if chain else "[zoom]copy[vout]")
     return stmts
+
+
+# --------------------------------------------------------------------------------------
+# YouTube Optimization & Post-Processing: DCS, Extinction Countdown HUD, Shorts 9:16
+# --------------------------------------------------------------------------------------
+
+DCS_FILTER_EXPR = "eq=gamma='max(0.45, 1.0 - 0.15*(t/60.0))':saturation='max(0.35, 1.0 - 0.14*(t/60.0))':eval=frame"
+
+
+def apply_dynamic_contrast_shift(
+    input_path: str | Path,
+    out_path: str | Path,
+    duration: float | None = None,
+    ffmpeg: str | None = None,
+) -> Path:
+    """Apply Dynamic Contrast Shift (DCS) to simulate atmospheric solar obscuration over time.
+
+    Gamma and saturation gradually decrease as volcanic ash blocks the sun:
+    eq=gamma='max(0.45, 1.0 - 0.15*(t/60.0))':saturation='max(0.35, 1.0 - 0.14*(t/60.0))'
+    """
+    ffmpeg = ffmpeg or config.resolve_ffmpeg()
+    input_path = Path(input_path)
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    info = probe(input_path, ffmpeg)
+
+    args = [ffmpeg, "-hide_banner", "-y"]
+    if duration is not None and duration > 0:
+        args += ["-t", f"{duration:.3f}"]
+    args += [
+        "-i", str(input_path),
+        "-vf", DCS_FILTER_EXPR,
+        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+    ]
+    if info.has_audio:
+        args += ["-c:a", "copy"]
+    else:
+        args += ["-an"]
+    args.append(str(out_path))
+
+    proc = _run(args)
+    if proc.returncode != 0:
+        raise RuntimeError("apply_dynamic_contrast_shift failed:\n" + proc.stderr[-2000:])
+    return out_path
+
+
+def apply_extinction_countdown_overlay(
+    input_path: str | Path,
+    out_path: str | Path,
+    countdown_seconds: float = 4.0,
+    banner_text: str = "",
+    ffmpeg: str | None = None,
+) -> Path:
+    """Overlay an attention-grabbing red HUD warning banner in the opening 3-5 seconds.
+
+    Acts as the viral crisis hook invariant per Protocol v4.0.
+    """
+    if not banner_text.strip():
+        raise ValueError("Countdown overlay requires explicit banner_text")
+    ffmpeg = ffmpeg or config.resolve_ffmpeg()
+    input_path = Path(input_path)
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    info = probe(input_path, ffmpeg)
+    clean_text = banner_text.replace("\\", "\\\\").replace("'", "\\'").replace(":", "\\:")
+    draw_filter = (
+        f"drawtext=text='{clean_text}':"
+        "fontsize=h*0.045:fontcolor=0xFF2222:borderw=2:bordercolor=0x220000:"
+        "box=1:boxcolor=black@0.75:boxborderw=10:"
+        f"x=(w-text_w)/2:y=h*0.08:enable='between(t,0,{countdown_seconds:.3f})'"
+    )
+
+    args = [
+        ffmpeg, "-hide_banner", "-y",
+        "-i", str(input_path),
+        "-vf", draw_filter,
+        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+    ]
+    if info.has_audio:
+        args += ["-c:a", "copy"]
+    else:
+        args += ["-an"]
+    args.append(str(out_path))
+
+    proc = _run(args)
+    if proc.returncode != 0:
+        raise RuntimeError("apply_extinction_countdown_overlay failed:\n" + proc.stderr[-2000:])
+    return out_path
+
+
+def export_shorts_multiplex(
+    input_path: str | Path,
+    out_path: str | Path,
+    max_duration: float = 45.0,
+    start_time: float = 0.0,
+    ffmpeg: str | None = None,
+) -> Path:
+    """Multiplex 16:9 master video into a 9:16 (1080x1920) vertical YouTube Shorts cut.
+
+    Uses smart center-crop and scaling: crop=ih*9/16:ih:(iw-ow)/2:0,scale=1080:1920
+    """
+    ffmpeg = ffmpeg or config.resolve_ffmpeg()
+    input_path = Path(input_path)
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    info = probe(input_path, ffmpeg)
+
+    args = [ffmpeg, "-hide_banner", "-y"]
+    if start_time > 0.001:
+        args += ["-ss", f"{start_time:.3f}"]
+    if max_duration > 0:
+        args += ["-t", f"{max_duration:.3f}"]
+
+    crop_filter = "crop=ih*9/16:ih:(iw-ow)/2:0,scale=1080:1920,setsar=1"
+    args += [
+        "-i", str(input_path),
+        "-vf", crop_filter,
+        "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+    ]
+    if info.has_audio:
+        args += ["-c:a", "aac", "-b:a", "192k"]
+    else:
+        args += ["-an"]
+    args.append(str(out_path))
+
+    proc = _run(args)
+    if proc.returncode != 0:
+        raise RuntimeError("export_shorts_multiplex failed:\n" + proc.stderr[-2000:])
+    return out_path
 
 
 
@@ -652,13 +822,16 @@ def build_audio_filter(
     soundscape_index: int | None = None,
 ) -> list[str]:
     r = config.AUDIO_RATE
+    # Some FFmpeg loudnorm builds emit non-finite samples for short digital silence.
+    # Preserve finite normalized samples and turn only invalid samples into silence.
+    finite_samples = "aeval=exprs='if(isnan(val(0))+isinf(val(0)),0,val(0))|if(isnan(val(1))+isinf(val(1)),0,val(1))'"
     stmts: list[str] = []
     sfx_inputs = sfx_inputs or []
     if music_index is None and soundscape_index is None and not sfx_inputs:
         stmts.append(
             f"[{vo_index}:a]aformat=sample_rates={r}:channel_layouts=stereo,"
             f"loudnorm=I={config.LOUDNORM_I}:TP={config.LOUDNORM_TP}:LRA={config.LOUDNORM_LRA},"
-            f"apad,aformat=sample_rates={r}:channel_layouts=stereo[aout]"
+            f"{finite_samples},apad,aformat=sample_rates={r}:channel_layouts=stereo[aout]"
         )
         return stmts
 
@@ -709,7 +882,7 @@ def build_audio_filter(
         stmts.append(f"{''.join(labels)}amix=inputs={len(labels)}:duration=first:dropout_transition=0:normalize=0[{mix_label}]")
     stmts.append(
         f"[{mix_label}]loudnorm=I={config.LOUDNORM_I}:TP={config.LOUDNORM_TP}:LRA={config.LOUDNORM_LRA},"
-        f"aformat=sample_rates={r}:channel_layouts=stereo[aout]"
+        f"{finite_samples},aformat=sample_rates={r}:channel_layouts=stereo[aout]"
     )
     return stmts
 
@@ -818,6 +991,11 @@ def build_filtergraph(
     terminal_payoff: bool = False,
     sfx_inputs: list[dict] | None = None,
     soundscape_index: int | None = None,
+    enable_dcs: bool = False,
+    enable_countdown: bool = False,
+    countdown_seconds: float = 4.0,
+    countdown_text: str = "",
+    fps: int | None = None,
 ) -> str:
     vo_index = n_blocks
     music_index = n_blocks + 1 if have_music else None
@@ -825,6 +1003,9 @@ def build_filtergraph(
         n_blocks, punch_times, boundaries, final_polish, captions_path,
         quadrants, zoom_gain, block_durations, target_duration, boundary_kinds,
         transitions_enabled, coverage, editorial_plan, terminal_payoff,
+        enable_dcs=enable_dcs, enable_countdown=enable_countdown,
+        countdown_seconds=countdown_seconds, countdown_text=countdown_text,
+        fps=fps,
     )
     audio = build_audio_filter(vo_index, music_index, sfx_inputs, soundscape_index=soundscape_index)
     return ";\n".join(video + audio)
@@ -849,6 +1030,12 @@ def render(
     terminal_payoff: bool = False,
     sfx_cues: list[dict] | None = None,
     soundscape_path: Path | None = None,
+    enable_dcs: bool = False,
+    enable_countdown: bool = False,
+    countdown_seconds: float = 4.0,
+    countdown_text: str = "",
+    fps: int | None = None,
+    timeline_durations: list[float] | None = None,
 ) -> tuple[list[str], str]:
     """Compile the graph and (unless dry_run) encode final.mp4.
 
@@ -863,24 +1050,52 @@ def render(
 
     blocks = [probe(p, ffmpeg) for p in block_paths]
 
+    # Harmonize frame rates: if any block is 60 fps (e.g. Remotion B-Roll) or mixed rates, normalize to 60 FPS
+    detected_fps = [b.fps for b in blocks if b.fps]
+    if fps is not None:
+        render_fps = fps
+    elif any(f and f >= 50.0 for f in detected_fps):
+        render_fps = 60
+    elif config.LONGFORM_MODE:
+        render_fps = 60
+    else:
+        render_fps = config.FPS
+
     voice_duration = probe(vo_path, ffmpeg).duration
     generated_footage = round(sum(float(info.duration or 0.0) for info in blocks), 3)
-    # The target is final output duration and includes the clone tail.
-    if target_len is None:
-        if any(info.duration is None for info in blocks):
-            raise ValueError("Render requires target_len when a source duration cannot be probed")
-        target_len = config.compute_target_duration(generated_footage, voice_duration)
-    target_len = float(target_len)
-    content_duration = round(target_len - config.TAIL_HOLD, 3)
-    if content_duration <= 0:
-        raise ValueError("Render target must exceed the configured cloned tail")
-    if content_duration > generated_footage + 0.03:
-        raise RuntimeError("Voice duration exceeds available provider footage plus the configured tail; regenerate narration before video work.")
-    source_durations = [float(info.duration or 0.0) for info in blocks]
-    block_durations_target = list(source_durations)
-    block_durations_target[-1] = round(content_duration - sum(block_durations_target[:-1]), 3)
-    if block_durations_target[-1] <= 0:
-        raise RuntimeError("Tail budget leaves no valid final native block content")
+    if timeline_durations is not None:
+        import math
+        if len(timeline_durations) != n or any(not math.isfinite(d) or d <= 0 for d in timeline_durations):
+            raise ValueError("Timeline durations must contain one positive finite duration per source")
+        # Quantize cumulative boundaries, not individual slots: rounding error stays
+        # within half a frame for the entire film rather than accumulating per shot.
+        frame_edges = [0] + [round(sum(timeline_durations[:i]) * render_fps)
+                             for i in range(1, n + 1)]
+        if any(stop <= start for start, stop in zip(frame_edges, frame_edges[1:])):
+            raise ValueError("Timeline contains a slot shorter than one output frame")
+        block_durations_target = [(stop - start) / render_fps
+                                  for start, stop in zip(frame_edges, frame_edges[1:])]
+        content_duration = frame_edges[-1] / render_fps
+        required_target = content_duration + config.TAIL_HOLD
+        if target_len is not None and abs(float(target_len) - required_target) > 0.03:
+            raise ValueError("Target duration disagrees with the audio-aligned timeline plus tail hold")
+        target_len = required_target
+    else:
+        # Legacy callers retain the fixed-source timeline behavior.
+        if target_len is None:
+            if any(info.duration is None for info in blocks):
+                raise ValueError("Render requires target_len when a source duration cannot be probed")
+            target_len = config.compute_target_duration(generated_footage, voice_duration)
+        target_len = float(target_len)
+        content_duration = round(target_len - config.TAIL_HOLD, 3)
+        if content_duration <= 0:
+            raise ValueError("Render target must exceed the configured cloned tail")
+        if content_duration > generated_footage + 0.03:
+            raise RuntimeError("Voice duration exceeds available provider footage plus the configured tail; regenerate narration before video work.")
+        block_durations_target = [float(info.duration or 0.0) for info in blocks]
+        block_durations_target[-1] = round(content_duration - sum(block_durations_target[:-1]), 3)
+        if block_durations_target[-1] <= 0:
+            raise RuntimeError("Tail budget leaves no valid final native block content")
     boundaries = [round(sum(block_durations_target[:i]), 3) for i in range(1, n)]
 
     kinds = normalize_boundary_kinds(boundary_kinds, n)
@@ -922,11 +1137,13 @@ def render(
         boundary_kinds=kinds, transitions_enabled=False, coverage=coverage,
         editorial_plan=editorial_plan, terminal_payoff=terminal_payoff, sfx_inputs=validated_sfx,
         soundscape_index=soundscape_index,
+        enable_dcs=enable_dcs, enable_countdown=enable_countdown,
+        countdown_seconds=countdown_seconds, countdown_text=countdown_text,
+        fps=render_fps,
     )
 
 
-    script_path = out_path.parent / "_filtergraph.txt"
-    script_path.write_text(graph, encoding="utf-8")
+    script_path = _write_render_graph(out_path, graph)
 
     args = [ffmpeg, "-hide_banner", "-y"]
     for b in block_paths:
@@ -941,7 +1158,7 @@ def render(
     args += ["-/filter_complex", str(script_path), "-map", "[vout]", "-map", "[aout]"]
     render_len = target_len
     args += [
-        "-t", f"{render_len:.3f}", "-r", str(config.FPS),
+        "-t", f"{render_len:.3f}", "-r", str(render_fps),
         "-c:v", "libx264", "-crf", str(config.X264_CRF), "-preset", config.X264_PRESET,
         "-pix_fmt", "yuv420p", "-movflags", "+faststart",
         "-c:a", "aac", "-b:a", config.AAC_BITRATE, "-ar", str(config.AUDIO_RATE),
@@ -1497,8 +1714,7 @@ class LongformCompiler:
         video_lines = [f"[0:v]{','.join(chain)}[vout]" if chain else "[0:v]copy[vout]"]
         final_graph = ";\n".join(video_lines + audio_lines)
         
-        final_script = out_path.parent / "_filtergraph.txt"
-        final_script.write_text(final_graph, encoding="utf-8")
+        final_script = _write_render_graph(out_path, final_graph)
         
         args = [self.ffmpeg, "-hide_banner", "-y", "-i", str(stitched_video), "-i", str(vo_path)]
         if have_music:

@@ -61,6 +61,7 @@ ROOT_MAP: dict[str, str] = {
     "sequence": "Produce",
     "animatic": "Produce",
     "wave-a": "Produce",
+    "motion-graphics": "Produce",
     "memory": "Produce",
     "sfw": "Spend",
     "nsfw": "Spend",
@@ -197,6 +198,11 @@ NESTED_MAPS: dict[str, dict[str, str]] = {
         "briefs": "Packets",
         "validate": "Gate",
         "attach": "Gate",
+    },
+    "motion-graphics": {
+        "render": "Render",
+        "storm-map": "Render",
+        "telemetry": "Render",
     },
 }
 

@@ -1,72 +1,61 @@
-# Grok Imagine Cinematic Studio v3.11.4 — skill manifest (65 skills; matches .grok/skills + plugin.json)
+# Grok Imagine Cinematic Studio v3.11.4 — skill manifest (58 skills; matches .grok/skills)
 # One skill per line. Append " # core" for skills required by verify.
 
-grok-imagine-cinematic-studio # core
-ai-video-upscaler # core
-cinematic-sequence-extender # core
-studio-director # core
-quality-assurance-guardian # core
-identity-lock-specialist # core
-workflow-quota-optimizer # core
-quota-dashboard
 ai-image-recreation
 ai-polish-director
+ai-video-upscaler # core
 animatic-director
 arc-replan-copilot
 assembly-editor
+catastrophe-director
 chain-qa-protocol
-character-dna-extractor
 cinematic-ffmpeg
-cinematic-studio-meta-installer
+cinematic-sequence-extender # core
 cinematic-skill-creator
+cinematic-studio-meta-installer
+contact-micro-physics-specialist
 continuity-consistency-guardian
-costume-wardrobe-continuity
-extend-frame-to-video
+deepsea-survival-director
 director-of-photography
-director-of-photography-v3-3
-erosforge-nsfw-director
+distribution-crop-strategist
 foley-sound-design-specialist
 github-repo-manager
+grok-chat-model-map
 grok-doctor
+grok-imagine-cinematic-studio # core
+grok-imagine-image-tools
+grok-imagine-template-library
 handoff-packet-validator
 i2i-cinematic-refiner
-i2i-refiner
 image-to-video-specialist
 imagine-execution-bridge
 imagine-model-overrides
-grok-imagine-image-tools
-xai-grok-skill
 imagine-prompt-master
 key-art-poster-designer
 localization-subtitle-specialist
-mega-production-architect
-multi-character-identity-arbiter
-performance-emotion-director
+micro-survival-director
+multi-clip-continuity-orchestrator
+narrative-arc-pacing-strategist
+parallel-brief-dispatcher
+planetary-catastrophe-director
+plate-motion-readiness-lead
 post-production-color-grading-supervisor
 production-bible-workflow
 production-designer-set-decorator
+quality-assurance-guardian # core
+quota-dashboard
 reference-asset-curator
+score-temp-music-supervisor
 sequence-director
-sfw-batch-orchestrator
 skill-agent-architect
 sonic-architect-native-audio-virtuoso
-stunt-action-choreographer
-trailer-teaser-director
-vfx-sfx-supervisor
-plate-motion-readiness-lead
-contact-micro-physics-specialist
-hair-makeup-continuity
-dialogue-adr-director
-score-temp-music-supervisor
-title-motion-graphics-lead
-distribution-crop-strategist
-parallel-brief-dispatcher
-narrative-arc-pacing-strategist
-multi-clip-continuity-orchestrator
-nsfw-quota-orchestrator
-nsfw-sequence-extender
-nsfw-chain-qa-protocol
-catastrophe-director
+studio-director # core
 thumbnail-designer
-youtube-factory
+title-motion-graphics-lead
+trailer-teaser-director
+urban-infiltration-director
+vfx-sfx-supervisor
 viral-retention-director
+workflow-quota-optimizer # core
+xai-grok-skill
+youtube-factory

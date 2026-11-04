@@ -11,6 +11,9 @@ import typer
 _TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(_TOOLS))
 sys.path.insert(0, str(_TOOLS.parent))
+_ARCHIVE_TOOLS = _TOOLS.parent / "archive" / "legacy_tools"
+if _ARCHIVE_TOOLS.is_dir() and str(_ARCHIVE_TOOLS) not in sys.path:
+    sys.path.append(str(_ARCHIVE_TOOLS))
 
 from cli.animatic_commands import register as register_animatic_commands  # noqa: E402
 from cli.bible_commands import register as register_bible_commands  # noqa: E402
@@ -34,6 +37,7 @@ from cli.web_commands import register as register_web_commands  # noqa: E402
 from cli.web_react_commands import register as register_web_react_commands  # noqa: E402
 from cli.api_commands import register as register_api_commands  # noqa: E402
 from cli.produce_commands import register as register_produce_commands  # noqa: E402
+from cli.motion_commands import register as register_motion_commands  # noqa: E402
 from cli.ghost_aliases import register_ghost_aliases  # noqa: E402
 from cli.help_ia import ROOT_EPILOG, ROOT_HELP, StudioGroup, apply_help_ia  # noqa: E402
 
@@ -57,6 +61,7 @@ imagine_app = typer.Typer(help="Imagine jobs, bridge, agent-handoff")
 files_app = typer.Typer(help="xAI Files API — upload plates, list, get, delete")
 handoff_app = typer.Typer(help="Handoff packet validate (identity / sequence / agent-mode)")
 animatic_app = typer.Typer(help="Animatic pre-vis and hero promotion")
+motion_app = typer.Typer(help="Remotion motion graphics B-Roll render commands (60 FPS)")
 
 app.add_typer(dna_app, name="dna")
 app.add_typer(seq_app, name="sequence")
@@ -68,6 +73,7 @@ app.add_typer(imagine_app, name="imagine")
 app.add_typer(files_app, name="files")
 app.add_typer(handoff_app, name="handoff")
 app.add_typer(animatic_app, name="animatic")
+app.add_typer(motion_app, name="motion-graphics")
 nsfw_app.add_typer(extend_app, name="extend")
 
 register_studio_commands(app)
@@ -81,6 +87,7 @@ register_imagine_commands(imagine_app)
 register_files_commands(files_app)
 register_handoff_commands(handoff_app)
 register_animatic_commands(animatic_app)
+register_motion_commands(motion_app)
 register_report_commands(app)
 register_plugin_commands(app)
 register_tui_commands(app)

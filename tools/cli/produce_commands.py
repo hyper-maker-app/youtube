@@ -18,6 +18,7 @@ from typing import Any, Optional
 import typer
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
 _TOOLS = Path(__file__).resolve().parents[1]
 _ROOT = _TOOLS.parent
@@ -30,15 +31,56 @@ if str(_ROOT / "engine") not in sys.path:
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
+if sys.platform == "win32":
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+
+def safe_console_text(text: Any) -> str:
+    """Normalize unicode math/checkmarks to plain ASCII so Windows console never crashes."""
+    if not isinstance(text, str):
+        text = str(text)
+    replacements = {
+        "\u2074": "^4",
+        "\u2070": "^0",
+        "\u00b9": "^1",
+        "\u00b2": "^2",
+        "\u00b3": "^3",
+        "\u00b0": " deg ",
+        "\u2713": "[OK]",
+        "\u2705": "[OK]",
+        "\u274c": "[X]",
+        "\u2192": "->",
+        "\u2265": ">=",
+        "\u2264": "<=",
+        "\u2022": "-",
+        "\u00b7": "-",
+        "\u26a0": "[!]",
+        "\u2014": "--",
+        "\u2013": "-",
+    }
+    for char, rep in replacements.items():
+        if char in text:
+            text = text.replace(char, rep)
+    return text.encode("ascii", errors="replace").decode("ascii")
+
+
 from engine.flow_bridge import execute_grok_flow_production, sanitize_slug
 from engine.providers.llm.grok import GrokLLMProvider
 from engine.services.continuity import EpisodeHandoff, apply_handoff_to_scenes
-from engine.services.series_architect import generate_rigor_mortis_episode_01_scenes
+from engine.services.screenplay_linter import lint_scenes
 from engine.services.text_sanitizer import sanitize_spoken_text
 from engine.services.universal_narrative import (
+    UniversalNarrativeEngine,
     build_llm_catastrophe_system_prompt,
     build_llm_genre_system_prompt,
     detect_genre_archetype,
+    generate_5act_script,
     generate_catastrophe_scenes,
     generate_universal_scenes,
 )
@@ -74,6 +116,10 @@ SCRIPT_SCHEMA: dict[str, Any] = {
                         "enum": ["wide", "medium", "close", "macro", "micro", "nano"],
                     },
                     "duration": {"type": "number"},
+                    "micro_math": {
+                        "type": "string",
+                        "description": "Concrete survival metrics: temperature, pressure in PSI/bar, time in seconds, distance, calories, radiation",
+                    },
                 },
                 "required": [
                     "id",
@@ -82,6 +128,7 @@ SCRIPT_SCHEMA: dict[str, Any] = {
                     "visual_prompt",
                     "motion_prompt",
                     "duration",
+                    "micro_math",
                 ],
             },
         },
@@ -100,7 +147,7 @@ def get_script_schema(duration: int = 300) -> dict[str, Any]:
     return schema
 
 
-def generate_local_3act_scenes(title: str, genre: str = "catastrophe", duration: int = 300, aspect: str = "16:9") -> list[dict[str, Any]]:
+def generate_local_3act_scenes(title: str, genre: str = "catastrophe", duration: int = 300, aspect: str = "16:9", *, simulation: bool = False) -> list[dict[str, Any]]:
     """Synthesize structured scenes adhering to the universal 2nd-person retention standard across all genres.
 
     Invariants:
@@ -112,8 +159,8 @@ def generate_local_3act_scenes(title: str, genre: str = "catastrophe", duration:
     """
     arch = detect_genre_archetype(genre)
     if arch.slug == "catastrophe":
-        return generate_catastrophe_scenes(title=title, duration=duration, aspect=aspect)
-    return generate_universal_scenes(title=title, genre=genre, duration=duration, aspect=aspect)
+        return generate_catastrophe_scenes(title=title, duration=duration, aspect=aspect, simulation=simulation)
+    return generate_universal_scenes(title=title, genre=genre, duration=duration, aspect=aspect, simulation=simulation)
 
 
 def produce_film(
@@ -135,6 +182,10 @@ def produce_film(
     simulate_defect_block: Optional[int] = typer.Option(None, "--simulate-defect-block", help="Simulate a visual continuity breach on block N to test Director Agent HEAL re-generation loop"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Automatically confirm physical video rendering without prompting"),
     allow_deepmind_fallback: bool = typer.Option(False, "--allow-deepmind-fallback", help="Allow fallback to DeepMind heuristic if gemini_webapi is unavailable"),
+    force_render: bool = typer.Option(False, "--force-render", help="Bypass adversarial reviewer fail-closed gate for testing or override."),
+    export_shorts: bool = typer.Option(False, "--export-shorts", help="Automatically multiplex 9:16 vertical YouTube Shorts cut alongside 16:9 master."),
+    gemini_judge_model: str = typer.Option("gemini-3.1-pro", "--gemini-judge-model", help="Gemini judge model identifier (default: gemini-3.1-pro via Chrome CDP)"),
+    grok_judge_model: str = typer.Option("grok-4.20-non-reasoning", "--grok-judge-model", help="xAI Grok judge model identifier (default: grok-4.20-0309-non-reasoning)"),
 ) -> None:
     """Produce a complete cinematic film: Grok Studio AI Brain -> Flow CDP Video -> Voice Provider -> FFmpeg Assembly."""
     slug = sanitize_slug(title)
@@ -172,16 +223,13 @@ def produce_film(
     xai_key = os.getenv("XAI_API_KEY", "").strip()
     handoff_path = sequences_dir / f"{slug}_handoff.json"
 
-    # Canonical UDSE v4.2 resolution for canonical pilot
-    if slug == "project-rigor-mortis-episode-01" and director_mode:
-        console.print("  + Compiling Canonical 3-Act UDSE v4.2 Screenplay (9 blocks / 74s / EAB Invariants)...")
-        scenes = generate_rigor_mortis_episode_01_scenes()
-        duration = int(sum(float(s.get("duration", 8.0)) for s in scenes))
-    elif not rebuild and handoff_path.is_file() and handoff_path.stat().st_size > 100:
+    # Resume authored handoffs; simulation data never becomes a live production.
+    if not rebuild and handoff_path.is_file() and handoff_path.stat().st_size > 100:
         try:
             saved_data = json.loads(handoff_path.read_text(encoding="utf-8"))
             if (
                 saved_data.get("scenes")
+                and (dry_run or not any(scene.get("simulation_only") for scene in saved_data["scenes"]))
                 and len(saved_data["scenes"]) >= 4
                 and saved_data.get("duration") == duration
                 and (not genre or saved_data.get("genre", "").lower() == genre.lower())
@@ -200,36 +248,32 @@ def produce_film(
         try:
             from engine.services.skill_loader import get_skill_loader
             skill_loader = get_skill_loader()
-
             console.print(f"  + Injected live directives from {len(skill_loader.list_skills())} disk skills.")
 
             llm = GrokLLMProvider(api_key=xai_key, model="grok-4.20-0309-non-reasoning")
-            system_prompt = build_llm_genre_system_prompt(
+            engine_inst = UniversalNarrativeEngine(skill_loader=skill_loader, llm_provider=llm)
+            scenes = engine_inst.generate_screenplay(
                 title=title,
                 genre=genre,
                 duration=duration,
                 aspect=aspect,
+                voice_provider=voice_provider,
+                dry_run=dry_run,
             )
-            target_schema = get_script_schema(duration=duration)
-            script_data = asyncio.run(llm.generate_script(
-                topic=f"{title} ({genre})",
-                system_prompt=system_prompt,
-                schema=target_schema,
-            ))
-            scenes = script_data.get("scenes", [])
-            console.print(f"  + Grok authored {len(scenes)} dynamic 2nd-person scenes.")
+            console.print(f"  + Grok authored {len(scenes)} dynamic 2nd-person scenes across 5 acts.")
         except Exception as exc:
-            console.print(f"  [yellow]Notice: Grok API call encountered: {exc}. Falling back to Universal Procedural scenes.[/yellow]")
-            if archetype.slug == "catastrophe":
-                scenes = generate_catastrophe_scenes(title, duration=duration, aspect=aspect)
-            else:
-                scenes = generate_universal_scenes(title, genre, duration, aspect=aspect)
+            console.print(f"[red]Screenplay authoring failed: {safe_console_text(exc)}[/red]")
+            raise typer.Exit(code=1)
     elif not scenes:
-        console.print(f"  + Synthesizing Universal 2nd-Person Narrative ({archetype.display_name} Standard)...")
-        if archetype.slug == "catastrophe":
-            scenes = generate_catastrophe_scenes(title, duration=duration, aspect=aspect)
-        else:
-            scenes = generate_universal_scenes(title, genre, duration, aspect=aspect)
+        if not dry_run:
+            console.print("[red]Live authoring requires XAI_API_KEY or an existing handoff. Use --dry-run for offline simulation.[/red]")
+            raise typer.Exit(code=1)
+        scenes = generate_universal_scenes(title, genre, duration, aspect=aspect, simulation=True)
+        console.print("[yellow]Offline simulation fixture loaded; this screenplay cannot receive production certification.[/yellow]")
+
+    if not dry_run and any(scene.get("simulation_only") for scene in scenes):
+        console.print("[red]Simulation scenes cannot be rendered as a live production, including with --force-render.[/red]")
+        raise typer.Exit(code=1)
 
     # Sanitize all narration across scenes to guarantee 100% clean spoken audio
     for sc in scenes:
@@ -247,17 +291,43 @@ def produce_film(
             except Exception as exc:
                 console.print(f"  [yellow]Notice: Could not thaw EpisodeHandoff from {handoff_file}: {exc}[/yellow]")
 
+    # Phase 1.25: Pre-Generation Linter (zero-cost deterministic format enforcement)
+    # Report model-authored repair requirements before the judge loop.
+    console.print("\n[bold cyan][1.25/3] Running Pre-Generation Linter (POV · CTA · Veo Guards)...[/bold cyan]")
+    scenes, lint_actions = lint_scenes(scenes)
+    if lint_actions:
+        fix_count = sum(1 for a in lint_actions if "ERROR" in a)
+        warn_count = sum(1 for a in lint_actions if "WARNING" in a)
+        if fix_count:
+            console.print(f"  [green][OK] {fix_count} violation(s) require model-authored repair:[/green]")
+            for act in lint_actions:
+                if "WARNING" not in act:
+                    console.print(f"    [dim]- {act}[/dim]")
+        if warn_count:
+            console.print(f"  [yellow][!] {warn_count} advisory warning(s):[/yellow]")
+            for act in lint_actions:
+                if "WARNING" in act:
+                    console.print(f"    [yellow dim]- {act}[/yellow dim]")
+    else:
+        console.print("  [green][OK] All scenes passed pre-lint checks -- no corrections needed.[/green]")
+
     # Phase 1.5: Adversarial Review & Auto-Healing (Grok & Gemini Quality Gate)
     console.print("\n[bold magenta][1.5/3] Running Adversarial Screenplay Audit & Auto-Healer...[/bold magenta]")
     from engine.services.screenplay_reviewer import ScreenplayReviewer, GeminiWebAPIUnavailableError
     from engine.services.screenplay_healer import ScreenplayHealer
 
     allow_deepmind = allow_deepmind_fallback
-    reviewer = ScreenplayReviewer(xai_api_key=xai_key, allow_deepmind_fallback=allow_deepmind)
+    reviewer = ScreenplayReviewer(
+        xai_api_key=xai_key,
+        allow_deepmind_fallback=allow_deepmind,
+        gemini_model=gemini_judge_model,
+        grok_model=grok_judge_model,
+    )
     initial_scenes_snapshot = copy.deepcopy(scenes)
+    consult_ai_active = bool(xai_key and not dry_run)
 
     try:
-        scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=bool(xai_key))
+        scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=consult_ai_active)
     except GeminiWebAPIUnavailableError:
         console.print("\n[bold red][FAIL-CLOSED USER GATE][/bold red] [yellow]gemini_webapi (Chrome CDP port 9223) is unavailable or timed out.[/yellow]")
         proceed_fallback = typer.confirm("gemini_webapi bağlantısı kurulamadı. DeepMind alternatif protokolüne geçilsin mi?", default=False)
@@ -265,31 +335,109 @@ def produce_film(
             console.print("[bold red]İşlem kullanıcı tarafından durduruldu (Fail-Closed). gemini_webapi veya Chrome CDP (port 9223) oturumunu kontrol edin.[/bold red]")
             raise typer.Exit(code=1)
         allow_deepmind = True
-        reviewer = ScreenplayReviewer(xai_api_key=xai_key, allow_deepmind_fallback=True)
-        scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=bool(xai_key))
+        reviewer = ScreenplayReviewer(
+            xai_api_key=xai_key,
+            allow_deepmind_fallback=True,
+            gemini_model=gemini_judge_model,
+            grok_model=grok_judge_model,
+        )
+        scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=consult_ai_active)
+
+    simulation_only = dry_run or any(scene.get("simulation_only") for scene in scenes)
+    if simulation_only:
+        scorecard.passed = False
+        scorecard.grade = "SIMULATION (UNCERTIFIED)"
+        scorecard.defects.append("Simulation fixtures cannot receive production certification")
 
     initial_ai_critique = scorecard.ai_critique
+    initial_score = scorecard.total_score
+    initial_grade = scorecard.grade
+    initial_grok = scorecard.grok_score
+    initial_gemini = scorecard.gemini_score
     reinforcement_records = []
+    round_records = []
 
     if scorecard.ai_critique:
         console.print(Panel(
             scorecard.ai_critique.strip(),
-            title="[bold yellow]Adversarial Reviewer Critique (Grok xAI & Google Gemini)[/bold yellow]",
+            title="[bold yellow]Initial Adversarial Reviewer Critique (Grok xAI & Google Gemini)[/bold yellow]",
             border_style="yellow",
         ))
 
-    if not scorecard.passed:
-        console.print(f"  [yellow]Initial audit score: {scorecard.total_score}/100 ({scorecard.grade}) with {len(scorecard.defects)} defect(s). Initiating Full-Context Auto-Healer...[/yellow]")
-        healer = ScreenplayHealer(reviewer=reviewer, xai_api_key=xai_key, target_score=90)
-        heal_res = healer.heal(scenes, title=title, genre=genre, consult_ai=bool(xai_key))
+    if (not scorecard.passed or scorecard.total_score < 90) and not dry_run:
+        console.print(f"  [yellow]Initial audit score: {scorecard.total_score}/100 ({scorecard.grade}) with {len(scorecard.defects)} defect(s). Initiating Multi-Round Auto-Healer (up to 3 passes, target >= 90)...[/yellow]")
+        healer = ScreenplayHealer(
+            reviewer=reviewer,
+            xai_api_key=xai_key,
+            target_score=90,
+            grok_model=grok_judge_model,
+        )
+        heal_res = healer.heal(scenes, title=title, genre=genre, max_iterations=3, consult_ai=consult_ai_active, initial_scorecard=scorecard)
         scenes = heal_res.repaired_scenes
         scorecard = heal_res.final_scorecard
         if not scorecard.ai_critique:
             scorecard.ai_critique = initial_ai_critique
         reinforcement_records = heal_res.reinforcement_records
-        for log_line in heal_res.repair_log:
-            console.print(f"    [dim]{log_line}[/dim]")
-    else:
+        round_records = heal_res.round_records
+
+        # Print each round in detail
+        for rnd in round_records:
+            rep_ids_str = ", ".join(f"Scene {sid}" for sid in rnd.repaired_scene_ids) if rnd.repaired_scene_ids else "Deterministic polish"
+            defects_preview = "\n".join(f"    - {safe_console_text(d)}" for d in rnd.defects_before[:4])
+            if len(rnd.defects_before) > 4:
+                defects_preview += f"\n    [dim]... and {len(rnd.defects_before) - 4} more defect(s)[/dim]"
+
+            round_panel_text = (
+                f"[bold cyan]Judges Review (Pre-Healing):[/bold cyan]\n"
+                f"  - Grok xAI Score: {rnd.grok_score_before or 'N/A'}/100 | Gemini Score: {rnd.gemini_score_before or 'N/A'}/100\n"
+                f"  - Combined Score: {rnd.score_before}/100 ({rnd.grade_before})\n\n"
+                f"[bold yellow]Flagged Defects ({len(rnd.defects_before)}):[/bold yellow]\n"
+                f"{defects_preview}\n\n"
+                f"[bold green]Screenwriter Actions:[/bold green]\n"
+                f"  - Repaired: [bold]{rep_ids_str}[/bold]\n\n"
+                f"[bold magenta]Judges Re-Audit (Post-Healing):[/bold magenta]\n"
+                f"  - Grok xAI Score: {rnd.grok_score_after or 'N/A'}/100 | Gemini Score: {rnd.gemini_score_after or 'N/A'}/100\n"
+                f"  - Re-Audit Score: [bold green]{rnd.score_after}/100 ({rnd.grade_after})[/bold green]"
+            )
+            console.print(Panel(
+                round_panel_text,
+                title=f"[bold yellow]🥊 ROUND {rnd.iteration} ADVERSARIAL DEBATE & REPAIR[/bold yellow]",
+                border_style="cyan",
+            ))
+
+        # Progression Table
+        table = Table(title="[bold magenta]Adversarial Multi-Round Progression Scoreboard[/bold magenta]", border_style="magenta")
+        table.add_column("Round", justify="center", style="bold white")
+        table.add_column("Grok Score", justify="center")
+        table.add_column("Gemini Score", justify="center")
+        table.add_column("Total Score", justify="center")
+        table.add_column("Grade", justify="center")
+        table.add_column("Repaired Scenes", style="green")
+        table.add_column("Verdict", style="bold")
+
+        table.add_row(
+            "Initial",
+            str(initial_grok or "N/A"),
+            str(initial_gemini or "N/A"),
+            f"{initial_score}/100",
+            initial_grade,
+            "Initial Draft",
+            "[yellow]Defects Flagged[/yellow]"
+        )
+        for rnd in round_records:
+            status_str = "[bold green]Target Reached (>=90)[/bold green]" if (rnd.score_after >= 90) else "[yellow]Advancing to Next Round[/yellow]"
+            rep_ids_str = ", ".join(f"{sid}" for sid in rnd.repaired_scene_ids) if rnd.repaired_scene_ids else "Polish"
+            table.add_row(
+                f"Round {rnd.iteration}",
+                str(rnd.grok_score_after or "N/A"),
+                str(rnd.gemini_score_after or "N/A"),
+                f"{rnd.score_after}/100",
+                rnd.grade_after,
+                f"Scenes: {rep_ids_str}",
+                status_str,
+            )
+        console.print(table)
+    elif not simulation_only:
         console.print(f"  [green]Initial audit passed directly: {scorecard.total_score}/100 ({scorecard.grade})[/green]")
 
     # Generate Comprehensive Transparent Raw Audit Report
@@ -318,35 +466,62 @@ def produce_film(
     else:
         reinf_lines.append("- No persistent skill modifications required (screenplay compliant with active guidelines).")
 
+    # Build Round-by-Round Markdown Sections
+    round_md_sections = []
+    if round_records:
+        round_md_sections.append("## 1. Multi-Round Progression Scoreboard\n")
+        round_md_sections.append("| Round | Grok Score | Gemini Score | Total Score | Grade | Screenwriter Repaired Scenes | Status |")
+        round_md_sections.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+        round_md_sections.append(f"| Initial | {initial_grok or 'N/A'} | {initial_gemini or 'N/A'} | {initial_score}/100 | {initial_grade} | Initial Draft | Defects Flagged |")
+        for rnd in round_records:
+            rep_ids_str = ", ".join(f"Scene {sid}" for sid in rnd.repaired_scene_ids) if rnd.repaired_scene_ids else "Polish"
+            status_text = "Target Certified" if rnd.score_after >= 90 else "Advancing to Next Round"
+            round_md_sections.append(f"| Round {rnd.iteration} | {rnd.grok_score_after or 'N/A'} | {rnd.gemini_score_after or 'N/A'} | {rnd.score_after}/100 | {rnd.grade_after} | {rep_ids_str} | {status_text} |")
+        round_md_sections.append("\n## 2. Round-by-Round Adversarial Debate Details\n")
+        for rnd in round_records:
+            rep_ids_str = ", ".join(f"Scene {sid}" for sid in rnd.repaired_scene_ids) if rnd.repaired_scene_ids else "Polish"
+            defects_list_str = "\n".join(f"- {d}" for d in rnd.defects_before)
+            round_md_sections.append(f"### 🥊 Round {rnd.iteration}\n")
+            round_md_sections.append(f"- **Judges Evaluation Before:** Grok = {rnd.grok_score_before or 'N/A'}/100, Gemini = {rnd.gemini_score_before or 'N/A'}/100 -> Total: **{rnd.score_before}/100 ({rnd.grade_before})**\n")
+            if rnd.ai_critique_before:
+                round_md_sections.append(f"#### Judges Critique Before Round {rnd.iteration}\n```\n{rnd.ai_critique_before.strip()}\n```\n")
+            round_md_sections.append(f"#### Flagged Defects ({len(rnd.defects_before)})\n{defects_list_str}\n")
+            round_md_sections.append(f"#### Screenwriter Actions\n- Repaired scenes: **{rep_ids_str}**\n")
+            for act in rnd.repair_actions:
+                round_md_sections.append(f"  - {act}")
+            round_md_sections.append(f"\n- **Judges Re-Audit After Round {rnd.iteration}:** Grok = {rnd.grok_score_after or 'N/A'}/100, Gemini = {rnd.gemini_score_after or 'N/A'}/100 -> **New Score: {rnd.score_after}/100 ({rnd.grade_after})**\n\n---\n")
+
     report_content = (
         f"# Complete Adversarial Screenplay Audit & Closed-Loop Healing Report\n\n"
         f"- **Project Title:** {title}\n"
         f"- **Genre:** {genre}\n"
         f"- **Total Scenes:** {len(scenes)} ({duration}s)\n"
         f"- **Final Certification:** {scorecard.grade} ({scorecard.total_score}/100) — {'PASSED' if scorecard.passed else 'FAILED'}\n"
-        f"- **Dual-Judge Scores:** Grok = {scorecard.grok_score or 'N/A'}, Gemini = {scorecard.gemini_score or 'N/A'}\n\n"
-        f"## 1. Dual-Judge Evaluation Verdict\n\n"
+        f"- **Dual-Judge Final Scores:** Grok = {scorecard.grok_score or 'N/A'}, Gemini = {scorecard.gemini_score or 'N/A'}\n\n"
+        + "\n".join(round_md_sections)
+        + f"\n## 3. Final Dual-Judge Evaluation Verdict\n\n"
         f"{scorecard.ai_critique or 'Deterministic schema evaluation passed without critical defects.'}\n\n"
-        f"## 2. Raw Prompts and LLM Responses\n\n"
+        f"## 4. Healed Scenes Before vs After Comparison\n\n"
+        f"{chr(10).join(diff_lines) if diff_lines else 'No scene modifications were required.'}\n\n"
+        f"## 5. Closed-Loop Skill Reinforcement Log\n\n"
+        f"{chr(10).join(reinf_lines)}\n\n"
+        f"## 6. Raw Prompts and LLM Responses\n\n"
         f"### A. Raw Compact Screenplay Payload (Sent to Judges)\n"
         f"```json\n{scorecard.raw_prompt or 'N/A'}\n```\n\n"
         f"### B. Judge 1 (xAI Grok) Raw Response\n"
         f"```\n{scorecard.raw_grok_response or 'N/A'}\n```\n\n"
         f"### C. Judge 2 (Google Gemini) Raw Response\n"
-        f"```\n{scorecard.raw_gemini_response or 'N/A'}\n```\n\n"
-        f"## 3. Healed Scenes Before vs After Comparison\n\n"
-        f"{chr(10).join(diff_lines) if diff_lines else 'No scene modifications were required.'}\n\n"
-        f"## 4. Closed-Loop Skill Reinforcement Log\n\n"
-        f"{chr(10).join(reinf_lines)}\n"
+        f"```\n{scorecard.raw_gemini_response or 'N/A'}\n```\n"
     )
     project_report_file.write_text(report_content, encoding="utf-8")
     latest_report_file.write_text(report_content, encoding="utf-8")
     console.print(f"  + Transparent Audit Report written -> [dim]{project_report_file}[/dim]")
 
-    if scorecard.passed:
+
+    if scorecard.passed and scorecard.total_score >= 90:
         console.print(Panel(
             f"[bold green][CERTIFIED] Screenplay Certified Grade A+ ({scorecard.total_score}/100)![/bold green]\n\n"
-            f"[b]Project Title:[/b] {title}\n"
+            f"[b]Project Title:[/b] {safe_console_text(title)}\n"
             f"[b]Scenes / Duration:[/b] {len(scenes)} scenes / {duration}s ({aspect})\n"
             f"[b]Audit Scores:[/b]\n"
             f"  - CTA Isolation: {scorecard.category_scores.get('cta_isolation', 0)}/15 pts\n"
@@ -359,10 +534,11 @@ def produce_film(
             border_style="green"
         ))
     else:
+        clean_defects = [safe_console_text(d) for d in scorecard.defects[:5]]
         console.print(Panel(
             f"[bold red][FAILED] Screenplay Audit Incomplete: {scorecard.grade} ({scorecard.total_score}/100)[/bold red]\n\n"
-            f"[b]Project Title:[/b] {title}\n"
-            f"[b]Defects ({len(scorecard.defects)}):[/b]\n" + "\n".join(f"  - {d}" for d in scorecard.defects[:5]),
+            f"[b]Project Title:[/b] {safe_console_text(title)}\n"
+            f"[b]Defects ({len(scorecard.defects)}):[/b]\n" + "\n".join(f"  - {d}" for d in clean_defects),
             title="[AUDIT WARNING] Screenplay Quality Gate",
             border_style="red"
         ))
@@ -401,6 +577,20 @@ def produce_film(
             border_style="yellow"
         ))
         return
+
+    # Fail-Closed Quality Gate: Enforce that only Certified screenplays proceed to physical execution
+    if (not scorecard.passed or scorecard.total_score < 90) and not force_render:
+        if not dry_run:
+            console.print("\n[bold red][QUALITY GATE BLOCKED] Screenplay failed adversarial review (Score < 90 / Defects present).[/bold red]")
+            console.print("[yellow]Physical video rendering halted to protect Google Flow and API credits.[/yellow]")
+            console.print("[dim]Tip: Inspect defect critique above and re-run with --plan-only to review before rendering.[/dim]\n")
+            raise typer.Exit(code=1)
+    elif not scorecard.passed and force_render:
+        console.print("\n[bold yellow][QUALITY GATE OVERRIDE] --force-render active: Bypassing fail-closed gate despite audit score/defects.[/bold yellow]")
+
+    if simulation_only and not dry_run:
+        console.print("[red]Simulation handoffs cannot be rendered as live productions.[/red]")
+        raise typer.Exit(code=1)
 
     # Phase 2: User Confirmation Gate before Physical Execution
     if not dry_run and not yes:
@@ -458,10 +648,30 @@ def produce_film(
 
         console.print(f"  + YouTube Thumbnail locked -> [dim]{thumbnail_path}[/dim]")
 
+        shorts_path = None
+        if export_shorts:
+            shorts_path = out_dir / f"{slug}_shorts_9x16.mp4"
+            console.print(f"\n[bold cyan][SHORTS] Multiplexing 9:16 vertical YouTube Shorts cut alongside 16:9 master...[/bold cyan]")
+            try:
+                import editor
+                if final_mp4 and Path(final_mp4).is_file():
+                    editor.export_shorts_multiplex(
+                        input_path=final_mp4,
+                        out_path=shorts_path,
+                        max_duration=45.0,
+                        start_time=0.0,
+                    )
+                    console.print(f"  + YouTube Shorts (9:16) produced -> [dim]{shorts_path}[/dim]")
+                else:
+                    logger.warning("Master video not found on disk; skipping Shorts multiplex.")
+            except Exception as exc:
+                logger.warning(f"Shorts multiplex generation notice: {exc}")
+
+        shorts_line = f"\n[SHORTS] [b]YouTube Shorts (9:16):[/b] {shorts_path}" if (shorts_path and shorts_path.is_file()) else ""
         console.print(Panel(
             f"[bold green][DONE] Film Successfully Produced![/bold green]\n\n"
             f"[VIDEO] [b]Final MP4:[/b] {final_mp4}\n"
-            f"[THUMBNAIL] [b]Thumbnail:[/b] {thumbnail_path}\n"
+            f"[THUMBNAIL] [b]Thumbnail:[/b] {thumbnail_path}{shorts_line}\n"
             f"[AUDIO] [b]Audio Layers Active (3 Layers):[/b]\n"
             f"  • Layer 1 (TTS Voiceover): {voice_provider.upper()}\n"
             f"  • Layer 2 (Background Music Bed): -14 LUFS (TTS Sidechain Ducked)\n"

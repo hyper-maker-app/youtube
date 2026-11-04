@@ -48,6 +48,17 @@ _CATEGORY_FALLBACK_MAP = {
     "emotion": "performance-emotion-director",
     "continuity": "continuity-consistency-guardian",
     "color": "post-production-color-grading-supervisor",
+    "survival": "micro-survival-director",
+    "fema": "micro-survival-director",
+    "void": "micro-survival-director",
+    "planetary": "planetary-catastrophe-director",
+    "cosmic": "planetary-catastrophe-director",
+    "deepsea": "deepsea-survival-director",
+    "hadal": "deepsea-survival-director",
+    "ocean": "deepsea-survival-director",
+    "urban": "urban-infiltration-director",
+    "blackout": "urban-infiltration-director",
+    "scada": "urban-infiltration-director",
 }
 
 
@@ -145,14 +156,14 @@ class SkillReinforcementService:
         content = skill_file.read_text(encoding="utf-8")
         lines = content.splitlines()
 
-        # Semantic & lexical deduplication check
+        # Semantic & lexical deduplication check (primary pass — exact and near-exact)
         clean_rule = rule.strip().rstrip(".")
         normalized_rule_words = set(re.findall(r"\w+", clean_rule.lower()))
         for line in lines:
             line_clean = line.strip().lstrip("-* ").rstrip(".")
             if not line_clean:
                 continue
-            # Exact or highly overlapping match
+            # Exact match
             if clean_rule.lower() == line_clean.lower():
                 return {
                     "skill_slug": skill_slug,
@@ -160,31 +171,70 @@ class SkillReinforcementService:
                     "reason": "Rule already exists identically in skill guidelines (Deduplicated).",
                     "rule": rule,
                 }
-            line_words = set(re.findall(r"\w+", line_clean.lower()))
-            if len(normalized_rule_words) >= 5 and len(line_words) >= 5:
-                overlap = len(normalized_rule_words & line_words) / min(len(normalized_rule_words), len(line_words))
-                if overlap > 0.85:
+
+        # Additional deduplication: normalise scene ids (s030 == 30) for cross-format matching
+        def _norm_scene(text: str) -> str:
+            import re as _re
+            # Strip leading zeros and 's' prefix: "s030" -> "30", "s009" -> "9"
+            return _re.sub(r'\bs0*(\d+)\b', lambda m: str(int(m.group(1))), text.lower())
+
+        norm_rule = _norm_scene(clean_rule)
+        norm_rule_words = set(re.findall(r"\w+", norm_rule))
+
+        for line in lines:
+            line_clean = line.strip().lstrip("-* ").rstrip(".")
+            if not line_clean:
+                continue
+            norm_line = _norm_scene(line_clean)
+            norm_line_words = set(re.findall(r"\w+", norm_line))
+            if len(norm_rule_words) >= 5 and len(norm_line_words) >= 5:
+                overlap = len(norm_rule_words & norm_line_words) / min(len(norm_rule_words), len(norm_line_words))
+                if overlap > 0.80:  # tightened from 0.85 to catch cross-format duplicates
                     return {
                         "skill_slug": skill_slug,
                         "applied": False,
-                        "reason": f"Semantically redundant with existing rule: '{line_clean[:60]}...' (Deduplicated).",
+                        "reason": f"Semantically redundant (normalised) with existing rule: '{line_clean[:60]}' (Deduplicated).",
                         "rule": rule,
                     }
 
-        header = "## Learned Production Invariants (Adversarial Feedback)"
+        # Hard cap: reject if skill already has >= 20 learned invariant entries.
+        # Rules beyond this threshold indicate a structural skill problem (wrong root cause),
+        # not a genuine new invariant. Human review is required.
+        existing_invariant_count = sum(
+            1 for l in lines if l.strip().startswith("- **[Scene")
+        )
+        if existing_invariant_count >= 20:
+            logger.warning(
+                "Skill '%s' already has %d learned invariants (>= 20 cap). "
+                "Root-cause skill redesign required before adding more rules.",
+                skill_slug, existing_invariant_count,
+            )
+            return {
+                "skill_slug": skill_slug,
+                "applied": False,
+                "reason": (
+                    f"Skill '{skill_slug}' has {existing_invariant_count} learned invariants "
+                    f"(hard cap = 20). This indicates a structural skill problem. "
+                    "Redesign the skill's core directives instead of appending more patches."
+                ),
+                "rule": rule,
+            }
+
+        header = "## Universal Physics & Causality Invariants"
+        # Fall back to legacy header if new one not present
+        legacy_header = "## Learned Production Invariants (Adversarial Feedback)"
+        active_header = header if header in content else (legacy_header if legacy_header in content else header)
         bullet = f"- **[Scene {scene_id or 'General'}]**: {clean_rule}."
 
-        if header in content:
+        if active_header in content:
             # Append under existing header
-            parts = content.split(header)
-            prefix = parts[0] + header + "\n"
+            parts = content.split(active_header, 1)
+            prefix = parts[0] + active_header + "\n"
             suffix = parts[1]
 
-            # Enforce 450 line cap consolidation if file is growing too large
-            if len(lines) >= 450:
-                # Consolidate older invariant lines
+            # Enforce 150 line cap on learned section: keep last 9 + new one
+            if len(lines) >= 150:
                 suffix_lines = [l for l in suffix.splitlines() if l.strip()]
-                # Keep top 10 most recent invariants + new one
                 kept_invariants = [l for l in suffix_lines if l.strip().startswith("-")][-9:]
                 new_suffix = "\n" + "\n".join(kept_invariants) + f"\n{bullet}\n"
                 new_content = prefix + new_suffix
@@ -200,7 +250,7 @@ class SkillReinforcementService:
                     "reason": f"File at {len(lines)} lines would exceed 500-line AGENTS.md limit.",
                     "rule": rule,
                 }
-            new_content = content.rstrip() + f"\n\n{header}\n{bullet}\n"
+            new_content = content.rstrip() + f"\n\n{active_header}\n{bullet}\n"
 
         # Hard guard: Verify line count <= 500
         new_lines_count = len(new_content.splitlines())
@@ -214,7 +264,7 @@ class SkillReinforcementService:
             }
 
         skill_file.write_text(new_content, encoding="utf-8")
-        logger.info("Reinforced skill '%s' with learned rule: %s", skill_slug, clean_rule[:60])
+        logger.info("Reinforced skill '%s' with learned rule: %s", skill_slug, clean_rule)
 
         return {
             "skill_slug": skill_slug,

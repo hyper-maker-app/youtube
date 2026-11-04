@@ -45,6 +45,11 @@ PHASE6_SKILLS = {
     "catastrophe-director",
     "thumbnail-designer",
     "youtube-factory",
+    "viral-retention-director",
+    "micro-survival-director",
+    "planetary-catastrophe-director",
+    "deepsea-survival-director",
+    "urban-infiltration-director",
 }
 
 

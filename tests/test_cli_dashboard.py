@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -10,17 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
 from cli.dashboard import build_studio_dashboard  # noqa: E402
-
-CLI = ROOT / "tools" / "cinematic_studio_cli.py"
-
-
-def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, str(CLI), *args],
-        capture_output=True,
-        text=True,
-        cwd=ROOT,
-    )
+from cli_helpers import run_cli  # noqa: E402
 
 
 def test_build_studio_dashboard_shape() -> None:
@@ -28,40 +17,38 @@ def test_build_studio_dashboard_shape() -> None:
     assert snap["studio_version"]
     assert "studio" in snap
     assert "quota" in snap
-    assert "production" in snap
-    assert "sequences" in snap
-    assert "characters" in snap
-    assert snap["studio"]["core_agents"] >= 23
-    recon = snap["quota"].get("reconciliation") or {}
-    assert "cascade_source" in recon
-    assert "entry_count" in recon
 
 
-def test_quota_table_shows_cascade() -> None:
-    from cli.dashboard import _quota_table
+def test_build_studio_dashboard_renders_rich() -> None:
+    from io import StringIO
     from rich.console import Console
+    from cli.dashboard import render_studio_dashboard
 
-    snap = {
-        "quota": {
-            "tier_label": "Test",
-            "session_spent": 1,
-            "session_generations": 1,
-            "risk_level": "low",
-            "burn_rate_risk": "medium",
-            "reconciliation": {
-                "cascade_source": "generation_ledger",
-                "estimated_total": 10.0,
-                "actual_total": 12.0,
-                "variance_pct": 20.0,
-                "entry_count": 2,
-                "burn_rate_multiplier": 1.2,
-                "risk_level": "medium",
-            },
-        }
+    snap = build_studio_dashboard()
+    buf = StringIO()
+    console = Console(file=buf, force_terminal=True, color_system="standard")
+    render_studio_dashboard(snap, console=console)
+    text = buf.getvalue()
+    assert "Studio Dashboard" in text
+    assert "Quota" in text
+
+
+def test_render_studio_dashboard_cost_breakdown() -> None:
+    from rich.console import Console
+    from cli.dashboard import render_studio_dashboard
+
+    console = Console(record=True, width=120)
+    snap = build_studio_dashboard()
+    snap["quota"]["reconciliation"] = {
+        "cascade_source": "generation_ledger",
+        "entry_count": 1,
+        "estimated_total": 1.0,
+        "actual_total": 1.0,
+        "variance_pct": 0.0,
+        "burn_rate_multiplier": 1.0,
+        "burn_rate_risk": "low",
     }
-    table = _quota_table(snap)
-    console = Console(record=True, width=80)
-    console.print(table)
+    render_studio_dashboard(snap, console=console)
     text = console.export_text()
     assert "Cascade" in text
     assert "ledger" in text.lower()

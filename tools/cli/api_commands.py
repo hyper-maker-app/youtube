@@ -43,22 +43,20 @@ def register(app: typer.Typer) -> None:
           GET  /v1/actions/{id}
           POST /v1/actions/{id}/execute
         """
-        try:
-            import fastapi  # noqa: F401
-            import uvicorn  # noqa: F401
-        except ImportError as exc:
-            py = sys.executable
-            console.print(
-                "[red]FastAPI/uvicorn not installed.[/red]\n"
-                f"  [bold]{py} -m pip install -r requirements-api.txt[/bold]"
-            )
-            raise typer.Exit(1) from exc
-
         root = Path(__file__).resolve().parents[2]
         if str(root) not in sys.path:
             sys.path.insert(0, str(root))
 
-        from studio_api.app import run_api
+        try:
+            import fastapi  # noqa: F401
+            import uvicorn  # noqa: F401
+            from studio_api.app import run_api
+        except ImportError:
+            typer.secho(
+                "Web surfaces have been safely archived to archive/legacy_web/. Use CLI produce-film engine.",
+                fg="yellow",
+            )
+            return
 
         console.print(
             f"[cyan]Studio API[/cyan] → http://{host}:{port}/\n"

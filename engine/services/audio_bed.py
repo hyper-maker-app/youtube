@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -85,7 +86,35 @@ _MOOD_CHAINS: dict[str, str] = {
         "[sub1][sub2v][filtered]amix=inputs=3:weights=0.55 0.25 0.20[raw];"
         "[raw]tremolo=f=0.7:d=0.40[out]"
     ),
+    # catastrophe_4band: 4-band procedural frequency architecture
+    # Band 1 (30-45 Hz): Deep tectonic sub-bass sine wave (tectonic vibration)
+    # Band 2 (90-120 Hz): Harmonic magma resonance and volcanic lava rumble
+    # Band 3 (800-2000 Hz): Ash storm bandpass filtered wind noise
+    # Band 4 (8-12 kHz): High-frequency atmospheric pressure sheen and brittle transient air
+    "catastrophe_4band": (
+        "sine=frequency=34:sample_rate=48000[b1_sine1];"
+        "sine=frequency=38.5:sample_rate=48000[b1_sine2];"
+        "[b1_sine2]volume=0.35[b1_sine2v];"
+        "[b1_sine1][b1_sine2v]amix=inputs=2:weights=0.70 0.30[b1_raw];"
+        "[b1_raw]lowpass=f=45[band1];"
+        "sine=frequency=96:sample_rate=48000[b2_harm];"
+        "anoisesrc=color=brown:sample_rate=48000:amplitude=0.09[b2_bnoise];"
+        "[b2_bnoise]bandpass=f=105:width_type=h:w=30[b2_filtered];"
+        "[b2_harm][b2_filtered]amix=inputs=2:weights=0.35 0.65[b2_raw];"
+        "[b2_raw]tremolo=f=0.75:d=0.35[band2];"
+        "anoisesrc=color=pink:sample_rate=48000:amplitude=0.06[b3_pnoise];"
+        "[b3_pnoise]bandpass=f=1400:width_type=h:w=1200[b3_raw];"
+        "[b3_raw]tremolo=f=1.2:d=0.40[band3];"
+        "anoisesrc=color=white:sample_rate=48000:amplitude=0.025[b4_wnoise];"
+        "[b4_wnoise]highpass=f=8000,lowpass=f=12000[b4_raw];"
+        "[b4_raw]tremolo=f=2.4:d=0.30[band4];"
+        "[band1][band2][band3][band4]amix=inputs=4:weights=0.50 0.25 0.15 0.10[mixed];"
+        "[mixed]acompressor=threshold=-14dB:ratio=3.2:attack=8:release=90[out]"
+    ),
 }
+
+# Explicit alias for direct mood lookup
+_MOOD_CHAINS["catastrophe"] = _MOOD_CHAINS["catastrophe_4band"]
 
 # ---------------------------------------------------------------------------
 # Mode / Genre → mood mapping
@@ -96,7 +125,7 @@ _MODE_TO_MOOD: dict[str, str] = {
     "incident": "tension_pulse",
     "mechanical": "mechanical_hum",
     "explorer": "epic_curiosity",
-    "catastrophe": "tension_pulse",
+    "catastrophe": "catastrophe_4band",
     "sci-fi": "cinematic_dramatic",
     "horror": "tension_pulse",
     "survival": "tension_pulse",
@@ -121,7 +150,7 @@ def fetch_pixabay_music(
     timeout: float = 8.0,
 ) -> Path | None:
     """Fetch royalty-free dramatic background music track from Pixabay API.
-    
+
     Returns the Path to the downloaded audio file, or None if unavailable.
     """
     key = api_key or os.getenv("PIXABAY_API_KEY")
@@ -170,7 +199,7 @@ def fetch_thematic_music(
     timeout: float = 8.0,
 ) -> Path | None:
     """Fetch royalty-free dramatic background music track from Thematic catalog API.
-    
+
     Returns the Path to the downloaded audio file, or None if unavailable.
     """
     key = api_key or os.getenv("THEMATIC_API_KEY")
@@ -220,7 +249,7 @@ def normalize_loudness(
     ffmpeg: str | None = None,
 ) -> Path:
     """Apply FFmpeg -14 LUFS broadcast loudness normalization (EBU R128 / YouTube standard).
-    
+
     Parameters
     ----------
     input_path:
@@ -261,7 +290,14 @@ def normalize_loudness(
     ]
 
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+        )
         if temp_out.is_file() and temp_out.stat().st_size > 100:
             if dest == src:
                 src.unlink(missing_ok=True)
@@ -312,7 +348,7 @@ def duck_audio_bed(
     ffmpeg: str | None = None,
 ) -> Path:
     """Apply FFmpeg sidechain ducking so background music ducks under speech with -14 LUFS normalization.
-    
+
     The speech stream splits into [vo1] (heard) and [vo2] (control signal for compressor).
     The music loops seamlessly, is ducked by [vo2], mixed with [vo1], and normalized to -14 LUFS.
     """
@@ -368,7 +404,7 @@ def generate_audio_bed(
     dry_run: bool = False,
 ) -> str:
     """Generate or fetch mood-matched dramatic background music bed normalized to -14 LUFS.
-    
+
     Hierarchy:
     1. Remote royalty-free fetch (Pixabay / Thematic) if credentials exist and not in dry-run.
     2. Local stock catalog in assets/music/ if present.
@@ -505,6 +541,146 @@ def generate_music_bed(mood: str, duration_seconds: float, output_dir: str, use_
 
 
 # ---------------------------------------------------------------------------
+# Audio Trigger Cue & Braam Injection (v4.0 Frequency Architecture)
+# ---------------------------------------------------------------------------
+
+def synthesize_audio_trigger_cue(
+    output_path: str | Path,
+    duration: float = 1.2,
+    cue_type: str = "sub_bass_braam",
+    ffmpeg: str | None = None,
+) -> Path:
+    """Synthesize a sub-bass braam / thud transient trigger cue via FFmpeg lavfi.
+
+    Generates a 35 Hz -> 25 Hz pitch-drop sub-bass braam + low-pass transient thud hit
+    designed to eliminate dead silence between voiceover sections and transition boundaries.
+
+    Parameters
+    ----------
+    output_path:
+        Destination audio file path (typically .wav).
+    duration:
+        Duration of the cue in seconds (default: 1.2s).
+    cue_type:
+        Style of cue ("sub_bass_braam", "impact_thud", "tectonic_hit").
+    ffmpeg:
+        Optional path to FFmpeg binary.
+    """
+    ffmpeg_bin = ffmpeg or config.resolve_ffmpeg()
+    dest = Path(output_path).resolve()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dur = max(0.4, float(duration))
+
+    fade_out_start = max(0.1, dur * 0.35)
+    fade_out_dur = dur - fade_out_start
+    thud_decay = min(0.35, dur * 0.30)
+
+    # 35 Hz -> 25 Hz pitch-drop braam tone + transient impact thud
+    filtergraph = (
+        f"aevalsrc='0.85*sin(2*PI*(35 - 10*(t/{dur}))*t)':s=48000:d={dur}[braam_tone];"
+        f"[braam_tone]afade=t=in:st=0:d=0.04,afade=t=out:st={fade_out_start:.3f}:d={fade_out_dur:.3f},lowpass=f=95[braam];"
+        f"anoisesrc=color=brown:sample_rate=48000:amplitude=0.45:d={dur}[thud_raw];"
+        f"[thud_raw]lowpass=f=65,afade=t=in:st=0:d=0.01,afade=t=out:st=0.02:d={thud_decay:.3f}[thud];"
+        f"[braam][thud]amix=inputs=2:weights=0.75 0.25[cue_raw];"
+        f"[cue_raw]aformat=sample_rates=48000:channel_layouts=stereo,"
+        f"acompressor=threshold=-12dB:ratio=4:attack=5:release=80[out]"
+    )
+
+    cmd = [
+        ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-y",
+        "-f", "lavfi", "-i", filtergraph,
+        "-t", f"{dur:.3f}",
+        "-c:a", "pcm_s16le",
+        "-ar", "48000",
+        "-ac", "2",
+        str(dest),
+    ]
+
+    subprocess.run(cmd, check=True)
+    return dest
+
+
+def inject_audio_trigger_cues(
+    audio_path: str | Path,
+    cue_timestamps: list[float],
+    out_path: str | Path,
+    cue_gain_db: float = -6.0,
+    ffmpeg: str | None = None,
+) -> Path:
+    """Inject sub-bass braam trigger cues at specified timestamps into an audio stream.
+
+    Eliminates dead silence between voiceover sections and transition boundaries by
+    overlaying procedural sub-bass hits with precise sample alignment.
+
+    Parameters
+    ----------
+    audio_path:
+        Source audio track.
+    cue_timestamps:
+        List of timestamp offsets in seconds where sub-bass braam cues should trigger.
+    out_path:
+        Target output audio file path.
+    cue_gain_db:
+        Gain offset for cues in dB (default: -6.0 dB).
+    ffmpeg:
+        Optional path to FFmpeg binary.
+    """
+    src = Path(audio_path).resolve()
+    dest = Path(out_path).resolve()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    ffmpeg_bin = ffmpeg or config.resolve_ffmpeg()
+
+    if not src.is_file():
+        raise FileNotFoundError(f"Source audio file not found: {src}")
+
+    valid_timestamps = [float(ts) for ts in cue_timestamps if ts >= 0.0]
+    if not valid_timestamps:
+        if src != dest:
+            shutil.copy2(src, dest)
+        return dest
+
+    # Synthesize transient cue into a temporary file
+    temp_dir = Path(tempfile.mkdtemp(prefix="cue_inject_"))
+    try:
+        cue_wav = temp_dir / "trigger_cue.wav"
+        synthesize_audio_trigger_cue(cue_wav, duration=1.2, ffmpeg=ffmpeg_bin)
+
+        split_count = len(valid_timestamps)
+        split_labels = "".join([f"[c{i}]" for i in range(split_count)])
+        delays = []
+        mix_inputs = ["[0:a]"]
+
+        for i, ts in enumerate(valid_timestamps):
+            ms = max(0, int(round(ts * 1000)))
+            delays.append(f"[c{i}]adelay={ms}|{ms},volume={cue_gain_db}dB[d{i}]")
+            mix_inputs.append(f"[d{i}]")
+
+        filtergraph = (
+            f"[1:a]asplit={split_count}{split_labels};"
+            + ";".join(delays) + ";"
+            + "".join(mix_inputs)
+            + f"amix=inputs={len(mix_inputs)}:duration=first:dropout_transition=0:normalize=0[mix];"
+            + "[mix]aformat=sample_rates=48000:channel_layouts=stereo[out]"
+        )
+
+        cmd = [
+            ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-y",
+            "-i", str(src),
+            "-i", str(cue_wav),
+            "-filter_complex", filtergraph,
+            "-map", "[out]",
+            "-c:a", "pcm_s16le",
+            "-ar", "48000",
+            "-ac", "2",
+            str(dest),
+        ]
+        subprocess.run(cmd, check=True)
+        return dest
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
 # Self-Test Validation Function
 # ---------------------------------------------------------------------------
 
@@ -515,13 +691,15 @@ def test_audio_bed() -> bool:
     1. Clean generation of audio bed via synthesis/fallback.
     2. FFmpeg -14 LUFS loudness normalization.
     3. Sidechain ducking of background music under speech.
+    4. 4-Band catastrophe procedural frequency synthesis.
+    5. Sub-bass braam trigger cue synthesis and timestamped injection.
     """
     import tempfile
     test_dir = Path(tempfile.mkdtemp(prefix="test_audio_bed_"))
     try:
         ffmpeg_bin = config.resolve_ffmpeg()
 
-        # 1. Test audio bed generation
+        # 1. Test audio bed generation (tension_pulse)
         bed_path = generate_audio_bed(
             mood="tension_pulse",
             duration_seconds=3.0,
@@ -557,6 +735,39 @@ def test_audio_bed() -> bool:
         )
         assert ducked_out.is_file(), "Ducked mix output file was not generated"
         assert ducked_out.stat().st_size > 1000, "Ducked mix file is too small"
+
+        # 5. Test 4-Band catastrophe procedural audio synthesis
+        cat_path = generate_audio_bed(
+            mood="catastrophe",
+            duration_seconds=3.0,
+            output_dir=str(test_dir),
+            dry_run=True,
+        )
+        assert Path(cat_path).is_file(), f"Catastrophe 4-band audio was not generated: {cat_path}"
+        assert Path(cat_path).stat().st_size > 1000, "Catastrophe 4-band audio file is too small"
+
+        # 6. Test sub-bass braam trigger cue synthesis
+        cue_path = test_dir / "cue_hit.wav"
+        synthesize_audio_trigger_cue(
+            output_path=cue_path,
+            duration=1.2,
+            cue_type="sub_bass_braam",
+            ffmpeg=ffmpeg_bin,
+        )
+        assert cue_path.is_file(), "Sub-bass braam cue file was not generated"
+        assert cue_path.stat().st_size > 1000, "Sub-bass braam cue file is too small"
+
+        # 7. Test trigger cue injection into audio stream
+        injected_path = test_dir / "injected_mix.wav"
+        inject_audio_trigger_cues(
+            audio_path=cat_path,
+            cue_timestamps=[0.5, 1.8],
+            out_path=injected_path,
+            cue_gain_db=-6.0,
+            ffmpeg=ffmpeg_bin,
+        )
+        assert injected_path.is_file(), "Injected audio mix was not generated"
+        assert injected_path.stat().st_size > 1000, "Injected audio mix file is too small"
 
         logger.info("[AUDIO BED] All audio bed self-tests passed successfully.")
         return True

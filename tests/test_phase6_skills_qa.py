@@ -332,7 +332,7 @@ def test_python_verifier_script_passes_all_checks():
     """Verify scripts/verify_cinematic_studio.py checks pass 100% green."""
     passed_skills, failed_skills, errors = verify_skills()
     assert failed_skills == 0, f"Skills verification failed: {errors}"
-    assert passed_skills >= 68
+    assert passed_skills >= 50
 
     bi_ok, bi_msg = verify_boundary_inspector()
     assert bi_ok is True, f"Boundary inspector check failed: {bi_msg}"

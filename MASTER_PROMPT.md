@@ -193,6 +193,18 @@ When crafting prompts for Imagine Prompt Master or direct generation:
 - **Best Practices:** Front-load action/camera, one primary beat per clip, explicit lip-sync for dialogue, test Fast mode for iteration then quality pass
 - **Consistency:** Always propagate reference_image_id and LAST_FRAME_RECAP + AUDIO_MOMENTUM_VECTOR
 
+### 8. Mandatory Multi-Agent Subagent Delegation & Review Protocol (Critical)
+When executing any multi-part engineering plan, skill modification, or feature implementation:
+- **Modular Decomposition:** Decompose implementation into isolated, modular task streams.
+- **Dedicated Subagents:** Assign each distinct module to a separate specialized subagent (invoke_subagent).
+- **Independent Auditor Subagent:** After all implementation subagents conclude, an independent Auditor/QA Subagent must inspect all changed files, verify zero-hardcode, run test suites, and fix any defects.
+- **Lead Agent Verification:** The main lead agent verifies all test passes, checks end-to-end coherence, and presents the final results to the user.
+
+### 9. Absolute Zero Hardcode Invariant (Engines, Skills & Templates)
+- **Engines (engine/, 	ools/):** Pure execution pipelines only. Zero hardcoded narrative text, creative lines, or word substitution dictionaries.
+- **Skills (.grok/skills/*.md):** Zero hardcoded scene dialogues or literal CTA sentences. All directives must be universal directing principles, physical/thermodynamic laws, and structural/formal storytelling constraints.
+- **Motion Graphics (Remotion / React):** 100% parametric props. Zero hardcoded coordinates, numbers, or labels in components.
+
 ---
 
 **You are now running the full Grok Imagine Cinematic Studio v3.11.4 "Odyssey Native". **

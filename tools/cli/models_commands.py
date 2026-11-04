@@ -71,7 +71,7 @@ def _ordered_video_slugs() -> list[str]:
 def models_list():
     """List Grok Build CLI, xAI chat, and Imagine model slugs (4.6 / 1.0 first)."""
     table = Table(
-        title=f"🤖 Model Registry · Grok 4.6 · studio v{STUDIO_VERSION}",
+        title=f"🤖 Model Registry - Grok 4.6 - studio v{STUDIO_VERSION}",
         box=box.ROUNDED,
     )
     table.add_column("Category", style="bold cyan", no_wrap=True)
@@ -96,7 +96,7 @@ def models_list():
     for slug in _ordered_chat_slugs():
         info = XAI_CHAT_MODELS[slug]
         ctx = info.get("context_tokens")
-        ctx_s = f" · {ctx // 1000}k ctx" if isinstance(ctx, int) else ""
+        ctx_s = f" - {ctx // 1000}k ctx" if isinstance(ctx, int) else ""
         table.add_row(
             "xAI Chat",
             slug + _chat_tags(slug, info),
@@ -137,7 +137,7 @@ def models_list():
     for slug, info in GROK_BUILD_V9_MODELS.items():
         base = info.get("base_model", "?")
         temp = info.get("temperature")
-        temp_s = f" · T={temp}" if temp is not None else ""
+        temp_s = f" - T={temp}" if temp is not None else ""
         star = ""
         if slug == DEFAULT_XAI_CHAT_EXPERT_MODEL:
             star = " ★ craft"
@@ -154,7 +154,7 @@ def models_list():
     for slug, info in GROK_BUILD_NSFW_MODELS.items():
         base = info.get("base_model", "?")
         temp = info.get("temperature")
-        temp_s = f" · T={temp}" if temp is not None else ""
+        temp_s = f" - T={temp}" if temp is not None else ""
         aliases = ", ".join(info.get("aliases", [])[:3])
         detail = f"{info['label']} → {base}{temp_s} — {info.get('description', '')}"
         if aliases:
@@ -163,10 +163,10 @@ def models_list():
 
     console.print(table)
     console.print(
-        f"\n[dim]Docs: {MODELS_DOC} · {MODEL_LAYER_DOC} · "
-        f"opt-in 1M: --chat-model grok-4.3 · never treat CLI 1.0.5 as a model slug · "
-        f"v9 specialist pickers: bash scripts/install_v9_grok_models.sh · "
-        f"NSFW Build aliases: bash scripts/install_nsfw_grok_models.sh · "
+        f"\n[dim]Docs: {MODELS_DOC} - {MODEL_LAYER_DOC} - "
+        f"opt-in 1M: --chat-model grok-4.3 - never treat CLI 1.0.5 as a model slug - "
+        f"v9 specialist pickers: bash scripts/install_v9_grok_models.sh - "
+        f"NSFW Build aliases: bash scripts/install_nsfw_grok_models.sh - "
         f"not Imagine generators[/dim]"
     )
 
@@ -204,35 +204,35 @@ def models_verify():
     warn_block = ""
     if result.get("warnings"):
         warn_block += "\n\n[yellow]Warnings:[/yellow]\n" + "\n".join(
-            f"• {w}" for w in result["warnings"]
+            f"- {w}" for w in result["warnings"]
         )
     if result.get("notes"):
         warn_block += "\n\n[dim]Notes:[/dim]\n" + "\n".join(
-            f"• {n}" for n in result["notes"]
+            f"- {n}" for n in result["notes"]
         )
     installed = result.get("installed_grok_cli_version") or "not found"
     if result["compatible"]:
         console.print(
             Panel.fit(
-                "[bold green]✅ Model compatibility verified[/bold green]\n\n"
+                "[bold green][OK] Model compatibility verified[/bold green]\n\n"
                 f"Studio target: v{result['studio_version']}\n"
                 f"Grok Build CLI: {stack['grok_build_cli_default']} "
-                f"(+ {stack['grok_build_cli_fork']}, recommend ≥ "
+                f"(+ {stack['grok_build_cli_fork']}, recommend >= "
                 f"{stack.get('grok_build_cli_min_version', RECOMMENDED_GROK_BUILD_CLI_VERSION)})\n"
                 f"Installed CLI: {installed}\n"
                 f"xAI Chat (cinematic): {stack['xai_chat']} | Build/coding: {stack['xai_build']}\n"
                 f"Imagine Video: {stack['imagine_video']} | Image: {stack['imagine_image']}\n\n"
                 f"{result['video_pipeline_spec']}"
                 f"{warn_block}",
-                title="Grok 4.6 Cinematic+Build · Optional 4.3 1M · Imagine",
+                title="Grok 4.6 Cinematic+Build - Optional 4.3 1M - Imagine",
                 border_style="green",
             )
         )
     else:
         console.print(
             Panel.fit(
-                "[bold red]❌ Model compatibility issues[/bold red]\n\n"
-                + "\n".join(f"• {issue}" for issue in result["issues"])
+                "[bold red][ERROR] Model compatibility issues[/bold red]\n\n"
+                + "\n".join(f"- {issue}" for issue in result["issues"])
                 + warn_block,
                 title="Compatibility Check Failed",
                 border_style="red",

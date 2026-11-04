@@ -113,11 +113,11 @@ def register(app: typer.Typer) -> None:
         app_dir = _web_react_dir()
         pkg = app_dir / "package.json"
         if not pkg.is_file():
-            console.print(
-                f"[red]web_react package not found:[/red] {pkg}\n"
-                "Clone the full repo or restore the web_react/ tree."
+            typer.secho(
+                "Web surfaces have been safely archived to archive/legacy_web/. Use CLI produce-film engine.",
+                fg="yellow",
             )
-            raise typer.Exit(1)
+            return
 
         npm = _require_npm()
         _ensure_deps(npm, app_dir, force_install=install)

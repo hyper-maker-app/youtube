@@ -246,3 +246,7 @@ engine/.env
 *.wav
 *.zip
 *.log
+
+# Remotion Motion Graphics Engine
+engine/motion_graphics/node_modules/
+engine/motion_graphics/.remotion/

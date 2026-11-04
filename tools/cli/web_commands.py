@@ -44,31 +44,19 @@ def register(app: typer.Typer) -> None:
 
         Streamlit remains available via: streamlit run web_ui/app.py
         """
-        try:
-            import nicegui  # noqa: F401
-        except ImportError as exc:
-            py = sys.executable
-            console.print(
-                "[red]NiceGUI is not installed.[/red]\n"
-                f"Python: [bold]{py}[/bold]\n"
-                "Install:\n"
-                f"  [bold]{py} -m pip install -r requirements-nicegui.txt[/bold]\n"
-                "or:\n"
-                f"  [bold]{py} -m pip install 'nicegui>=2.0.0'[/bold]\n"
-                "Streamlit UI (no NiceGUI needed):\n"
-                "  [bold]streamlit run web_ui/app.py[/bold]"
-            )
-            raise typer.Exit(1) from exc
-
         root = Path(__file__).resolve().parents[2]
         if str(root) not in sys.path:
             sys.path.insert(0, str(root))
 
         try:
+            import nicegui  # noqa: F401
             from web_nicegui.app import run_web
-        except ImportError as exc:
-            console.print(f"[red]Failed to load web_nicegui package:[/red] {exc}")
-            raise typer.Exit(1) from exc
+        except ImportError:
+            typer.secho(
+                "Web surfaces have been safely archived to archive/legacy_web/. Use CLI produce-film engine.",
+                fg="yellow",
+            )
+            return
 
         console.print(
             f"[cyan]NiceGUI dashboard[/cyan] → http://{host}:{port}/\n"

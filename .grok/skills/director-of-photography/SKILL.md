@@ -161,13 +161,13 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-- **[Scene s028]**: Keep helmet visors and masks in profile or backlit silhouette to eliminate reflection and facial warping traps.
-
-- **[Scene s014]**: Never prompt for gauges, dials, or text-bearing instruments to prevent Veo text hallucinations.
-
-- **[Scene s007]**: Avoid crowds of people in motion prompts to prevent Veo facial distortion and identity morphing.
-
-- **[Scene 14]**: Never prompt for readable gauges, dials, or text to maintain clean video generation.
-
-- **[Scene 7]**: Avoid crowd shots with visible faces in catastrophe prompts to prevent Veo generation artifacts.
-- **[Scene 12]**: Avoid extreme close-ups of human hands interacting with freezing/melting surfaces to prevent AI hand distortion artifacts.
+- **[Scene 24]**: Avoid referencing exact numbers in visual prompts to prevent unwanted text rendering.
+- **[Scene 31]**: Eliminate redundant text clauses and needle mechanisms from AI video generation prompts.
+- **[Scene 9]**: Never include negative constraints that conflict with scene elements or request items forbidden in the negative prompt.
+- **[Scene 24]**: Avoid requesting gauges or dials when negative prompts restrict numbers and readouts.
+- **[Scene 9]**: Never mention excluded UI elements in negative tags when the concept itself triggers text rendering artifacts; substitute with purely physical environmental textures.
+- **[Scene 15]**: Avoid descriptor words like 'analog', 'environmental framing', or 'meter' that imply measurable scales or numeric displays in AI video.
+- **[Scene 21]**: Substitute medical or measurement devices with purely structural cold-weather textures like frost, condensation, or rime ice.
+- **[Scene 24]**: Never use the phrase 'control panel' or 'instrument cluster' in Veo prompts to prevent unrenderable UI artifacts.
+- **[Scene 26]**: Ensure visual prompts completely decouple from specific medical devices mentioned in narration to avoid accidental graphic text generation.
+- **[Scene 31]**: Eliminate needles, pointers, and indicator arms from visual prompts to prevent broken mechanical renders.

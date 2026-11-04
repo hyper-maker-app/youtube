@@ -13,13 +13,13 @@ from typing import Any
 
 from rich import box
 from rich.columns import Columns
-from rich.console import Group, RenderableType
+from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
 from cli.quota_display import RISK_COLORS
-from cli.shared import console
+from cli.shared import console as default_console
 
 # Repo root on path so studio_core imports work when only tools/ was inserted.
 _ROOT = Path(__file__).resolve().parents[2]
@@ -335,12 +335,19 @@ def dashboard_renderables(snapshot: dict[str, Any], *, compact: bool = False) ->
     return Group(*parts)
 
 
-def render_studio_dashboard(snapshot: dict[str, Any], *, compact: bool = False) -> None:
-    """Print the studio dashboard to the shared Rich console."""
-    console.print(dashboard_renderables(snapshot, compact=compact))
+def render_studio_dashboard(
+    snapshot: dict[str, Any],
+    *,
+    compact: bool = False,
+    console: Console | None = None,
+) -> None:
+    """Print the studio dashboard to the given or shared Rich console."""
+    out_console = console if console is not None else default_console
+    out_console.print(dashboard_renderables(snapshot, compact=compact))
 
 
-def render_dashboard_json(snapshot: dict[str, Any]) -> None:
+def render_dashboard_json(snapshot: dict[str, Any], *, console: Console | None = None) -> None:
     import json
 
-    console.print(json.dumps(snapshot, indent=2))
+    out_console = console if console is not None else default_console
+    out_console.print(json.dumps(snapshot, indent=2))

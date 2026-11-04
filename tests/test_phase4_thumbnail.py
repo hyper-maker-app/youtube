@@ -275,7 +275,7 @@ def test_standalone_cli_execution(tmp_path: Path):
         str(out_file),
     ]
 
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace")
     assert proc.returncode == 0, f"CLI standalone failed with error: {proc.stderr}"
     assert "[THUMBNAIL] Generated 1280x720 YouTube thumbnail" in proc.stdout
     assert out_file.is_file()
@@ -309,33 +309,32 @@ def test_extract_climax_frame_from_video(tmp_path: Path):
     assert extracted.size == (1280, 720)
 
 
-def test_produce_film_dry_run_thumbnail_integration(tmp_path: Path):
-    """Verify produce-film dry-run execution produces and references out/<project>/thumbnail.jpg."""
-    cmd = [
-        sys.executable,
-        "tools/cinematic_studio_cli.py",
-        "produce-film",
-        "What if 1000 Volcanoes Erupted at Once",
-        "--genre", "catastrophe",
-        "--duration", "300",
-        "--dry-run",
-    ]
+def test_produce_film_dry_run_thumbnail_integration(tmp_path: Path, monkeypatch):
+    """Exercise the actual offline bridge and thumbnail in an isolated short production."""
+    import json
+    from typer.testing import CliRunner
+    from tools.cinematic_studio_cli import app
+    import cli.produce_commands as commands
 
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    assert proc.returncode == 0, f"produce-film dry-run failed: {proc.stderr}"
-
-    # Dry-run output must explicitly reference out/<project>/thumbnail.jpg
-    expected_rel_path = os.path.join("what-if-1000-volcanoes-erupted-at-once", "thumbnail.jpg").replace("\\", "/")
-    combined_output = (proc.stdout + "\n" + proc.stderr).replace("\\", "/")
-    assert expected_rel_path in combined_output, (
-        f"Dry run output did NOT reference thumbnail path '{expected_rel_path}':\n{combined_output}"
-    )
-    assert "[THUMBNAIL]" in proc.stdout, f"Expected '[THUMBNAIL]' section in stdout panel:\n{proc.stdout}"
-
-    # Check thumbnail.jpg file exists on disk
-    project_thumbnail = Path("out") / "what-if-1000-volcanoes-erupted-at-once" / "thumbnail.jpg"
-    assert project_thumbnail.is_file(), f"Expected thumbnail file at {project_thumbnail} does not exist"
-
+    monkeypatch.setattr(commands, "_ROOT", tmp_path)
+    sequence_dir = tmp_path / "sequences"
+    sequence_dir.mkdir()
+    slug = "thumbnail-qa-fixture"
+    handoff = {"genre": "Sci-Fi", "duration": 16, "scenes": [
+        {"id": f"scene_{i+1:02d}", "duration": 4, "simulation_only": True,
+         "narration": f"You inspect test fixture {i+1}.",
+         "visual_prompt": "Opaque test fixture under fixed lighting", "micro_math": "4s"}
+        for i in range(4)]}
+    (sequence_dir / f"{slug}_handoff.json").write_text(json.dumps(handoff), encoding="utf-8")
+    result = CliRunner().invoke(app, ["produce-film", "Thumbnail QA Fixture", "--genre", "Sci-Fi",
+        "--duration", "16", "--dry-run", "--no-music", "--no-captions"])
+    assert result.exit_code == 0, result.output
+    expected_rel_path = os.path.join(slug, "thumbnail.jpg").replace(chr(92), "/")
+    combined_output = result.output.replace(chr(92), "/")
+    assert expected_rel_path in combined_output, combined_output
+    assert "[THUMBNAIL]" in result.output, result.output
+    project_thumbnail = tmp_path / "out" / slug / "thumbnail.jpg"
+    assert project_thumbnail.is_file()
     with Image.open(project_thumbnail) as img:
         assert img.format == "JPEG"
         assert img.size == (1280, 720)

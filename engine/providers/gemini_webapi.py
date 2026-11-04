@@ -24,7 +24,11 @@ logger = logging.getLogger(__name__)
 PORT = 8085
 BASE_URL = f"http://127.0.0.1:{PORT}/v1"
 API_KEY = "local-gemini-key"
-VENDOR_DIR = config.ROOT / "vendor" / "gemini_webapi"
+VENDOR_DIR = (
+    config.ROOT / "engine" / "vendor" / "gemini_webapi"
+    if (config.ROOT / "engine" / "vendor" / "gemini_webapi").exists()
+    else config.ROOT / "vendor" / "gemini_webapi"
+)
 COOKIE_FILE = VENDOR_DIR / "cookies.txt"
 BINARY = VENDOR_DIR / "bin" / "gemini-web2api.exe"
 
@@ -157,12 +161,13 @@ def ensure_server_running(cdp_port: int = 9223, force_refresh: bool = False) -> 
         "-api-key", API_KEY,
     ]
     logger.info("Spawning gemini-web2api server on port %d...", PORT)
+    flags = (subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP) if os.name == "nt" else 0
     subprocess.Popen(
         cmd,
         cwd=str(BINARY.parent.parent),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        creationflags=flags,
     )
 
     for _ in range(24):
@@ -174,8 +179,8 @@ def ensure_server_running(cdp_port: int = 9223, force_refresh: bool = False) -> 
     raise RuntimeError(f"gemini-web2api failed to start on port {PORT} within timeout")
 
 
-def _post_with_retry(payload: dict[str, Any], timeout: float = 60.0) -> dict[str, Any]:
-    """Execute chat completion request with automatic cookie re-sync and daemon restart on failure."""
+def _post_with_retry(payload: dict[str, Any], timeout: float = 30.0) -> dict[str, Any]:
+    """Execute chat completion request with automatic daemon recovery if port is closed."""
     ensure_server_running()
 
     data_bytes = json.dumps(payload).encode("utf-8")
@@ -186,19 +191,22 @@ def _post_with_retry(payload: dict[str, Any], timeout: float = 60.0) -> dict[str
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except Exception as exc:
-        logger.warning("gemini-web2api request failed (%s); refreshing cookies and restarting...", exc)
-        ensure_server_running(force_refresh=True)
-        req = urllib.request.Request(f"{BASE_URL}/chat/completions", data=data_bytes, headers=headers)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        # Only force-restart daemon if connection was actively refused or reset
+        if "10061" in str(exc) or "refused" in str(exc).lower() or not is_server_alive():
+            logger.warning("gemini-web2api connection dropped (%s); recovering daemon...", exc)
+            ensure_server_running(force_refresh=True)
+            req = urllib.request.Request(f"{BASE_URL}/chat/completions", data=data_bytes, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        raise exc
 
 
 def call_gemini_vision(
     prompt: str,
     images: list[Path | str],
     *,
-    model: str = "gemini-3.5-flash-lite",
-    timeout: float = 60.0,
+    model: str = "gemini-3.1-pro",
+    timeout: float = 30.0,
 ) -> str:
     """Send sampled video/image frames and prompt to local Gemini Pro/Flash endpoint."""
     content_parts: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
@@ -227,15 +235,36 @@ def call_gemini_vision(
 def call_gemini_chat(
     prompt: str,
     *,
-    model: str = "gemini-3.5-flash-lite",
-    timeout: float = 60.0,
+    model: str = "gemini-3.1-pro",
+    timeout: float = 35.0,
+    fallback_models: tuple[str, ...] = (),
 ) -> str:
-    """Send text prompt to local Gemini Pro/Flash endpoint."""
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": False,
-    }
+    """Call the named model; alternatives require an explicit caller allowlist."""
+    candidate_models = list(dict.fromkeys((model, *fallback_models)))
 
-    res = _post_with_retry(payload, timeout=timeout)
-    return res["choices"][0]["message"]["content"]
+    last_err: Exception | None = None
+    for cand in candidate_models:
+        payload = {
+            "model": cand,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+        }
+        try:
+            res = _post_with_retry(payload, timeout=timeout)
+            content = res.get("choices", [{}])[0].get("message", {}).get("content", "")
+            # Filter out Gemini web error strings
+            if content and not any(err_msg in content for err_msg in [
+                "Sorry, something went wrong",
+                "I'm having a hard time fulfilling your request",
+                "I encountered an error doing what you asked",
+                "I seem to be encountering an error",
+                "An internal error has occurred",
+                "temporarily unavailable",
+            ]):
+                return content
+            logger.warning("Gemini model '%s' returned web error page; trying next candidate...", cand)
+        except Exception as exc:
+            logger.warning("Gemini model '%s' failed (%s); trying fallback...", cand, exc)
+            last_err = exc
+
+    raise last_err or RuntimeError("All Gemini candidate models failed to return valid response.")

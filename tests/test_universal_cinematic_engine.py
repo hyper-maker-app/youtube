@@ -48,7 +48,7 @@ def test_universal_scenes_invariants(genre_slug: str):
         genre=genre_slug,
         duration=24,
         aspect="16:9",
-    )
+     simulation=True)
 
     assert len(scenes) >= 3, f"Expected at least 3 scenes, got {len(scenes)}"
 
@@ -78,14 +78,14 @@ def test_universal_scenes_invariants(genre_slug: str):
 def test_aspect_ratio_smart_endings():
     """Verify 16:9 cliffhanger vs 9:16 seamless audio loop."""
     # 16:9 should have high tension cliffhanger beat
-    scenes_16_9 = generate_universal_scenes("Event Horizon", "Sci-Fi", duration=32, aspect="16:9")
+    scenes_16_9 = generate_universal_scenes("Event Horizon", "Sci-Fi", duration=32, aspect="16:9", simulation=True)
     last_16_9 = scenes_16_9[-1]["narration"]
     assert any(w in last_16_9.lower() for w in ("blast doors", "begins to turn", "splits wide", "unseal", "flares", "laser")), (
         f"16:9 should end on dramatic cliffhanger beat: {last_16_9}"
     )
 
     # 9:16 should end with an open-ended loop connector ("because...")
-    scenes_9_16 = generate_universal_scenes("Event Horizon", "Sci-Fi", duration=24, aspect="9:16")
+    scenes_9_16 = generate_universal_scenes("Event Horizon", "Sci-Fi", duration=24, aspect="9:16", simulation=True)
     last_9_16 = scenes_9_16[-1]["narration"]
     assert last_9_16.strip().endswith("because..."), (
         f"9:16 must end on seamless audio loop hook 'because...': got '{last_9_16}'"

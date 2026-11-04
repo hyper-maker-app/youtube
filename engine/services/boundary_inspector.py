@@ -211,8 +211,37 @@ async def inspect_transition_boundary(
     model_name: str | None = None,
     dry_run: bool = False,
     report_path: Path | str | None = None,
+    is_data_broll: bool = False,
+    expected_width: int = 1920,
+    expected_height: int = 1080,
+    data_broll_sides: tuple[bool, bool] = (False, True),
 ) -> BoundaryQAReport:
     """Inspect the cross-block boundary between two consecutive video blocks."""
+    if is_data_broll:
+        violations = []
+        for path, position, broll in zip(
+            (block_n_video, block_n_plus_1_video), ("last", "first"), data_broll_sides
+        ):
+            valid = path.is_file() and path.stat().st_size > 500
+            frame = extract_video_frame(path, position=position) if valid else None
+            if frame is None:
+                violations.append(f"Unreadable transition video: {path.name}")
+                continue
+            h, w = frame.shape[:2]
+            aspect_ok = abs(w / h - expected_width / expected_height) < 0.02 if h else False
+            if not aspect_ok or (broll and (w, h) != (expected_width, expected_height)):
+                violations.append(f"Invalid transition resolution {w}x{h}: {path.name}")
+        passed = not violations
+        rep = BoundaryQAReport(
+            continuity_score=1.0 if passed else 0.4,
+            passed=passed, violations=violations,
+            corrective_prompt="" if passed else "Regenerate invalid transition video with the configured output dimensions",
+            inspected_by="data_broll_resolution_validator",
+        )
+        if report_path:
+            write_qa_report(rep, report_path)
+        return rep
+
     composite, jpeg_bytes = build_boundary_triplet_image(
         hero_plate_path, block_n_video, block_n_plus_1_video
     )

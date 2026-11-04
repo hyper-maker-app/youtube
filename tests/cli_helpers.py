@@ -31,6 +31,8 @@ def cli_env(extra: dict[str, str] | None = None) -> dict[str, str]:
         "FORCE_COLOR": "0",
         "TERM": "dumb",
         "COLUMNS": "120",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
     }
     if extra:
         env.update(extra)
@@ -48,6 +50,8 @@ def run_cli(
         [sys.executable, str(CLI), *args],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         cwd=str(cwd or ROOT),
         input=stdin,
         env=env or cli_env(),

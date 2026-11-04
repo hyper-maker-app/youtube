@@ -149,12 +149,12 @@ class SkillLoader:
             director_slug = "catastrophe-director" if "catastrophe" in self._cache else "studio-director"
 
         return {
-            "director": self.load_skill_instructions(director_slug, max_chars=8500),
-            "retention": self.load_skill_instructions("viral-retention-director", max_chars=4000),
-            "cinematography": self.load_skill_instructions("director-of-photography", max_chars=3500),
-            "foley": self.load_skill_instructions("foley-sound-design-specialist", max_chars=3000),
-            "vfx": self.load_skill_instructions("vfx-sfx-supervisor", max_chars=3000),
-            "continuity": self.load_skill_instructions("continuity-consistency-guardian", max_chars=3000),
+            "director": self.load_skill_instructions(director_slug, max_chars=35000),
+            "retention": self.load_skill_instructions("viral-retention-director", max_chars=8000),
+            "cinematography": self.load_skill_instructions("director-of-photography", max_chars=5000),
+            "foley": self.load_skill_instructions("foley-sound-design-specialist", max_chars=4000),
+            "vfx": self.load_skill_instructions("vfx-sfx-supervisor", max_chars=4000),
+            "continuity": self.load_skill_instructions("continuity-consistency-guardian", max_chars=4000),
         }
 
     def build_unified_system_prompt(
@@ -177,6 +177,14 @@ class SkillLoader:
             f"You are the Multi-Agent Autonomous Studio Director for the high-end production '{title}'.",
             f"Target Duration: {duration} seconds | Genre: {genre.capitalize()} | Aspect Ratio: {aspect}.",
             f"Scene Target: Exactly {target_scene_count} tightly connected scenes (dynamic block durations from [4.0, 6.0, 8.0, 10.0] seconds).",
+            "",
+            "CRITICAL TOPIC LOCK — READ THIS FIRST:",
+            f"This film is about: \"{title}\".",
+            "Every scene's narration, visual prompts, micro-math, and causal chain MUST be derived",
+            "from and consistent with THIS specific topic only. Do NOT import events, climate",
+            "end-states, or physics from any other scenario (e.g., if the topic is ocean boiling,",
+            "do NOT introduce deep-freezing, rogue-planet drift, or sun-disappearance events",
+            "unless they are a direct thermodynamic consequence of this film's primary trigger).",
             "",
             "OPERATIONAL DIRECTIVES (LOADED LIVE FROM DISK SKILLS):",
             "Follow all instructions, negative guardrails, narrative scales, and standards loaded from .grok/skills/:",

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import hashlib
 import json
 import logging
 import math
@@ -63,12 +64,104 @@ from services.director_agent import (
     commit_canon_delta,
     evaluate_visual_delta,
 )
-from services.duration_packer import pack_durations_to_veo_blocks
+from services.duration_packer import pack_durations_to_veo_blocks, is_data_broll_scene
 from services.prompt_compiler import compile_udse_prompt
-from services.series_architect import build_canonical_rigor_mortis_world_state
+try:
+    from services.series_architect import build_canonical_rigor_mortis_world_state
+except ImportError:
+    try:
+        from engine.services.series_architect import build_canonical_rigor_mortis_world_state
+    except ImportError:
+        try:
+            from archive.legacy_services.series_architect import build_canonical_rigor_mortis_world_state
+        except ImportError:
+            def build_canonical_rigor_mortis_world_state():
+                return WorldState(project_id="project-rigor-mortis-episode-01")
 from services.text_sanitizer import sanitize_spoken_text
+from services.remotion_bridge import render_remotion_broll, resolve_template_name
 
 logger = logging.getLogger("grok_flow_bridge")
+
+
+def is_scene_data_broll(sc: dict[str, Any]) -> bool:
+    """Determine whether a scene specifies a procedural/motion graphics [DATA_BROLL]."""
+    return is_data_broll_scene(sc)
+
+
+_CACHE_SCHEMA = 1
+
+
+def production_fingerprint(payload: dict[str, Any]) -> str:
+    encoded = json.dumps({"schema": _CACHE_SCHEMA, "payload": payload},
+                         sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def cache_sidecar(path: Path) -> Path:
+    return path.with_suffix(path.suffix + ".cache.json")
+
+
+def cache_matches(path: Path, fingerprint: str) -> bool:
+    try:
+        saved = json.loads(cache_sidecar(path).read_text(encoding="utf-8"))
+        return path.is_file() and saved.get("fingerprint") == fingerprint
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def write_cache_fingerprint(path: Path, fingerprint: str) -> None:
+    cache_sidecar(path).write_text(json.dumps({"schema": _CACHE_SCHEMA,"fingerprint":fingerprint}),encoding="utf-8")
+
+
+def file_fingerprint(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024*1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def remove_flow_state_cache(state_dir: Path, out_dir: Path) -> None:
+    """Delete only resolved state directories contained by this production."""
+    root = out_dir.resolve()
+    target = state_dir.resolve()
+    if target == root or not target.is_relative_to(root):
+        raise RuntimeError(f"Flow state cache escapes the production directory: {state_dir}")
+    if state_dir.is_dir():
+        shutil.rmtree(state_dir)
+
+
+def aligned_block_scene(bp) -> dict[str, Any]:
+    """Carry authored production metadata into every audio-aligned source block."""
+    scene = dict(bp.scene_metadata)
+    scene.update(id=bp.scene_id, duration=bp.veo_duration,
+                 audio_t0=bp.audio_t0, audio_t1=bp.audio_t1,
+                 pad_tail_seconds=bp.pad_tail_seconds, freeze_tail_seconds=bp.freeze_tail_seconds,
+                 visual_prompt=bp.visual_prompt, motion_prompt=bp.motion_prompt, narration=bp.narration)
+    template = (scene.get("data_broll_template") or scene.get("template_name")
+                or scene.get("broll_template") or scene.get("broll_type"))
+    if template:
+        scene["template_name"] = template
+    payload = next((scene[key] for key in ("data_broll_payload", "data_payload", "payload", "broll_props")
+                    if scene.get(key) is not None), None)
+    if payload is not None:
+        scene["data_payload"] = payload
+    return scene
+
+
+def validate_video_source(path: Path, *, is_broll: bool, width: int, height: int) -> None:
+    """Validate every source, including a first/only block without a transition."""
+    frame = extract_video_frame(path, position="first")
+    if frame is None:
+        raise RuntimeError(f"Unreadable video source: {path.name}")
+    actual_height, actual_width = frame.shape[:2]
+    if actual_height <= 0 or actual_width <= 0:
+        raise RuntimeError(f"Invalid video source dimensions: {path.name}")
+    if abs(actual_width / actual_height - width / height) >= .02:
+        raise RuntimeError(f"Invalid video source aspect ratio: {path.name}")
+    if is_broll and (actual_width, actual_height) != (width, height):
+        raise RuntimeError(f"Invalid B-roll source resolution {actual_width}x{actual_height}: {path.name}")
+
 
 
 def snap_to_veo_duration(duration: float) -> float:
@@ -160,6 +253,8 @@ async def execute_grok_flow_production(
     simulate_defect_block: int | None = None,
 ) -> Path:
     """Take Grok Studio planned scenes and execute full physical render with Flow + Voice + FFmpeg."""
+    if not dry_run and any(scene.get("simulation_only") for scene in scenes):
+        raise ValueError("Simulation scenes cannot be rendered by live production")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "audio").mkdir(parents=True, exist_ok=True)
     (out_dir / "blocks").mkdir(parents=True, exist_ok=True)
@@ -188,12 +283,18 @@ async def execute_grok_flow_production(
         for i, s in enumerate(scenes)
     ]
 
+    voice_fingerprint = production_fingerprint({
+        "renderer": "voice-alignment-v1", "beats": beats, "provider": voice_provider, "dry_run": dry_run,
+        "settings": {key: value for key, value in os.environ.items()
+                     if key.startswith(("DEEPGRAM_", "ELEVENLABS_", "VOYSLITY_", "TTS_", "VOICE_"))
+                     and not any(secret in key for secret in ("KEY", "TOKEN", "SECRET", "PASSWORD", "COOKIE"))},
+    })
     if dry_run:
         expected_duration = sum(float(s.get("duration", block_duration)) for s in scenes)
         synthesize_dry_run_audio(vo_path, duration=expected_duration)
         words = make_mock_words(scenes, expected_duration)
         measured_duration = expected_duration
-    elif vo_path.is_file() and words_path.is_file() and vo_path.stat().st_size > 10000:
+    elif cache_matches(vo_path, voice_fingerprint) and words_path.is_file() and vo_path.stat().st_size > 10000:
         logger.info(f"[1/3] Voiceover already exists -> reusing: {vo_path}")
         words_data = json.loads(words_path.read_text(encoding="utf-8"))
         words = words_data.get("words", [])
@@ -206,6 +307,7 @@ async def execute_grok_flow_production(
         measured_duration = float(voice_res.get("duration", 0.0))
 
     words_path.write_text(json.dumps({"words": words, "duration": measured_duration}, indent=2), encoding="utf-8")
+    write_cache_fingerprint(vo_path, voice_fingerprint)
     logger.info(f"[1/3] Voiceover ready: {measured_duration:.2f}s, {len(words)} timed words.")
 
     # Step 2: Native Dynamic Video Block Allocation via DurationPacker (Grok 4.6 Standard)
@@ -215,25 +317,14 @@ async def execute_grok_flow_production(
         words=words,
         default_block_duration=block_duration,
     )
-    aligned_scenes: list[dict[str, Any]] = [
-        {
-            "id": bp.scene_id,
-            "duration": bp.veo_duration,
-            "audio_t0": bp.audio_t0,
-            "audio_t1": bp.audio_t1,
-            "pad_tail_seconds": bp.pad_tail_seconds,
-            "freeze_tail_seconds": bp.freeze_tail_seconds,
-            "visual_prompt": bp.visual_prompt,
-            "motion_prompt": bp.motion_prompt,
-            "narration": scenes[i].get("narration", "") if i < len(scenes) else "",
-        }
-        for i, bp in enumerate(block_plans)
-    ]
+    aligned_scenes = [aligned_block_scene(bp) for bp in block_plans]
 
     logger.info(f"[2/3] Generating {len(aligned_scenes)} dynamic video blocks (durations: {[s['duration'] for s in aligned_scenes]}) via Flow CDP...")
 
     block_paths: list[Path] = []
     qa_evaluations: list[dict[str, Any]] = []
+    # Track which blocks are procedural [DATA_BROLL] for zero-cost routing and QA exception
+    broll_flags = [is_scene_data_broll(s) for s in aligned_scenes]
     # Unified Video Block Generation & Transition Boundary QA (Dry-run & Live parity)
     import cv2
     video_prov = None if dry_run else get_video_provider("playwright_flow")
@@ -246,8 +337,12 @@ async def execute_grok_flow_production(
     for i, sc in enumerate(aligned_scenes, 1):
         block_file = out_dir / "blocks" / f"block_{i:02d}.mp4"
         dur = float(sc.get("duration", block_duration))
+        sc_dur = dur
         vp = str(sc.get("visual_prompt", "")).strip()
         mp = str(sc.get("motion_prompt", "")).strip()
+        is_broll = broll_flags[i - 1]
+        transition_is_broll = bool(is_broll or (i >= 2 and broll_flags[i - 2]))
+
         # Compile with UDSE v4.3 and active Visibility Gating
         compiled_vp = compile_udse_prompt(
             visual_prompt=vp,
@@ -256,8 +351,32 @@ async def execute_grok_flow_production(
         ) if vp else ""
         full_prompt = f"{compiled_vp}. {mp}" if compiled_vp else mp
 
+        depends_on_previous = bool(not is_broll and i >= 2 and not broll_flags[i-2])
+        block_fingerprint = production_fingerprint({
+            "renderer": "flow-remotion-audio-slots-v2", "scene": sc, "prompt": full_prompt,
+            "size": [config.WIDTH, config.HEIGHT], "duration": dur, "dry_run": dry_run,
+            "model": os.getenv("FLOW_VIDEO_MODEL", ""),
+            "quality": os.getenv("FLOW_VIDEO_TEST_QUALITY" if dry_run else "FLOW_VIDEO_REAL_QUALITY", ""),
+            "previous_reference": file_fingerprint(block_paths[-1]) if depends_on_previous else None,
+        })
+        if block_file.is_file() and not cache_matches(block_file, block_fingerprint):
+            logger.info("Block %s source fingerprint changed or missing; regenerate", i)
+            block_file.unlink()
+            state_dir = block_file.parent / f"{block_file.stem}.flow-state"
+            remove_flow_state_cache(state_dir, out_dir)
         if simulate_defect_block is not None and i == simulate_defect_block:
             block_file.unlink(missing_ok=True)
+
+        if block_file.is_file() and block_file.stat().st_size > 1000:
+            try:
+                validate_video_source(block_file, is_broll=is_broll, width=config.WIDTH, height=config.HEIGHT)
+                cached_probe = editor.probe(block_file, config.resolve_ffmpeg())
+                if cached_probe.duration is not None and abs(float(cached_probe.duration) - sc_dur) > 0.5:
+                    logger.info(f"Block {i}/{len(aligned_scenes)} duration mismatch (cached {cached_probe.duration:.1f}s != requested {sc_dur:.1f}s) -> re-generating")
+                    block_file.unlink(missing_ok=True)
+            except Exception as invalid_cache:
+                logger.warning("Cached source is invalid; regenerate: %s", invalid_cache)
+                block_file.unlink(missing_ok=True)
 
         if block_file.is_file() and block_file.stat().st_size > 1000:
             logger.info(f"Block {i}/{len(aligned_scenes)} already rendered -> reusing: {block_file.name}")
@@ -267,6 +386,9 @@ async def execute_grok_flow_production(
                     block_n_video=block_paths[-1],
                     block_n_plus_1_video=block_file,
                     dry_run=dry_run,
+                    is_data_broll=transition_is_broll,
+                    expected_width=config.WIDTH, expected_height=config.HEIGHT,
+                    data_broll_sides=(broll_flags[i - 2], is_broll),
                 )
                 qa_evaluations.append({
                     "transition": f"Block {i-1:02d} -> Block {i:02d}",
@@ -280,12 +402,14 @@ async def execute_grok_flow_production(
                     "corrective_prompt": str(qa_rep.corrective_prompt),
                     "inspected_by": str(qa_rep.inspected_by),
                 })
+                if not qa_rep.passed:
+                    raise RuntimeError(f"Cached transition failed QA: {block_file.name}: {qa_rep.violations}")
             block_paths.append(block_file)
             continue
 
         # Extract exit-frame from previous block for abra_i2v temporal pixel lock
         start_frame_path: Path | None = None
-        if block_paths and block_paths[-1].is_file():
+        if not is_broll and block_paths and not broll_flags[i - 2] and block_paths[-1].is_file():
             exit_img = extract_video_frame(block_paths[-1], position="last")
             if exit_img is not None:
                 kf_path = out_dir / "keyframes" / f"exit_frame_b{i-1:02d}.jpg"
@@ -302,7 +426,44 @@ async def execute_grok_flow_production(
                     and attempt == 1
                 )
 
-                if dry_run:
+                if is_broll:
+                    # Pure engine: Render motion graphics B-Roll directly with Remotion (no Flow CDP/Veo call)
+                    broll_tmpl = (sc.get("data_broll_template") or sc.get("template_name")
+                                  or sc.get("broll_template") or sc.get("broll_type") or "")
+                    broll_payload = next((sc[key] for key in
+                        ("data_broll_payload", "data_payload", "payload", "broll_props")
+                        if sc.get(key) is not None), {})
+                    if not broll_tmpl:
+                        raise ValueError("Data B-roll requires an explicit template_name or data_broll_template")
+                    logger.info(
+                        f"Rendering Remotion B-Roll block {i}/{len(aligned_scenes)} ({broll_tmpl}, duration={dur:.1f}s)..."
+                    )
+                    if dry_run:
+                        try:
+                            render_remotion_broll(
+                                template_name=broll_tmpl,
+                                data_payload=broll_payload,
+                                output_path=block_file,
+                                width=config.WIDTH,
+                                height=config.HEIGHT,
+                                fps=60,
+                                duration_seconds=dur,
+                            )
+                        except Exception as remotion_err:
+                            logger.warning(f"Dry-run Remotion render skipped/fallback: {remotion_err}")
+                            color = "red" if is_defect_attempt else "black"
+                            synthesize_dry_run_video_block(block_file, duration=dur, aspect=aspect_ratio, color=color)
+                    else:
+                        render_remotion_broll(
+                            template_name=broll_tmpl,
+                            data_payload=broll_payload,
+                            output_path=block_file,
+                            width=config.WIDTH,
+                            height=config.HEIGHT,
+                            fps=60,
+                            duration_seconds=dur,
+                        )
+                elif dry_run:
                     color = "red" if is_defect_attempt else "black"
                     synthesize_dry_run_video_block(block_file, duration=dur, aspect=aspect_ratio, color=color)
                 else:
@@ -314,6 +475,10 @@ async def execute_grok_flow_production(
                         out_path=block_file,
                         duration=dur,
                     )
+
+                if not block_file.is_file() or block_file.stat().st_size <= 1000:
+                    raise RuntimeError(f"Renderer did not produce a valid video source: {block_file.name}")
+                validate_video_source(block_file, is_broll=is_broll, width=config.WIDTH, height=config.HEIGHT)
 
                 if block_file.is_file() and block_file.stat().st_size > 1000:
                     # Inspect transition boundary with previous block
@@ -335,6 +500,9 @@ async def execute_grok_flow_production(
                                 block_n_video=block_paths[-1],
                                 block_n_plus_1_video=block_file,
                                 dry_run=dry_run,
+                                is_data_broll=transition_is_broll,
+                                expected_width=config.WIDTH, expected_height=config.HEIGHT,
+                                data_broll_sides=(broll_flags[i - 2], is_broll),
                             )
 
                         qa_evaluations.append({
@@ -355,6 +523,9 @@ async def execute_grok_flow_production(
                             f"Transition Boundary QA [Block {i-1} -> {i}]: score={qa_rep.continuity_score:.2f} "
                             f"({qa_rep.inspected_by}, passed={qa_rep.passed}){heal_suffix}"
                         )
+
+                        if not qa_rep.passed and (transition_is_broll or not director_mode):
+                            raise RuntimeError(f"Transition failed QA: {block_file.name}: {qa_rep.violations}")
 
                         if not qa_rep.passed and director_mode:
                             # Dynamically resolve target entity
@@ -390,16 +561,18 @@ async def execute_grok_flow_production(
                             elif action.decision == DirectorDecision.CANONIZE:
                                 logger.info(f"Director Agent: CANONIZING emergent visual ({action.reason}).")
                                 commit_canon_delta(world_state, delta)
+                            else:
+                                raise RuntimeError(f"Transition failed QA after corrective attempts: {block_file.name}")
                     break
             except Exception as exc:
                 logger.warning(f"Block {i} attempt {attempt} failed: {exc}")
                 state_dir = block_file.parent / f"{block_file.stem}.flow-state"
-                if state_dir.is_dir():
-                    shutil.rmtree(state_dir, ignore_errors=True)
+                remove_flow_state_cache(state_dir, out_dir)
                 if attempt == max_retries:
                     raise
                 if not dry_run:
                     await asyncio.sleep(4.0 * attempt)
+        write_cache_fingerprint(block_file, block_fingerprint)
         block_paths.append(block_file)
 
     # Write visual transition QA report (including any failed transition logs)
@@ -419,7 +592,8 @@ async def execute_grok_flow_production(
     logger.info(f"Transition QA report written -> {qa_report_path} (inspected={len(qa_evaluations)}, failed={len(failed_transitions)})")
     # Step 3: FFmpeg Assembly, Dual-Stage SFX & Foley Bed, Karaoke Subtitles
     logger.info("[3/3] Mixing broadcast audio bed, procedural SFX foley, and subtitles with FFmpeg...")
-    target_len = round(measured_duration + config.TAIL_HOLD, 3)
+    timeline_durations = [float(s["audio_t1"]) - float(s["audio_t0"]) for s in aligned_scenes]
+    target_len = measured_duration + config.TAIL_HOLD
 
     # Derive and resolve procedural SFX cues
     sfx_cues: list[dict[str, Any]] = []
@@ -430,7 +604,7 @@ async def execute_grok_flow_production(
         sfx_prov = get_sfx_provider(prov_name)
         curr_t = 0.0
         for sc_idx, sc in enumerate(aligned_scenes):
-            sc_dur = float(sc.get("duration", block_duration))
+            sc_dur = timeline_durations[sc_idx]
             category_match = extract_sfx_category(sc)
             if category_match:
                 f_prompt = category_match.audiogen_prompt
@@ -517,6 +691,7 @@ async def execute_grok_flow_production(
         dry_run=dry_run,
         target_len=target_len,
         sfx_cues=sfx_cues,
+        timeline_durations=timeline_durations,
     )
 
     if dry_run and not final_mp4.is_file():
@@ -529,7 +704,7 @@ async def execute_grok_flow_production(
     last_scene = aligned_scenes[-1] if aligned_scenes else {}
     last_delta = last_scene.get("delta_state", {})
     last_narration = last_scene.get("narration", "")
-    ending_summary = f"Concluded Episode {episode_num} of {project_title}: {last_narration or 'Protagonist holds ground'}. Telemetry: {last_delta}"
+    ending_summary = f"Concluded Episode {episode_num} of {project_title}: {last_narration}. Telemetry: {last_delta}"
     save_series_continuity(
         series_dir=out_dir,
         episode_num=episode_num,

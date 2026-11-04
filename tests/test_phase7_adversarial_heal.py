@@ -22,6 +22,12 @@ from engine.services.skill_loader import SkillLoader, get_skill_loader
 from engine.services.universal_narrative import generate_catastrophe_scenes
 
 
+@pytest.fixture(autouse=True)
+def offline_authoring(monkeypatch):
+    monkeypatch.setenv("XAI_API_KEY", "")
+    monkeypatch.setattr("urllib.request.urlopen", lambda *a,**kw: (_ for _ in ()).throw(AssertionError("Network disabled in unit tests")))
+
+
 def test_pure_engine_invariant_skill_loader_no_hardcoded_narrative():
     """Verify skill_loader.py has zero hardcoded narrative, directing, or CTA strings."""
     loader_path = Path(__file__).resolve().parents[1] / "engine" / "services" / "skill_loader.py"
@@ -140,8 +146,9 @@ def test_screenplay_reviewer_detects_all_defect_types():
     assert "2nd-person" in defect_str or "pov" in defect_str
 
 
-def test_screenplay_healer_repairs_defects_to_grade_a_plus():
+def test_screenplay_healer_repairs_defects_to_grade_a_plus(monkeypatch: pytest.MonkeyPatch):
     """Verify healer repairs defective scenes into a Grade A+ certified screenplay."""
+    monkeypatch.setenv("XAI_API_KEY", "")
     reviewer = ScreenplayReviewer()
     healer = ScreenplayHealer(reviewer=reviewer, target_score=90)
 
@@ -192,32 +199,17 @@ def test_screenplay_healer_repairs_defects_to_grade_a_plus():
     assert initial_card.passed is False
 
     heal_res = healer.heal(defective_scenes, title="What if the Sun Disappeared")
-    assert heal_res.final_scorecard.passed is True
-    assert heal_res.final_scorecard.total_score >= 90
-    assert heal_res.final_scorecard.grade == "Grade A+"
-
-    # Verify repairs in final scenes
-    final_scenes = heal_res.repaired_scenes
-    # 1. Premature CTA removed in Scene 1
-    assert "subscribe" not in final_scenes[0]["narration"].lower()
-    # 2. Mirror reflection removed in Scene 1 prompt
-    assert "mirror" not in final_scenes[0]["visual_prompt"].lower()
-    # 3. Smartphone screen removed in Scene 2 prompt
-    assert "smartphone" not in final_scenes[1]["visual_prompt"].lower()
-    # 4. Text overlay removed in Scene 3 prompt
-    assert "text overlay" not in final_scenes[2]["visual_prompt"].lower()
-    # 5. Nitrogen snow at -60C converted to dry ice
-    assert "dry ice" in final_scenes[2]["narration"].lower() or "nitrogen" not in final_scenes[2]["narration"].lower()
-    # 6. Single CTA in final scene only
-    assert "subscribe" in final_scenes[-1]["narration"].lower()
-    # 7. 2nd-person POV enforced across all scenes
-    for sc in final_scenes:
-        assert sc["narration"].startswith(("You ", "Your ")), f"Scene {sc.get('id')} failed You/Your prefix"
+    assert heal_res.final_scorecard.passed is False
+    assert heal_res.repaired_scenes == defective_scenes
+    assert any("model-authored" in action for action in heal_res.repair_log)
 
 
 def test_catastrophe_procedural_scenes_certified_grade_a_plus():
     """Verify that canonical 300s catastrophe generator produces a Grade A+ certified screenplay."""
-    scenes = generate_catastrophe_scenes(title="What if 1000 Volcanoes Erupted at Once", duration=300, aspect="16:9")
+    scenes = generate_catastrophe_scenes(title="What if 1000 Volcanoes Erupted at Once", duration=300, aspect="16:9", simulation=True)
+    # This test calibrates the production rubric using explicit test-only data.
+    for scene in scenes:
+        scene.pop("simulation_only", None)
     assert len(scenes) == 38
 
     reviewer = ScreenplayReviewer()
@@ -249,22 +241,24 @@ def test_produce_film_cli_adversarial_gate_plan_only(monkeypatch: pytest.MonkeyP
             "What if 1000 Volcanoes Erupted at Once",
             "--genre", "catastrophe",
             "--duration", "60",
-            "--plan-only",
+            "--plan-only", "--dry-run",
         ],
     )
     assert result.exit_code == 0, f"CLI command failed: {result.stdout}"
-    assert "Screenplay Certified Grade A+" in result.stdout
-    assert "Adversarial Screenplay Gate" in result.stdout
+    assert "SIMULATION (UNCERTIFIED)" in result.stdout
+    assert "Screenplay Certified Grade A+" not in result.stdout
+    assert "Screenplay Audit Incomplete" in result.stdout
 
 
-def test_user_confirmation_gate_rejection_halts(monkeypatch: pytest.MonkeyPatch):
+def test_live_authoring_without_credentials_halts(monkeypatch: pytest.MonkeyPatch, tmp_path):
     """Verify user can reject physical render confirmation and halt safely."""
     from typer.testing import CliRunner
     from tools.cinematic_studio_cli import app
 
     monkeypatch.setenv("XAI_API_KEY", "")
     runner = CliRunner()
-    # Provide 'n' as input to typer.confirm
+    monkeypatch.setattr("cli.produce_commands._ROOT", tmp_path)
+    # No credential and no cached authored handoff: halt before render approval.
     result = runner.invoke(
         app,
         [
@@ -275,8 +269,8 @@ def test_user_confirmation_gate_rejection_halts(monkeypatch: pytest.MonkeyPatch)
         ],
         input="n\n",
     )
-    assert result.exit_code == 0, f"CLI command failed: {result.stdout}"
-    assert "Physical production halted by user" in result.stdout
+    assert result.exit_code == 1
+    assert "Live authoring requires" in result.stdout
 
 
 def test_screenplay_healer_heals_critical_defects_even_when_initial_score_equals_target():
@@ -333,12 +327,11 @@ def test_screenplay_healer_heals_critical_defects_even_when_initial_score_equals
     assert initial_card.passed is False  # Fails due to pov_invariants < 8
     assert initial_card.grade == "Grade A"
 
-    heal_res = healer.heal(scenes_score_90_unpassed)
+    heal_res = healer.heal(scenes_score_90_unpassed, max_iterations=3)
     assert heal_res.iterations >= 1
-    assert heal_res.final_scorecard.passed is True
-    assert heal_res.final_scorecard.total_score == 100
-    assert heal_res.final_scorecard.grade == "Grade A+"
-    assert all(s["narration"].startswith(("You ", "Your ")) for s in heal_res.repaired_scenes)
+    assert heal_res.final_scorecard.passed is False
+    assert heal_res.repaired_scenes == scenes_score_90_unpassed
+    assert heal_res.iterations == 3
 
 
 def test_gemini_fail_closed_gate_raises_when_unauthorized(monkeypatch):
@@ -462,7 +455,10 @@ def test_robust_json_extractor_handles_latex_and_invalid_escapes():
 def test_pessimistic_gate_strict_fail_closed_when_judge_fails(monkeypatch):
     """Verify that when consult_ai=True, Grade A+ is blocked if any judge fails or times out."""
     reviewer = ScreenplayReviewer(xai_api_key="mock-key")
-    scenes = generate_catastrophe_scenes(title="What if 1000 Volcanoes Erupted at Once", duration=60, aspect="16:9")
+    scenes = generate_catastrophe_scenes(title="What if 1000 Volcanoes Erupted at Once", duration=60, aspect="16:9", simulation=True)
+    # This test calibrates the production rubric using explicit test-only data.
+    for scene in scenes:
+        scene.pop("simulation_only", None)
 
     # Case 1: Both judges respond with high scores -> Grade A+ certified
     monkeypatch.setattr(reviewer, "_consult_grok_critique", lambda *a, **k: {"screenplay_score": 92, "defects": []})
@@ -486,6 +482,85 @@ def test_pessimistic_gate_strict_fail_closed_when_judge_fails(monkeypatch):
     assert card_gemini_fail.passed is False
     assert card_gemini_fail.grade != "Grade A+"
     assert any("Gemini judge did not return a valid score" in d for d in card_gemini_fail.defects)
+
+
+def test_screenplay_reviewer_and_healer_dynamic_models():
+    """Verify default and dynamic model configurations for ScreenplayReviewer and ScreenplayHealer."""
+    # 1. Default reviewer models
+    default_rev = ScreenplayReviewer()
+    assert default_rev.gemini_model == "gemini-3.1-pro"
+    assert default_rev.grok_model == "grok-4.20-0309-non-reasoning"
+
+    # 2. Dynamic reviewer models
+    custom_rev = ScreenplayReviewer(
+        gemini_model="gemini-custom-pro",
+        grok_model="grok-custom-fast",
+    )
+    assert custom_rev.gemini_model == "gemini-custom-pro"
+    assert custom_rev.grok_model == "grok-custom-fast"
+
+    # 3. ScreenplayHealer propagates grok_model to reviewer and internal state
+    healer = ScreenplayHealer(grok_model="grok-4.20-non-reasoning")
+    assert healer.grok_model == "grok-4.20-non-reasoning"
+    assert healer.reviewer.grok_model == "grok-4.20-non-reasoning"
+
+
+def test_gemini_judge_model_parameter_passed_to_call(monkeypatch):
+    """Verify ScreenplayReviewer passes the configured gemini_model and 35s timeout to call_gemini_chat."""
+    recorded_calls = []
+
+    def mock_call_gemini_chat(prompt, *, model="gemini-3.1-pro", timeout=35.0):
+        recorded_calls.append({"model": model, "timeout": timeout, "prompt": prompt})
+        return '{"screenplay_score": 93, "grade": "Grade A+", "defects": []}'
+
+    monkeypatch.setattr("engine.providers.gemini_webapi.call_gemini_chat", mock_call_gemini_chat)
+
+    # Test default model
+    rev_default = ScreenplayReviewer(xai_api_key="mock-key")
+    res1 = rev_default._consult_gemini_critique(
+        compact_scenes=[{"scene_id": 1}],
+        title="Test",
+        genre="catastrophe",
+        deterministic_defects=[],
+    )
+    assert res1["screenplay_score"] == 93
+    assert recorded_calls[0]["model"] == "gemini-3.1-pro"
+    assert recorded_calls[0]["timeout"] == 35.0
+
+    # Test custom dynamic model
+    rev_custom = ScreenplayReviewer(xai_api_key="mock-key", gemini_model="gemini-3.1-pro-preview")
+    res2 = rev_custom._consult_gemini_critique(
+        compact_scenes=[{"scene_id": 1}],
+        title="Test",
+        genre="catastrophe",
+        deterministic_defects=[],
+    )
+    assert res2["screenplay_score"] == 93
+    assert recorded_calls[1]["model"] == "gemini-3.1-pro-preview"
+    assert recorded_calls[1]["timeout"] == 35.0
+
+
+def test_gemini_error_screen_filters(monkeypatch):
+    """Verify that Gemini error responses trigger fail-closed gate instead of corrupted scorecard."""
+    error_responses = [
+        "Sorry, something went wrong. Please try again later.",
+        "I'm having a hard time fulfilling your request at the moment.",
+        "An internal error has occurred.",
+    ]
+
+    for err_resp in error_responses:
+        monkeypatch.setattr(
+            "engine.providers.gemini_webapi.call_gemini_chat",
+            lambda *a, **k: err_resp,
+        )
+        rev = ScreenplayReviewer(xai_api_key="mock-key", allow_deepmind_fallback=False)
+        with pytest.raises(Exception):
+            rev._consult_gemini_critique(
+                compact_scenes=[{"scene_id": 1}],
+                title="Test",
+                genre="catastrophe",
+                deterministic_defects=[],
+            )
 
 
 
