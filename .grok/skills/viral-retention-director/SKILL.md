@@ -117,33 +117,33 @@ Failing screenplays are autonomously repaired by `ScreenplayHealer` before user 
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-- **[Scene 38]**: CTA must occupy solely the final sentence of the absolute last scene—never embed marketing language inside disaster narration.
+- **[Scene 38]**: The final scene must always conclude with an explicit, engaging Call-to-Action directed at the viewer to drive algorithmic engagement.
 
-- **[Scene 38]**: Isolate promotional CTAs from immersive 2nd-person action beats to protect narrative tone and viewer retention.
+- **[Scene 27]**: Do not break character POV to describe exterior macro-events; tether macro-events to the protagonist's senses.
 
-- **[Scene 38]**: Always isolate promotional CTAs into dedicated standalone sentences at the very end of the script.
+- **[Scene 7]**: Every narration sentence must strictly begin with 'You' or 'Your' to lock the viewer into the 2nd-person perspective.
 
-- **[Scene 38]**: CTA must occupy its own final sentence with zero scientific or narrative continuation after it.
+- **[Scene 38]**: CTA must be strictly isolated to the final sentence of scene_38 and nowhere else.
 
-- **[Scene 38]**: CTA must be strictly confined to the final sentence of the last scene and never appear in visual_prompt, micro_math, or integrated narration.
+- **[Scene 27]**: POV invariant is absolute: no scene may begin with 'The', 'Outside,', or any non-You/Your phrasing.
 
-- **[Scene 38]**: Preserve strict 2nd-person ('You') pronoun consistency throughout the entire narrative arc up to the Call to Action.
+- **[Scene 14]**: All scenes must maintain strict 'You/Your' opening to sustain 2nd-person immersion and viral retention.
 
-- **[Scene s024]**: Eliminate redundant trailing beats after the climax to maintain viral retention pacing.
+- **[Scene 38]**: The final scene narration must always conclude with an isolated, single-sentence Call to Action to drive algorithmic engagement.
+
+- **[Scene 4]**: Never drop the 'You/Your' prefix, especially during high-action sequences where POV anchoring is most critical for retention.
+
+- **[Scene 3]**: Every scene narration must strictly begin with 'You' or 'Your' to maintain unbreakable 2nd-person immersion.
+
+- **[Scene 1]**: Maintain continuous strict adherence to production schema and guardrails.
 
 - **[Scene 25]**: Never repeat identical narration or dead-protagonist beats across multiple trailing scenes; maintain progressive information density.
-
 - **[Scene 38]**: The last scene’s spoken track must contain nothing except the single CTA sentence; no residual story copy before it.
-
 - **[Scene 38]**: CTA lives only in the last spoken sentence; visuals must contain zero subscribe/notification/countdown text.
-
 - **[Scene 38]**: CTA lives in the last sentence of the last scene’s narration only—never in visuals, never as the whole scene.
-
 - **[Scene s026]**: Maintain strict 2nd-person bodily containment; never cut to external or orbital viewpoints when the viewer is explicitly framed inside an enclosed space.
-
 - **[Scene s026]**: 2nd-person narration may only describe photons that could reach the protagonist’s eyes unless an explicit cutaway label is used.
-
 - **[Scene 37]**: Never exit the viewer's perspective prior to the call-to-action conclusion.
-
 - **[Scene 37]**: Penultimate scenes must keep 2nd-person lock so the final CTA still lands inside the viewer's body.
 - **[Scene 19]**: Every scene narration must strictly maintain 2nd-person POV starting with 'You' or 'Your'.
+- **[Scene 4]**: Maintain strict 2nd-person sensory attachment to the protagonist's immediate physical vicinity.

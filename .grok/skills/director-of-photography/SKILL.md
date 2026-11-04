@@ -161,13 +161,13 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-- **[Scene 24]**: Avoid referencing exact numbers in visual prompts to prevent unwanted text rendering.
-- **[Scene 31]**: Eliminate redundant text clauses and needle mechanisms from AI video generation prompts.
-- **[Scene 9]**: Never include negative constraints that conflict with scene elements or request items forbidden in the negative prompt.
-- **[Scene 24]**: Avoid requesting gauges or dials when negative prompts restrict numbers and readouts.
-- **[Scene 9]**: Never mention excluded UI elements in negative tags when the concept itself triggers text rendering artifacts; substitute with purely physical environmental textures.
 - **[Scene 15]**: Avoid descriptor words like 'analog', 'environmental framing', or 'meter' that imply measurable scales or numeric displays in AI video.
 - **[Scene 21]**: Substitute medical or measurement devices with purely structural cold-weather textures like frost, condensation, or rime ice.
 - **[Scene 24]**: Never use the phrase 'control panel' or 'instrument cluster' in Veo prompts to prevent unrenderable UI artifacts.
 - **[Scene 26]**: Ensure visual prompts completely decouple from specific medical devices mentioned in narration to avoid accidental graphic text generation.
 - **[Scene 31]**: Eliminate needles, pointers, and indicator arms from visual prompts to prevent broken mechanical renders.
+- **[Scene scene_01]**: Avoid close-up hand-to-body contact in 1st-person POV prompts to prevent Veo distortion artifacts.
+- **[Scene 17]**: If narration dictates localized physical sensation ('you feel'), the visual must ground it with a physical environmental proxy or a 1st-person POV anchor.
+- **[Scene 11]**: Avoid prompting digital UI, screens, or specific indicators to prevent unreadable text hallucinations in AI video generation.
+- **[Scene 6]**: Avoid prompting rapid character movement, mechanical closures, and explosive fluid dynamics in the same shot; isolate fast actions to prevent AI spatial morphing.
+- **[Scene 23]**: Never prompt macro close-ups of complex articulating geometry (like fingers or hands) undergoing rapid repetitive motion (trembling/shaking).

@@ -114,21 +114,22 @@ def validate_judge_score(value: Any) -> int | float | None:
 
 def build_compact_scenes_payload(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Build compact, token-efficient JSON view of all scenes for dual-judge review."""
-    return [
-        {
+    payload = []
+    for idx, s in enumerate(scenes):
+        item: dict[str, Any] = {
             "scene_id": s.get("id") or s.get("scene_id", idx + 1),
             "duration": s.get("duration", 8.0),
             "narration": s.get("narration", ""),
             "visual_prompt": s.get("visual_prompt", ""),
-            "camera": s.get("camera", {}),
-            "micro_math": s.get("micro_math", ""),
-            "sfx": s.get("sfx", ""),
-            "is_data_broll": s.get("is_data_broll", False),
-            "template_name": s.get("template_name", ""),
-            "data_payload": s.get("data_payload", {}),
         }
-        for idx, s in enumerate(scenes)
-    ]
+        if s.get("micro_math"):
+            item["micro_math"] = s["micro_math"]
+        if s.get("is_data_broll"):
+            item["is_data_broll"] = True
+            item["template_name"] = s.get("template_name", "")
+            item["data_payload"] = s.get("data_payload", {})
+        payload.append(item)
+    return payload
 
 
 @dataclass
@@ -283,11 +284,12 @@ class ScreenplayReviewer:
         if consult_ai:
             grok_data: dict[str, Any] = {}
             gemini_data: dict[str, Any] = {}
+            deterministic_defects = list(all_defects)
 
             # Judge 1: Grok xAI
             if self.xai_api_key:
                 try:
-                    grok_data = self._consult_grok_critique(compact_payload, title, genre, all_defects)
+                    grok_data = self._consult_grok_critique(compact_payload, title, genre, deterministic_defects)
                     grok_score = validate_judge_score(grok_data.get("screenplay_score"))
                     raw_grok = grok_data.get("raw_response")
                     for d in grok_data.get("defects", []):
@@ -299,7 +301,7 @@ class ScreenplayReviewer:
 
             # Judge 2: Google Gemini (gemini_webapi via CDP port 9223)
             try:
-                gemini_data = self._consult_gemini_critique(compact_payload, title, genre, all_defects)
+                gemini_data = self._consult_gemini_critique(compact_payload, title, genre, deterministic_defects)
                 gemini_score = validate_judge_score(gemini_data.get("screenplay_score"))
                 raw_gemini = gemini_data.get("raw_response")
                 for d in gemini_data.get("defects", []):
@@ -587,15 +589,19 @@ class ScreenplayReviewer:
         system_prompt = (
             "You are the Lead Adversarial Screenplay Reviewer & Scientific Director for Grok Imagine Cinematic Studio.\n"
             "Review the COMPLETE screenplay presented in compact JSON format.\n"
-            "Evaluate:\n"
-            "1. Veo generative video safety (avoid facial glitches, readable digital UI numbers, baked-in text overlays).\n"
-            "2. Scientific, thermodynamic, and physical causality realism.\n"
-            "3. 2nd-person immersion ('You/Your') and viral retention pacing.\n"
-            "4. CTA isolation (strictly confined to the final sentence of the last scene).\n\n"
+            "Evaluate against this rigorous 100-point rubric:\n"
+            "- CTA Isolation (15 pts): CTA strictly isolated to the final sentence of Scene 38 only (-15 if absent/misplaced).\n"
+            "- Veo Video Safety (25 pts): Zero facial deformities, readable digital UI numbers, or baked-in text overlays (-3 pts per issue).\n"
+            "- Thermodynamics & Physics (20 pts): Realistic phase transitions, energy conservation, thermal curves (-2 pts per issue).\n"
+            "- Chronological Scale (15 pts): Unbroken multi-act escalation from initial trigger to deep time (-2 pts per issue).\n"
+            "- Causality Integrity (15 pts): Plausible cause-and-effect chain (-2 pts per issue).\n"
+            "- 2nd-Person Invariant (10 pts): 100% scenes start with 'You ' or 'Your ' (-2 pts per non-compliant scene).\n\n"
+            "Compute 'screenplay_score' mathematically: start at 100 and subtract points for each defect identified according to the categories above.\n"
+            "Grade A+ is >= 90. If the screenplay is clean with only minor polish notes, assign the mathematically earned score in the 90-98 range.\n"
             "You MUST respond ONLY with valid JSON conforming to this schema:\n"
             "{\n"
-            '  "screenplay_score": 85,\n'
-            '  "grade": "Grade B",\n'
+            '  "screenplay_score": 93,\n'
+            '  "grade": "Grade A+",\n'
             '  "critique_text": "Executive summary of audit...",\n'
             '  "defects": [\n'
             "    {\n"
@@ -656,10 +662,15 @@ class ScreenplayReviewer:
         prompt = (
             "You are Google DeepMind's Senior Visual Continuity & Screenplay Auditor for Google Flow CDP.\n"
             "Conduct a rigorous adversarial audit on the complete screenplay provided below.\n"
-            "Evaluate:\n"
-            "1. 2nd-person immersion and viral retention pacing.\n"
-            "2. AI Video / Veo rendering safety (avoiding facial deformities, mirror reflections, UI text).\n"
-            "3. Physical, thermodynamic, and causal realism.\n\n"
+            "Evaluate against this rigorous 100-point rubric:\n"
+            "- CTA Isolation (15 pts): CTA strictly isolated to the final sentence of Scene 38 only (-15 if absent/misplaced).\n"
+            "- Veo Video Safety (25 pts): Zero facial deformities, readable digital UI numbers, or baked-in text overlays (-3 pts per issue).\n"
+            "- Thermodynamics & Physics (20 pts): Realistic phase transitions, energy conservation, thermal curves (-2 pts per issue).\n"
+            "- Chronological Scale (15 pts): Unbroken multi-act escalation from initial trigger to deep time (-2 pts per issue).\n"
+            "- Causality Integrity (15 pts): Plausible cause-and-effect chain (-2 pts per issue).\n"
+            "- 2nd-Person Invariant (10 pts): 100% scenes start with 'You ' or 'Your ' (-2 pts per non-compliant scene).\n\n"
+            "Compute 'screenplay_score' mathematically: start at 100 and subtract points for each defect identified according to the categories above.\n"
+            "Grade A+ is >= 90. If the screenplay is clean with only minor polish notes, assign the mathematically earned score in the 90-98 range.\n\n"
             f"Film Title: {title}\n"
             f"Genre: {genre}\n"
             f"Total Scenes: {len(compact_scenes)}\n"
@@ -667,8 +678,8 @@ class ScreenplayReviewer:
             f"Screenplay Compact JSON:\n{json.dumps(compact_scenes, indent=2, ensure_ascii=False)}\n\n"
             "Respond ONLY with valid JSON using this format:\n"
             "{\n"
-            '  "screenplay_score": 88,\n'
-            '  "grade": "Grade B",\n'
+            '  "screenplay_score": 93,\n'
+            '  "grade": "Grade A+",\n'
             '  "critique_text": "3-bullet adversarial executive critique...",\n'
             '  "defects": [\n'
             "    {\n"
@@ -688,7 +699,8 @@ class ScreenplayReviewer:
             from engine.providers.gemini_webapi import call_gemini_chat
             judge_model = self.gemini_model or "gemini-3.1-pro"
 
-            raw_response = call_gemini_chat(prompt, model=judge_model, timeout=35.0)
+            timeout = float(os.getenv("GEMINI_JUDGE_TIMEOUT", "35.0"))
+            raw_response = call_gemini_chat(prompt, model=judge_model, timeout=timeout)
             if raw_response and raw_response.strip():
                 # Filter out error screens if any slipped through
                 error_signatures = [

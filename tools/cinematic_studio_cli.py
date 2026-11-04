@@ -76,8 +76,14 @@ app.add_typer(animatic_app, name="animatic")
 app.add_typer(motion_app, name="motion-graphics")
 nsfw_app.add_typer(extend_app, name="extend")
 
-register_studio_commands(app)
-register_bible_commands(app)
+for fn in (
+    register_studio_commands, register_bible_commands, register_report_commands,
+    register_plugin_commands, register_tui_commands, register_web_commands,
+    register_web_react_commands, register_api_commands, register_produce_commands,
+    register_generation_commands, register_wave_a_commands, register_grok_cli_commands,
+    register_ghost_aliases,
+):
+    fn(app)
 register_dna_commands(dna_app)
 register_sequence_commands(seq_app)
 register_quota_commands(quota_app)
@@ -88,17 +94,6 @@ register_files_commands(files_app)
 register_handoff_commands(handoff_app)
 register_animatic_commands(animatic_app)
 register_motion_commands(motion_app)
-register_report_commands(app)
-register_plugin_commands(app)
-register_tui_commands(app)
-register_web_commands(app)
-register_web_react_commands(app)
-register_api_commands(app)
-register_produce_commands(app)
-register_generation_commands(app)
-register_wave_a_commands(app)
-register_grok_cli_commands(app)
-register_ghost_aliases(app)
 apply_help_ia(app)
 
 if __name__ == "__main__":

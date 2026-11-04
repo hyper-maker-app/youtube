@@ -514,6 +514,7 @@ def test_gemini_judge_model_parameter_passed_to_call(monkeypatch):
         return '{"screenplay_score": 93, "grade": "Grade A+", "defects": []}'
 
     monkeypatch.setattr("engine.providers.gemini_webapi.call_gemini_chat", mock_call_gemini_chat)
+    monkeypatch.delenv("GEMINI_JUDGE_TIMEOUT", raising=False)
 
     # Test default model
     rev_default = ScreenplayReviewer(xai_api_key="mock-key")

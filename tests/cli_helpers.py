@@ -30,7 +30,8 @@ def cli_env(extra: dict[str, str] | None = None) -> dict[str, str]:
         "NO_COLOR": "1",
         "FORCE_COLOR": "0",
         "TERM": "dumb",
-        "COLUMNS": "120",
+        "COLUMNS": "160",
+        "TERMINAL_WIDTH": "160",
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUTF8": "1",
     }

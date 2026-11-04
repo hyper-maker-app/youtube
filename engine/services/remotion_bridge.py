@@ -113,10 +113,22 @@ def validate_broll_payload(template_name: str, payload: Mapping[str, Any]) -> di
         if pan is not None and (not isinstance(pan, Mapping) or any(not finite(pan.get(key)) for key in ('deltaLat', 'deltaLon', 'zoomDelta'))):
             raise ValueError("cameraPan requires finite deltaLat, deltaLon and zoomDelta")
         center = data.get('center')
+        if isinstance(center, Mapping) and 'lat' in center and 'lon' in center:
+            try:
+                data['center'] = [float(center['lat']), float(center['lon'])]
+                center = data['center']
+            except (ValueError, TypeError):
+                pass
         if not isinstance(center, (list, tuple)) or len(center) != 2 or not all(finite(v) for v in center) or abs(center[0]) > 85.05112878 or abs(center[1]) > 180:
-            raise ValueError("Map center must be valid [latitude, longitude]")
+            if center is None:
+                data['center'] = [0.0, 0.0]
+            else:
+                raise ValueError("Map center must be valid [latitude, longitude]")
         if not finite(data.get('zoom')) or not 0 <= data['zoom'] <= 22:
-            raise ValueError("Map zoom must be between 0 and 22")
+            if data.get('zoom') is None:
+                data['zoom'] = 3.0
+            else:
+                raise ValueError("Map zoom must be between 0 and 22")
     if template == 'TelemetryCurve':
         points = data['dataPoints']
         if len(points) < 2 or not all(finite(v) for v in points):
@@ -125,9 +137,25 @@ def validate_broll_payload(template_name: str, payload: Mapping[str, Any]) -> di
         if bounds is not None and (not isinstance(bounds, (list, tuple)) or len(bounds) != 2 or not all(finite(v) for v in bounds) or bounds[1] <= bounds[0]):
             raise ValueError("yRange must be [min, max] with max > min")
     for key in ('metrics', 'summaryMetrics'):
-        for item in data.get(key, []):
-            if not isinstance(item, Mapping) or not isinstance(item.get('label'), str) or not isinstance(item.get('value'), (str, int, float)) or isinstance(item.get('value'), bool) or (isinstance(item.get('value'), (int, float)) and not finite(item['value'])):
-                raise ValueError(f"{key} items require label and value")
+        if key in data:
+            raw_items = data[key]
+            if isinstance(raw_items, list):
+                coerced_items = []
+                for item in raw_items:
+                    if isinstance(item, Mapping):
+                        lbl = item.get('label') or item.get('name') or item.get('key')
+                        val = item.get('value') if 'value' in item else item.get('val')
+                        if lbl is not None and val is not None and not isinstance(val, bool) and (isinstance(val, (str, int, float))):
+                            coerced_items.append({'label': str(lbl), 'value': val})
+                        else:
+                            coerced_items.append(dict(item))
+                    else:
+                        coerced_items.append(item)
+                data[key] = coerced_items
+
+            for item in data[key]:
+                if not isinstance(item, Mapping) or not isinstance(item.get('label'), str) or not isinstance(item.get('value'), (str, int, float)) or isinstance(item.get('value'), bool) or (isinstance(item.get('value'), (int, float)) and not finite(item['value'])):
+                    raise ValueError(f"{key} items require label and value")
     return data
 
 

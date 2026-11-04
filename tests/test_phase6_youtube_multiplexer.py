@@ -142,6 +142,24 @@ def test_cli_produce_film_help_displays_phase6_flags():
     assert "--export-shorts" in res.stdout
 
 
+def test_cli_produce_film_help_displays_video_qa_flags():
+    from cli_helpers import run_cli
+    res = run_cli("produce-film", "--help")
+    assert res.returncode == 0
+    assert "--video-qa" in res.stdout
+    assert "--no-video-qa" in res.stdout
+    assert "--video-qa-model" in res.stdout
+    assert "--max-patch-passes" in res.stdout
+
+
+def test_produce_film_signature_has_video_qa_defaults():
+    import inspect
+    from cli.produce_commands import produce_film
+
+    params = inspect.signature(produce_film).parameters
+    assert params["video_qa"].default.default is False
+    assert params["video_qa_model"].default.default == "gemini-3.1-pro"
+    assert params["max_patch_passes"].default.default == 1
 def test_cli_produce_film_plan_only_dry_run():
     """Verify produce-film with --plan-only --dry-run runs cleanly end-to-end."""
     from cli_helpers import run_cli

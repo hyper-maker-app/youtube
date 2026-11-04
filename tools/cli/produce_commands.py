@@ -180,6 +180,9 @@ def produce_film(
     episode: int = typer.Option(1, "--episode", help="Episode number in series (default: 1)"),
     continue_from: Optional[str] = typer.Option(None, "--continue-from", help="Directory or path to previous episode continuity handoff to thaw state"),
     simulate_defect_block: Optional[int] = typer.Option(None, "--simulate-defect-block", help="Simulate a visual continuity breach on block N to test Director Agent HEAL re-generation loop"),
+    video_qa: bool = typer.Option(False, "--video-qa/--no-video-qa", help="Run provider-neutral full-video QA before final assembly"),
+    video_qa_model: str = typer.Option("gemini-3.1-pro", "--video-qa-model", help="Model identifier used by the configured video QA adapter"),
+    max_patch_passes: int = typer.Option(1, "--max-patch-passes", help="Maximum selective video QA patch passes (0-2)"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Automatically confirm physical video rendering without prompting"),
     allow_deepmind_fallback: bool = typer.Option(False, "--allow-deepmind-fallback", help="Allow fallback to DeepMind heuristic if gemini_webapi is unavailable"),
     force_render: bool = typer.Option(False, "--force-render", help="Bypass adversarial reviewer fail-closed gate for testing or override."),
@@ -234,6 +237,8 @@ def produce_film(
                 and saved_data.get("duration") == duration
                 and (not genre or saved_data.get("genre", "").lower() == genre.lower())
                 and (genre != "catastrophe" or all("micro_math" in s and s.get("narration", "").startswith(("You ", "Your ")) for s in saved_data["scenes"]))
+                and saved_data.get("adversarial_review", {}).get("passed", False) is True
+                and saved_data.get("adversarial_review", {}).get("total_score", 0) >= 90
             ):
                 scenes = saved_data["scenes"]
                 for s in scenes:
@@ -372,7 +377,7 @@ def produce_film(
             target_score=90,
             grok_model=grok_judge_model,
         )
-        heal_res = healer.heal(scenes, title=title, genre=genre, max_iterations=3, consult_ai=consult_ai_active, initial_scorecard=scorecard)
+        heal_res = healer.heal(scenes, title=title, genre=genre, max_iterations=4, consult_ai=consult_ai_active, initial_scorecard=scorecard)
         scenes = heal_res.repaired_scenes
         scorecard = heal_res.final_scorecard
         if not scorecard.ai_critique:
@@ -632,6 +637,9 @@ def produce_film(
             director_mode=director_mode,
             episode_num=episode,
             simulate_defect_block=simulate_defect_block,
+            video_qa=video_qa,
+            video_qa_model=video_qa_model,
+            max_patch_passes=max_patch_passes,
         ))
         thumbnail_path = out_dir / "thumbnail.jpg"
         if not thumbnail_path.is_file():

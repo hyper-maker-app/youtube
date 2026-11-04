@@ -65,8 +65,8 @@ Lütfen bu planı ve mimariyi acımasızca, en üst düzey yönetmen ve teknik m
     grok_out_file.write_text(grok_critique, encoding="utf-8")
     print(f"Grok critique saved to {grok_out_file} (length: {len(grok_critique)} chars)")
 
-    print("\n--- 2. Calling Gemini WebAPI (gemini-3.5-flash-lite) ---")
-    gemini_critique = call_gemini_chat(prompt, model="gemini-3.5-flash-lite", timeout=180.0)
+    print("\n--- 2. Calling Gemini WebAPI (gemini-3.1-pro) ---")
+    gemini_critique = call_gemini_chat(prompt, model="gemini-3.1-pro", timeout=180.0)
     gemini_out_file = out_dir / "live_gemini_critique.txt"
     gemini_out_file.write_text(gemini_critique, encoding="utf-8")
     print(f"Gemini critique saved to {gemini_out_file} (length: {len(gemini_critique)} chars)")

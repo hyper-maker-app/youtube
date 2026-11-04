@@ -254,7 +254,7 @@ async def inspect_transition_boundary(
         return rep
 
     gemini_key = api_key or os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
-    gemini_model = model_name or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
+    gemini_model = model_name or os.getenv("GEMINI_MODEL", "gemini-3.1-pro").strip()
 
     # 1. First priority: gemini-web2api sidecar using user's authenticated Google Pro account
     try:
@@ -286,7 +286,7 @@ async def inspect_transition_boundary(
                     '  "corrective_prompt": string (empty if passed, else prompt fix)\n'
                     "}"
                 )
-                sidecar_model = "gemini-3.5-flash-lite" if "flash-lite" in gemini_model or "3.5" in gemini_model else "gemini-3.5-flash-lite"
+                sidecar_model = "gemini-3.1-pro" if "3.1" in gemini_model or "pro" in gemini_model else gemini_model
                 raw_json = await asyncio.wait_for(
                     asyncio.to_thread(call_gemini_vision, prompt, [tmp_path], model=sidecar_model, timeout=60.0),
                     timeout=75.0,

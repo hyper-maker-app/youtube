@@ -179,7 +179,6 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-- **[Scene 25]**: Never repeat identical 2nd-person narration after death; each scene must add new information, and You-voice ends when the body fails.
 - **[Scene 25]**: Eliminate redundant narration loops to preserve viewer retention and pacing.
 - **[Scene 25]**: After the 2nd-person survivor dies, do not repeat their corpse description; one death beat, then a short visual coda.
 - **[Scene 24]**: After the end-state is stated once, do not restage the same sterile surface; additional scenes must add a new irreversible loss or be cut.
@@ -189,3 +188,4 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 - **[Scene 38]**: Keep viral CTAs cleanly separated from core narrative science blocks for maximum retention.
 - **[Scene 38]**: Calls to action must remain strictly separated from narrative immersion beats.
 - **[Scene 38]**: Isolate calls to action strictly to the final post-action beat.
+- **[Scene 6]**: Never repeat identical scenes; ensure each scene advances the narrative escalation or aftermath.

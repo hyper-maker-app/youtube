@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import hashlib
+import inspect
 import json
 import logging
 import math
@@ -65,6 +66,8 @@ from services.director_agent import (
     evaluate_visual_delta,
 )
 from services.duration_packer import pack_durations_to_veo_blocks, is_data_broll_scene
+from services.multimodal_audit import audit_with_adapter
+from services.proxy_generator import build_audit_proxy
 from services.prompt_compiler import compile_udse_prompt
 try:
     from services.series_architect import build_canonical_rigor_mortis_world_state
@@ -234,6 +237,105 @@ def make_mock_words(scenes: list[dict[str, Any]], total_duration: float) -> list
     return words
 
 
+async def _run_video_qa_gate(
+    *,
+    out_dir: Path,
+    block_paths: list[Path],
+    aligned_scenes: list[dict[str, Any]],
+    vo_path: Path,
+    measured_duration: float,
+    aspect_ratio: str,
+    dry_run: bool,
+    video_qa_model: str,
+    max_patch_passes: int,
+    video_qa_adapter: Any | None,
+) -> None:
+    """Run full-video QA and fail closed before final assembly.
+
+    Selective patching is deliberately not claimed here. The existing patch primitive
+    needs a safe block renderer and a post-patch re-audit callback; this production path
+    does not have both without inventing provider prompt text or changing authored scenes.
+    """
+    if max_patch_passes < 0 or max_patch_passes > 2:
+        raise ValueError("max_patch_passes must be between 0 and 2")
+    if video_qa_adapter is None and dry_run:
+        logger.info("Video QA is bypassed for explicit dry-run simulation.")
+        return
+    if video_qa_adapter is None and not os.getenv("GEMINI_API_KEY", "").strip():
+        raise RuntimeError("Live video QA requires an injected adapter or GEMINI_API_KEY")
+
+    proxy_scenes = [
+        {
+            "block_id": f"block_{index:02d}",
+            "start": float(scene["audio_t0"]),
+            "end": float(scene["audio_t1"]),
+        }
+        for index, scene in enumerate(aligned_scenes, 1)
+    ]
+    audit_adapter = video_qa_adapter
+    if audit_adapter is None:
+        llm = get_llm_provider("gemini_flash", model=video_qa_model)
+
+        async def audit_adapter(proxy: Path, _llm=llm):
+            return await _llm.review_images([proxy], "Return strict block-level video QA JSON.")
+
+    proxy_source = out_dir / "video_qa_source.mp4"
+    proxy_path = out_dir / "video_qa_proxy.mp4"
+    editor.render(
+        block_paths=block_paths,
+        vo_path=vo_path,
+        out_path=proxy_source,
+        punch_times=[],
+        dry_run=False,
+        target_len=measured_duration + config.TAIL_HOLD,
+        timeline_durations=[float(s["audio_t1"]) - float(s["audio_t0"]) for s in aligned_scenes],
+    )
+    build_audit_proxy(proxy_source, proxy_path, proxy_scenes, aspect_ratio=aspect_ratio)
+    response = audit_adapter(proxy_path)
+    report_payload = await response if inspect.isawaitable(response) else response
+    audit_result = audit_with_adapter(
+        lambda _proxy: report_payload,
+        proxy_path,
+        expected_block_ids=[item["block_id"] for item in proxy_scenes],
+    )
+
+    flagged_blocks = [
+        block.block_id
+        for block in audit_result.blocks
+        if block.verdict != "PASS" or block.review_required
+    ]
+    patch_blocks = list(audit_result.patch_blocks)
+    if patch_blocks:
+        patch_status = "not_applied_blocked_pending_safe_renderer"
+        patch_message = (
+            "Selective patching was not applied: this production path lacks a safe "
+            "block-render/re-audit callback pair."
+        )
+    else:
+        patch_status = "not_needed"
+        patch_message = None
+    video_qa_report_path = out_dir / "video_qa_report.json"
+    video_qa_report_path.write_text(json.dumps({
+        "model": video_qa_model,
+        "overall_verdict": audit_result.overall_verdict,
+        "confidence": audit_result.confidence,
+        "review_required": audit_result.review_required,
+        "flagged_blocks": flagged_blocks,
+        "patch_blocks": patch_blocks,
+        "patch_status": patch_status,
+        "patch_message": patch_message,
+        "max_patch_passes": max_patch_passes,
+        "blocks": [block.raw for block in audit_result.blocks],
+    }, indent=2), encoding="utf-8")
+    logger.info("Video QA report written -> %s", video_qa_report_path)
+    if audit_result.overall_verdict != "PASS" or audit_result.review_required:
+        raise RuntimeError(
+            "Video QA gate blocked final assembly: "
+            f"verdict={audit_result.overall_verdict}, review_required={audit_result.review_required}, "
+            f"flagged_blocks={flagged_blocks}, patch_status={patch_status}"
+        )
+
+
 async def execute_grok_flow_production(
     *,
     project_title: str,
@@ -251,6 +353,10 @@ async def execute_grok_flow_production(
     director_mode: bool = True,
     episode_num: int = 1,
     simulate_defect_block: int | None = None,
+    video_qa: bool = False,
+    video_qa_model: str = "gemini-3.1-pro",
+    max_patch_passes: int = 1,
+    video_qa_adapter: Any | None = None,
 ) -> Path:
     """Take Grok Studio planned scenes and execute full physical render with Flow + Voice + FFmpeg."""
     if not dry_run and any(scene.get("simulation_only") for scene in scenes):
@@ -590,7 +696,21 @@ async def execute_grok_flow_production(
     }
     write_qa_report(qa_summary, qa_report_path)
     logger.info(f"Transition QA report written -> {qa_report_path} (inspected={len(qa_evaluations)}, failed={len(failed_transitions)})")
-    # Step 3: FFmpeg Assembly, Dual-Stage SFX & Foley Bed, Karaoke Subtitles
+    # Full-video QA runs after block and boundary QA, before final master assembly.
+    if video_qa:
+        await _run_video_qa_gate(
+            out_dir=out_dir,
+            block_paths=block_paths,
+            aligned_scenes=aligned_scenes,
+            vo_path=vo_path,
+            measured_duration=measured_duration,
+            aspect_ratio=aspect_ratio,
+            dry_run=dry_run,
+            video_qa_model=video_qa_model,
+            max_patch_passes=max_patch_passes,
+            video_qa_adapter=video_qa_adapter,
+        )
+
     logger.info("[3/3] Mixing broadcast audio bed, procedural SFX foley, and subtitles with FFmpeg...")
     timeline_durations = [float(s["audio_t1"]) - float(s["audio_t0"]) for s in aligned_scenes]
     target_len = measured_duration + config.TAIL_HOLD

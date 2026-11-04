@@ -1,0 +1,78 @@
+# Windsurf Rules: Grok Imagine Cinematic Studio v3.11.4
+
+**Project Identity:** Grok Imagine Cinematic Studio v3.11.4  
+**Project Affiliation:** Independent community project (not affiliated with or endorsed by xAI).  
+**Canonical Guidance:** Follow `AGENTS.md` and `references/agents/AGENT_INDEX.md`.
+
+---
+
+## 1. Skill Bridge & Domain Delegation
+Always inspect `.grok/skills/` (64 specialized production skills) and `references/agents/AGENT_INDEX.md` before implementing or generating cinematic workflows:
+- Use domain skills rather than improvising logic:
+  - Multi-agent orchestration: `studio-director`, `mega-production-architect`
+  - Visuals, lighting, and camera: `director-of-photography`, `post-production-color-grading-supervisor`
+  - Consistency & DNA: `character-dna-extractor`, `identity-lock-specialist`, `multi-clip-continuity-orchestrator`
+  - Audio & Foley: `sonic-architect-native-audio-virtuoso`, `foley-sound-design-specialist`
+  - Quality & Assembly: `quality-assurance-guardian`, `handoff-packet-validator`, `cinematic-ffmpeg`
+- Never write ad-hoc scripts or prompts where established skills already define production standards.
+
+---
+
+## 2. Zero Ad-Hoc Probing Invariant (Critical)
+- **Strictly Forbidden:** Writing ad-hoc scratch scripts (`test_*.py`, `check_ports.py`, socket checkers) to probe background ports (9223 Flow CDP, 8085 proxy) or inspect cookies.
+- **Mandatory Direct Execution:** Always execute production directly via the unified CLI:
+  ```bash
+  # Plan-only blueprint (Zero-cost / No-render):
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "Sci-Fi Survival" --duration 60 --plan-only
+
+  # Full Physical Render (Google Flow CDP + Voice + FFmpeg):
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "Sci-Fi Survival" --duration 60 --voice-provider deepgram
+
+  # Dry-run validation:
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "Sci-Fi Survival" --duration 60 --dry-run
+  ```
+- The engine (`engine/flow_bridge.py`, `engine/editor.py`) manages server lifecycles, health checks, and cookie rotations internally. Never waste turns probing infrastructure.
+
+---
+
+## 3. Pure Engine & Pure Skill Invariant: Absolute Zero Hardcode
+- **Python Engines (`engine/`, `tools/`):** Pure execution pipelines only. Never hardcode creative narrative text, character dialogue, scene lines, camera instructions, or word substitution dictionaries.
+- **Skill Files (`.grok/skills/*.md`):** Contain universal directing principles, physical/acoustic laws, and structural criteria. Never hardcode scene scripts or literal CTA strings.
+- **UI Components (`web_ui/`, `web_react/`, `web_nicegui/`):** Must be 100% parametric. Components take dynamic props and JSON payloads; no hardcoded narrative elements.
+
+---
+
+## 4. Viral Second-Person & Foley Standard (Protocol v4.0)
+All screenplay, prompt, audio, and video generation must follow `references/agents/VIRAL_SECOND_PERSON_RETENTION_FOLEY_PROTOCOL_v4.0.md`:
+1. **100% English Invariant:** Every script beat, spoken voiceover, subtitle caption, prompt instruction, and alignment dictionary must run exclusively in English (`en` / `en-US`). Zero Turkish text in production pipelines.
+2. **2nd-Person POV ("You / Your"):** Strict 2nd-person singular perspective. The viewer is the survivor. 3rd-person narrator ("Elias runs...", "The protagonist...") is strictly forbidden.
+3. **In Media Res Hook (First 3 Seconds):** Story must open immediately at the acute crisis point with sensory impact and immediate stakes. No slow establishing city flyovers.
+4. **Micro-Survival Mathematics:** Concrete tangible stakes (exact water milliliters, decibel alarm thresholds, emergency battery percentages, physical barricade layer counts).
+5. **Spoken Text Sanitizer Gateway:** All narration text must pass through `engine/services/text_sanitizer.py` to strip metadata ("Act 1:", "Scene 02:") and bracketed directives (`[Sound of sirens]`, `(whispering)`).
+6. **Atmospheric / Situational Framing:** Door peephole POV, macro tool grips, battery LEDs, and backlit rain silhouettes. Prevent AI uncanny-valley facial artifacts.
+7. **Dual-Stage SFX & Procedural Foley:** Primary Hugging Face Space (`fffiloni/audiogen`, `declare-lab/TangoFlux`) with automatic fallback to local FFmpeg Lavfi synthetic foley.
+8. **Transition Boundary Triplet QA:** Evaluate cross-block continuity `[Hero DNA] | [Block N Exit] | [Block N+1 Entry]` with 1x corrective re-roll on score < 0.85.
+
+---
+
+## 5. Model Layer & Flow CDP Factory
+- **Stack Registry Defaults:** Locked to `grok-4.6` via `tools/models.py`. Opt-in `grok-4.3` only for 1M memory banks. Imagine Video default is `grok-imagine-video` (1.0 default) / `grok-imagine-video-1.5` (native audio / physics). Imagine Image hero default is `grok-imagine-image-2.0`.
+- **Flow Engine Definition:** In this workspace, "Flow" exclusively denotes the Google Flow CDP factory (Port 9223) + Deepgram Aura-2 / Voyslity / ElevenLabs + FFmpeg pipeline (`engine/flow_bridge.py`). Never confuse with generic ComfyUI or standalone web chat prompts.
+- **Hero Plates:** Store character visual references in `characters/<character_slug>_hero.jpg` and reference them in `sequences/<project>_handoff.json`.
+
+---
+
+## 6. Verification & Test Commands
+```bash
+# Doctor / Environment sanity:
+python tools/cinematic_studio_cli.py doctor
+
+# Model registry verification:
+python tools/cinematic_studio_cli.py models verify
+
+# Surface smoke check (CLI, API, TUI, NiceGUI):
+python scripts/smoke_studio_surfaces.py
+
+# Full test suite:
+pytest tests/
+```

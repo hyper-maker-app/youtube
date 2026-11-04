@@ -108,8 +108,8 @@ def ensure_chrome_cdp_running(cdp_port: int = 9223) -> None:
         cmd,
         creationflags=flags,
         close_fds=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=open(VENDOR_DIR / 'server.log', 'a', encoding='utf-8', errors='replace'),
+        stderr=subprocess.STDOUT,
     )
 
     for _ in range(20):
@@ -165,8 +165,8 @@ def ensure_server_running(cdp_port: int = 9223, force_refresh: bool = False) -> 
     subprocess.Popen(
         cmd,
         cwd=str(BINARY.parent.parent),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=open(VENDOR_DIR / 'server.log', 'a', encoding='utf-8', errors='replace'),
+        stderr=subprocess.STDOUT,
         creationflags=flags,
     )
 

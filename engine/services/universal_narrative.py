@@ -97,13 +97,34 @@ async def _generate_script_async(title: str, genre: str, duration: int, aspect: 
     system_prompt += "\nB-roll data interchange schema (template_name and data_payload):\n" + json.dumps(payload_schema)
 
     scene_count = max(5, math.ceil(duration / 8))
-    chunks = min(5,scene_count)
-    result: list[dict[str,Any]] = []
-    for chunk in range(chunks):
-        start = scene_count * chunk // chunks
-        end = scene_count * (chunk+1) // chunks
-        topic = json.dumps({"title":title,"genre":genre,"aspect":aspect,"target_duration":duration,
-            "chunk":chunk+1,"chunk_count":chunks,"scene_start":start+1,"scene_end":end,"previous_scenes":result})
+    if genre.lower() == "catastrophe" and scene_count == 38:
+        chunk_ranges = [(0, 6), (6, 16), (16, 27), (27, 34), (34, 38)]
+        act_names = [f"Act {c + 1} of 5" for c in range(5)]
+    else:
+        chunks = min(5, scene_count)
+        chunk_ranges = [(scene_count * c // chunks, scene_count * (c + 1) // chunks) for c in range(chunks)]
+        act_names = [f"Act {c + 1} of {len(chunk_ranges)}" for c in range(len(chunk_ranges))]
+
+    result: list[dict[str, Any]] = []
+    for chunk, (start, end) in enumerate(chunk_ranges):
+        topic = json.dumps({
+            "title": title,
+            "genre": genre,
+            "aspect": aspect,
+            "target_duration": duration,
+            "act_number": chunk + 1,
+            "act_description": act_names[chunk],
+            "chunk": chunk + 1,
+            "chunk_count": len(chunk_ranges),
+            "scene_start": start + 1,
+            "scene_end": end,
+            "act_instructions": (
+                "Maintain unbroken chronological continuity from preceding scenes. "
+                "Use the loaded production rules and screenplay contract for POV, visual safety, materials, and CTA placement. "
+                "Do not invent or infer a different act policy."
+            ),
+            "previous_scenes": result,
+        }, ensure_ascii=False)
         data = await llm_provider.generate_script(topic=topic,system_prompt=system_prompt,schema=screenplay_schema(end-start))
         scenes = data.get("scenes", [])
         if len(scenes) != end-start:
@@ -132,11 +153,14 @@ async def _generate_script_async(title: str, genre: str, duration: int, aspect: 
                 raise ValueError(f"Scene {i}: narration is empty after spoken-text sanitization")
             is_broll = scene.get("is_data_broll") or any("[DATA_BROLL]" in scene[key].upper()
                 for key in ("visual_prompt", "motion_prompt"))
-            if is_broll and (not scene.get("template_name") or not isinstance(scene.get("data_payload"),dict) or not scene["data_payload"]):
+            if is_broll and (not scene.get("template_name") or not isinstance(scene.get("data_payload"), dict) or not scene["data_payload"]):
                 raise ValueError(f"Scene {i}: B-roll requires template_name and non-empty data_payload")
             if is_broll:
                 from engine.services.remotion_bridge import validate_broll_payload
-                scene["data_payload"] = validate_broll_payload(scene["template_name"],scene["data_payload"])
+                try:
+                    scene["data_payload"] = validate_broll_payload(scene["template_name"], scene["data_payload"])
+                except Exception as broll_err:
+                    raise ValueError(f"Scene {i}: invalid B-roll payload") from broll_err
 
         result.extend(scenes)
     return result

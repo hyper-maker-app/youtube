@@ -1,0 +1,87 @@
+# Cursor Rules: Grok Imagine Cinematic Studio v3.11.4
+
+**Project Identity:** Grok Imagine Cinematic Studio v3.11.4
+**Canonical Role:** Independent community AI cinematic production studio (not affiliated with, endorsed by, or officially connected to xAI).
+**Canonical Reference:** `AGENTS.md` and `references/agents/AGENT_INDEX.md`
+
+---
+
+## 1. Skill Bridge & Domain Delegation (Mandatory)
+Before writing ad-hoc logic or improvising cinematic prompts, scripts, or directing pipelines:
+- Inspect `.grok/skills/` (64 specialized production skills).
+- Cross-reference `references/agents/AGENT_INDEX.md` and `references/agents/*.md` for specific domain roles:
+  - Studio Director (`studio-director`)
+  - Mega Production Architect (`mega-production-architect`)
+  - Director of Photography (`director-of-photography`)
+  - Color Grading Supervisor (`post-production-color-grading-supervisor`)
+  - Character DNA Extractor (`character-dna-extractor`)
+  - Identity Lock Specialist (`identity-lock-specialist`)
+  - Sonic Architect & Foley Specialist (`sonic-architect-native-audio-virtuoso`, `foley-sound-design-specialist`)
+  - Quality Assurance Guardian (`quality-assurance-guardian`)
+- **Never reinvent wheels** that skills already handle. Prefer existing skill assets, schemas, and directives over ad-hoc implementations.
+
+---
+
+## 2. Zero Ad-Hoc Probing & Forensic Rabbit Holes (Strict Invariant)
+- **Strictly Forbidden:** Writing ad-hoc scratch scripts (`test_*.py`, `check_api.py`, socket checkers) to probe background servers, sockets, Chrome CDP (port 9223), or local proxy (port 8085), or inspect cookies.
+- **Mandatory Direct Execution:** Always execute production directly via the CLI:
+  ```bash
+  # Planning only (Zero-cost / No-render):
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "Sci-Fi Survival" --duration 60 --plan-only
+
+  # Full Physical Render (Google Flow CDP + Voice + FFmpeg):
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "Sci-Fi Survival" --duration 60 --voice-provider deepgram
+
+  # Dry-run simulation:
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "Sci-Fi Survival" --duration 60 --dry-run
+  ```
+- The engine (`engine/flow_bridge.py`, `engine/editor.py`) manages server lifecycles, health checks, and cookie rotations internally. Never waste turns probing infrastructure.
+
+---
+
+## 3. Pure Engine & Pure Skill Invariant: Absolute Zero Hardcode
+- **Python Engines (`engine/`, `tools/`):** MUST NEVER hardcode creative narrative text, visual styles, camera instructions, scene lines, character dialogue, or word substitution dictionaries. Engines are strictly pure execution pipelines (I/O, formatting, schema validation, API calls, and FFmpeg execution).
+- **Skill Files (`.grok/skills/*.md`):** MUST NEVER contain hardcoded scene scripts, artificial dialogues, or literal Call-To-Action (CTA) sentences. All intelligence in skills consists of universal directing principles, physical/thermodynamic constraints, and structural storytelling criteria.
+- **UI Components (`web_ui/`, `web_react/`, `web_nicegui/`):** Must be 100% parametric. Zero hardcoded narrative elements, coordinates, or scene payloads.
+
+---
+
+## 4. Viral Second-Person & Foley Standard (Protocol v4.0)
+All cinematic and narrative generation must follow `references/agents/VIRAL_SECOND_PERSON_RETENTION_FOLEY_PROTOCOL_v4.0.md`:
+1. **100% English Invariant:** Every script beat, spoken voiceover, subtitle caption, prompt instruction, and alignment dictionary must run exclusively in English (`en` / `en-US`). Zero Turkish text in production outputs.
+2. **2nd-Person POV ("You / Your"):** Strict 2nd-person singular perspective. The viewer is the survivor. 3rd-person narrator ("Elias runs...", "The protagonist...") is strictly forbidden.
+3. **In Media Res Hook (First 3 Seconds):** Story must open immediately at the acute crisis point with sensory impact and immediate stakes. No slow establishing city flyovers.
+4. **Micro-Survival Mathematics:** Concrete tangible stakes:
+   - Water / hydration in exact milliliters (*"700 milliliters left"*).
+   - Sound thresholds in decibels (*"Sensor pulses at 64 decibels. 65 brings the horde."*).
+   - Battery / tech percentages (*"Emergency pack at 14%"*).
+   - Physical barricade layers (*"Three layers of cross-hatched heavy duct tape"*).
+5. **Spoken Text Sanitizer Gateway:** All narration text must pass through `engine/services/text_sanitizer.py` to strip metadata ("Act 1:", "Scene 02:") and bracketed directives (`[Sound of sirens]`, `(whispering)`).
+6. **Atmospheric / Situational Framing:** Door peephole POV, macro tool grips, battery LEDs, and backlit rain silhouettes. Prevent AI uncanny-valley facial artifacts.
+7. **Dual-Stage SFX & Procedural Foley:** Primary Hugging Face Space (`fffiloni/audiogen`, `declare-lab/TangoFlux`) with automatic fallback to local FFmpeg Lavfi synthetic foley.
+8. **Transition Boundary Triplet QA:** Evaluate cross-block continuity `[Hero DNA] | [Block N Exit] | [Block N+1 Entry]` with 1x corrective re-roll on score < 0.85.
+
+---
+
+## 5. Model Layer & Physical Flow Definition
+- **Stack Registry Defaults:** Locked to `grok-4.6` via `tools/models.py`. Opt-in `grok-4.3` only for 1M memory banks. Imagine Video default is `grok-imagine-video` (1.0 default) / `grok-imagine-video-1.5` (native audio / physics). Imagine Image hero default is `grok-imagine-image-2.0`.
+- **Flow Definition:** "Flow" exclusively means Google Flow CDP (Port 9223) + Deepgram Aura-2 / Voyslity / ElevenLabs + FFmpeg (`engine/flow_bridge.py`). Never confuse with generic ComfyUI or standalone web chat prompts.
+- **No Orphan Assets:** Hero plates must be stored in `characters/<character_slug>_hero.jpg` and bound into `sequences/<project>_handoff.json`.
+
+---
+
+## 6. Verification & Test Commands
+Run these commands to verify the environment, models, and surfaces:
+```bash
+# Doctor / Environment sanity:
+python tools/cinematic_studio_cli.py doctor
+
+# Model registry verification:
+python tools/cinematic_studio_cli.py models verify
+
+# Surface smoke check (CLI, API, TUI, NiceGUI):
+python scripts/smoke_studio_surfaces.py
+
+# Test suite:
+pytest tests/
+```

@@ -55,6 +55,12 @@ This workspace is designed for advanced **Grok 4.5** agent workflows, with heavy
 >    - Full specification: `references/agents/VIRAL_SECOND_PERSON_RETENTION_FOLEY_PROTOCOL_v4.0.md`.
 > 3. **No Orphan Image Generations:** If character hero plates or concept art are generated, DO NOT leave them abandoned in chat artifacts. They MUST be saved into `characters/<character_slug>_hero.jpg` and linked into `sequences/<project>_handoff.json` as visual references for Google Flow CDP.
 > 4. **Never Confuse "Flow":** When the user asks to produce via "Flow", they mean the Google Flow CDP factory (`engine/flow_bridge.py`), NEVER generic ComfyUI or standalone Grok Imagine web prompts.
+> 5. **ZERO AD-HOC PROBING & NO FORENSIC RABBIT HOLES (CRITICAL):**
+>    - When the user asks to write a screenplay, generate a test scenario, run adversarial review, or compare with a previous run/handoff:
+>      - **STRICTLY FORBIDDEN:** Writing ad-hoc scratch scripts (`test_gemini.py`, `check_api.py`, etc.) to probe background servers, sockets, Chrome CDP (port 9223), local proxy (port 8085), or inspect cookies.
+>      - **MANDATORY DIRECT EXECUTION:** Always directly execute the CLI command: `python tools/cinematic_studio_cli.py produce-film "Title" --genre "..." --duration <sec> --plan-only`.
+>      - The engine handles all health checks, server lifecycles, and cookie rotations internally. Agents that waste turns probing infrastructure instead of executing the CLI are violating this invariant.
+>      - When asked to compare with a previous conversation's handoff, simply read that handoff, run the new run via CLI, and compare the two outputs. Never attempt to "re-verify" past server conditions.
 
 ## MANDATORY MULTI-AGENT SUBAGENT DELEGATION & REVIEW PROTOCOL (CRITICAL)
 

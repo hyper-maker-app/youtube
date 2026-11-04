@@ -118,3 +118,6 @@ AI video generation models fail when instructed with human facial close-ups or a
 2. **Strictly 2nd-Person Singular POV ("You / Your"):** Every scene narration opens with "You " or "Your ". The viewer is the lone survivor calculating physical survival odds.
 3. **In-Media-Res Crisis Hook (First 3 Seconds):** Immediate physical peril in Scene 1 (air pocket shrinking, door shuddering, water rising past ankles). Zero establishing aerial shots.
 4. **Clean Narration Gateway:** Spoken prose must be completely free of scene metadata ("Scene 01:"), bracketed sound effects (`[coughing]`), and parenthetical directions.
+
+## Universal Physics & Causality Invariants
+- **[Scene 35]**: Maintain continuous temporal perspective in 2nd-person narratives; avoid massive time jumps that abruptly abandon the protagonist's localized experience.

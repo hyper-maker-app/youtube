@@ -133,14 +133,17 @@ Fully compatible with Grok Build CLI, `cinematic_studio_cli.py` prompt workflows
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-- **[Scene s007]**: No readable faces, visors, or crowd identity: silhouette-only humans for Veo catastrophe plates.
-- **[Scene 14]**: No gauges, HUDs, clocks, or numeral-bearing props in Veo prompts—even analog, even frozen.
-- **[Scene 7]**: Never prompt identifiable faces or crowded people; use silhouettes, scale figures, and empty wreckage only.
-- **[Scene 16]**: Never include legible gauges, dials, or numerical readouts in AI video prompts to avoid corrupted text artifacts.
-- **[Scene 5]**: All numerical quantities and measurements stay in narration/micro_math; never prompt on-camera instruments, gauges, dials, or needles. Route all data visualizations to [DATA_BROLL].
+- **[Scene 1]**: Maintain continuous strict adherence to production schema and guardrails.
+
+- **[Scene 1]**: Visual prompts must contain zero baked-in text, aspect ratios, or UI numbers that could render as overlays.
+
 - **[Scene 12]**: Ban on-screen temperature/pressure readouts, dials, gauges, and needles of any kind; convey environmental state exclusively through macroscopic physical damage (cracking concrete, frosting metal, structural deformation), routing any telemetry or readings to [DATA_BROLL].
 - **[Veo Video Prompt Standard]**: Strictly forbid dials, gauges, needles, counters, digital clocks, legible text, or maps in Veo visual prompts; delegate all telemetry and maps to [DATA_BROLL] code-based graphics engine.
 - **[Scene 32]**: Limit complex thermal glow effects and heavy heat distortion in close-up prompts to maintain Veo rendering stability.
 - **[Scene 13]**: Never describe gloves, hands, or body parts in any visual_prompt even if negated; keep every shot 100% object/mechanism-only.
 - **[Scene 31]**: Never embed production instructions or repeated framing descriptors inside visual_prompts; they bake in as unwanted text overlays.
 - **[Scene 9]**: Avoid explicit temporal countdowns in narration when rendering strict visual prompts.
+- **[Scene 2]**: Avoid any negative-face instructions; instead specify heavy blur, distance, or occlusion to safely suppress Veo facial glitches.
+- **[Scene 35]**: Avoid highly repetitive, technical, or UI-adjacent phrasing across contiguous scenes to prevent AI models from hallucinating text or UI overlays.
+- **[Scene 28]**: Never abandon an established 2nd-person physical POV for disembodied, centuries-later exterior B-roll shots.
+- **[Scene 9]**: Zero baked-in text overlays or unreadable digital UI numbers may appear in any visual_prompt.

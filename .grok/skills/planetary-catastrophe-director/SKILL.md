@@ -129,3 +129,6 @@ Generative AI video models fail when forced to render micro-detailed human faces
 2. **Strictly 2nd-Person Singular POV ("You / Your"):** Every scene begins with "You " or "Your ". The viewer directly experiences the planetary upheaval.
 3. **In-Media-Res Crisis Hook (First 3 Seconds):** Immediate sensory shock in Scene 1 (ground shuddering at Mach 3, sky turning sulfurous orange, pressure wave rattling reinforced bunker walls).
 4. **Clean Narration Gateway:** Spoken prose must be sanitized of all bracketed effects (`[rumble]`, `(screaming)`) and production headers before neural TTS ingestion.
+
+## Universal Physics & Causality Invariants
+- **[Scene 20]**: Seismic energy release scaling must obey physical limits; do not stack high-magnitude earthquakes at impossible high-frequency intervals.

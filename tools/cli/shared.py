@@ -187,6 +187,8 @@ ROLE_CARD_SHARED_DOCS = frozenset({
     "IMAGINE_EXECUTION_BRIDGE.md",  # v3.8.6 surface-C bridge protocol
     "IDENTITY_CONTINUITY_PROTOCOL_v3.8.md",
     "Parallel_Brief_Protocol.md",
+    "FULL_VIDEO_MULTIMODAL_QA_ENGINE_SPEC.md",
+    "VIRAL_SECOND_PERSON_RETENTION_FOLEY_PROTOCOL_v4.0.md",
 })
 # Skill SKILL.md filename aliases → canonical _v3.5 stems. Not mapped agents.
 ROLE_CARD_ALIAS_FILES = frozenset({

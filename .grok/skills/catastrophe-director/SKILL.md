@@ -136,23 +136,15 @@ Generative AI video models (Google Veo, Sora, Grok Imagine) degrade when instruc
 
 ## Universal Physics & Causality Invariants
 
-- **[Scene 35]**: Bridge temporal jumps with transitional visual indicators of environmental decay.
+- **[Scene 36]**: Nitrogen phase transitions must obey real thermodynamic limits: liquefaction at 77 K (-196 °C), solidification at 63 K (-210 °C); never state incorrect thresholds.
 
-- **[Scene 15]**: Keep optical visibility levels consistent with calculated solar irradiance.
-
-- **[Scene 12]**: Ensure structural stress calculations match actual material physics.
-
-- **[Scene 38]**: CTA must occupy strictly the final sentence of the last scene and never appear inside any visual_prompt or earlier narration.
-
-- **[Scene 1]**: 2nd-person narration ('You') must be supported by POV-safe visual prompts that never negate human elements; always describe visible environment from implied viewer perspective without banning viewer embodiment.
-- **[Scene 38]**: CTA scene must obey identical POV-safety rules as opening scenes; never negate the implied viewer in visual_prompt when using 'You watch' narration.
-- **[Scene 38]**: CTA must occupy its own terminal scene as the literal final sentence with zero preceding or following content inside that scene.
-- **[Scene 12]**: Maintain causal consistency between structural engineering limits and accumulated mass loads.
-- **[Scene 37]**: Material degradation rates must remain causally consistent with stated pH, temperature, and exposure duration.
-- **[Scene 9]**: Never allow any on-screen numerical readouts, clocks, gauges, or legible text in Veo disaster visuals.
-- **[Scene 31]**: Indicator arms and calibrated mechanisms are disallowed as they produce readable UI elements.
-- **[Scene 5]**: Supervolcanic overpressure decays with distance and time; instantaneous global PSI drops violate conservation of mass and momentum.
-- **[Scene 12]**: Weight calculations for ash accumulation must accurately reflect structural load limits.
-- **[Scene 35]**: Planetary catastrophe timelines must respect observable geological rates; never compress 10,000 years into a single cut without transitional evidence.
-- **[Scene 35-37]**: In deep-time geological cooling (e.g. 10,000-year epoch), biological lifespans must not be violated; frame 2nd-person POV strictly through automated bunker telemetry, seismic sensor arrays, or robotic exterior surveillance logs.
-- **[Scene 38]**: Visual prompts must depict physical macroscopic crisis cues (such as bedrock fissures re-opening or ice fracturing under subterranean stress) rather than gauges, needles, or dials; any telemetry representation belongs exclusively to `[DATA_BROLL]`.
+- **[Scene 28]**: All visual prompts must guarantee zero facial deformities, readable digital UI numbers, or baked-in text overlays.
+- **[Scene 3]**: Ensure narrative speed terminology (supersonic vs. subsonic) matches the physical velocities provided in the math.
+- **[Scene 22]**: Water-to-ice phase transitions and growth rates must rigorously adhere to Stefan's equation for thermal conductivity.
+- **[Scene 1]**: Phase transitions and pressure changes must obey realistic energy conservation and diffusion timescales.
+- **[Scene 7]**: Every major geophysical escalation must be grounded in a plausible preceding cause.
+- **[Scene 35]**: Multi-act escalation must remain unbroken from initial trigger through deep time.
+- **[Scene 8]**: Radiative cooling from stratospheric aerosols follows multi-year volcanic winter curves, never producing -25C global drops in under two hours.
+- **[Scene 38]**: Cryogenic liquid oxygen phase behavior follows slow sublimation or evaporation under geological conditions, never sudden high-pressure bedrock eruptions.
+- **[Scene 2]**: Total removal of atmospheric oxygen yields a maximum pressure drop of ~0.21 bar (21% of standard atmospheric pressure).
+- **[Scene 38]**: Verify phase transition temperatures (e.g., LOX at -183°C) against the established environmental baseline (-31°C) to avoid thermodynamic impossibilities.

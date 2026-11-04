@@ -23,18 +23,12 @@ import urllib.request
 from engine.services.screenplay_reviewer import (
     Scorecard,
     ScreenplayReviewer,
-    _CTA_PATTERN,
     build_compact_scenes_payload,
     extract_json_payload,
 )
 from engine.services.skill_reinforcement import SkillReinforcementService
 
 logger = logging.getLogger(__name__)
-
-_CTA_SUB_REGEX = re.compile(
-    r"\s*(?:You must )?subscribe (?:to the channel and turn on notifications now )?(?:if you want to survive[.]*|to survive[.]*|for the next episode[.]*|to join the expedition[.]*|to the channel[.]*)?",
-    re.IGNORECASE,
-)
 
 
 @dataclass
@@ -109,7 +103,9 @@ class ScreenplayHealer:
                 except ValueError:
                     pass
 
-        return sorted(list(scene_ids))
+        sorted_ids = sorted(list(scene_ids))
+        # Prioritize top 8 defective scenes per round to prevent LLM output token exhaustion
+        return sorted_ids[:8]
 
     def heal(
         self,
@@ -251,12 +247,19 @@ class ScreenplayHealer:
                 "micro_math": "string", "is_data_broll": "boolean", "template_name": "string", "data_payload": "object"}]},
         },ensure_ascii=False)
 
+        system_instruction = (
+            "You are the Lead Screenplay Repair Specialist for Grok Imagine Cinematic Studio.\n"
+            "Your task is to repair ONLY the scenes flagged with defects, ensuring unbroken chronological arc and continuity.\n"
+            "You MUST respond ONLY with a raw JSON object containing the repaired scenes under the key 'repaired_scenes'.\n"
+            "Do NOT output markdown titles, introductory prose, or conversational filler. Output pure JSON only.\n\n"
+            + skill_prompt
+        )
         payload = {
             "model": model_name,
             "messages": [
                 {
                     "role": "system",
-                    "content": skill_prompt,
+                    "content": system_instruction,
                 },
                 {"role": "user", "content": prompt},
             ],
