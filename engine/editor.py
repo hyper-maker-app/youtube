@@ -510,6 +510,7 @@ def build_video_filter(
     editorial_plan: dict | list[dict] | None = None,
     terminal_payoff: bool = False,
     enable_dcs: bool = False,
+    dcs_filter_expr: str | None = None,
     enable_countdown: bool = False,
     countdown_seconds: float = 4.0,
     countdown_text: str = "",
@@ -582,9 +583,10 @@ def build_video_filter(
     )
 
     chain: list[str] = []
+    resolved_dcs = dcs_filter_expr or (build_dcs_filter_expr(target_duration) if target_duration else DCS_FILTER_EXPR)
     if final_polish:
         eq_filter = (
-            DCS_FILTER_EXPR
+            resolved_dcs
             if enable_dcs
             else config.FINAL_EQ
         )
@@ -595,7 +597,7 @@ def build_video_filter(
             config.FINAL_VIGNETTE,
         ]
     elif enable_dcs:
-        chain.append(DCS_FILTER_EXPR)
+        chain.append(resolved_dcs)
 
     if enable_countdown:
         if not countdown_text.strip():
@@ -616,23 +618,32 @@ def build_video_filter(
 
 
 # --------------------------------------------------------------------------------------
-# YouTube Optimization & Post-Processing: DCS, Extinction Countdown HUD, Shorts 9:16
+# Post-Processing: DCS, Countdown HUD, Parametric Aspect Ratio Multiplexer
 # --------------------------------------------------------------------------------------
 
-DCS_FILTER_EXPR = "eq=gamma='max(0.45, 1.0 - 0.15*(t/60.0))':saturation='max(0.35, 1.0 - 0.14*(t/60.0))':eval=frame"
+def build_dcs_filter_expr(
+    duration: float = 60.0,
+    min_gamma: float = 0.45,
+    gamma_rate: float = 0.15,
+    min_sat: float = 0.35,
+    sat_rate: float = 0.14,
+) -> str:
+    """Parametric Dynamic Contrast Shift filter expression."""
+    dur = max(1.0, float(duration))
+    return f"eq=gamma='max({min_gamma}, 1.0 - {gamma_rate}*(t/{dur:.1f}))':saturation='max({min_sat}, 1.0 - {sat_rate}*(t/{dur:.1f}))':eval=frame"
+
+
+DCS_FILTER_EXPR = build_dcs_filter_expr(60.0)
 
 
 def apply_dynamic_contrast_shift(
     input_path: str | Path,
     out_path: str | Path,
     duration: float | None = None,
+    filter_expr: str | None = None,
     ffmpeg: str | None = None,
 ) -> Path:
-    """Apply Dynamic Contrast Shift (DCS) to simulate atmospheric solar obscuration over time.
-
-    Gamma and saturation gradually decrease as volcanic ash blocks the sun:
-    eq=gamma='max(0.45, 1.0 - 0.15*(t/60.0))':saturation='max(0.35, 1.0 - 0.14*(t/60.0))'
-    """
+    """Apply Dynamic Contrast Shift (DCS) using a parametric filter expression."""
     ffmpeg = ffmpeg or config.resolve_ffmpeg()
     input_path = Path(input_path)
     out_path = Path(out_path)
@@ -640,12 +651,13 @@ def apply_dynamic_contrast_shift(
 
     info = probe(input_path, ffmpeg)
 
+    resolved_filter = filter_expr or (build_dcs_filter_expr(duration) if duration else DCS_FILTER_EXPR)
     args = [ffmpeg, "-hide_banner", "-y"]
     if duration is not None and duration > 0:
         args += ["-t", f"{duration:.3f}"]
     args += [
         "-i", str(input_path),
-        "-vf", DCS_FILTER_EXPR,
+        "-vf", resolved_filter,
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
     ]
     if info.has_audio:
@@ -665,12 +677,14 @@ def apply_extinction_countdown_overlay(
     out_path: str | Path,
     countdown_seconds: float = 4.0,
     banner_text: str = "",
+    font_color: str = "0xFF2222",
+    border_color: str = "0x220000",
+    box_color: str = "black@0.75",
+    font_size: str = "h*0.045",
+    y_pos: str = "h*0.08",
     ffmpeg: str | None = None,
 ) -> Path:
-    """Overlay an attention-grabbing red HUD warning banner in the opening 3-5 seconds.
-
-    Acts as the viral crisis hook invariant per Protocol v4.0.
-    """
+    """Overlay a parametric HUD warning countdown banner in opening seconds."""
     if not banner_text.strip():
         raise ValueError("Countdown overlay requires explicit banner_text")
     explicit_ffmpeg = ffmpeg is not None or bool(os.environ.get("FFMPEG_BINARY"))
@@ -683,9 +697,9 @@ def apply_extinction_countdown_overlay(
     clean_text = banner_text.replace("\\", "\\\\").replace("'", "\\'").replace(":", "\\:")
     draw_filter = (
         f"drawtext=text='{clean_text}':"
-        "fontsize=h*0.045:fontcolor=0xFF2222:borderw=2:bordercolor=0x220000:"
-        "box=1:boxcolor=black@0.75:boxborderw=10:"
-        f"x=(w-text_w)/2:y=h*0.08:enable='between(t,0,{countdown_seconds:.3f})'"
+        f"fontsize={font_size}:fontcolor={font_color}:borderw=2:bordercolor={border_color}:"
+        f"box=1:boxcolor={box_color}:boxborderw=10:"
+        f"x=(w-text_w)/2:y={y_pos}:enable='between(t,0,{countdown_seconds:.3f})'"
     )
 
     args = [
@@ -717,17 +731,21 @@ def apply_extinction_countdown_overlay(
     return out_path
 
 
-def export_shorts_multiplex(
+def export_aspect_ratio_multiplex(
     input_path: str | Path,
     out_path: str | Path,
-    max_duration: float = 45.0,
+    target_width: int = 1080,
+    target_height: int = 1920,
+    aspect_w: int = 9,
+    aspect_h: int = 16,
+    max_duration: float = 0.0,
     start_time: float = 0.0,
+    crf: int = 18,
+    preset: str = "fast",
+    audio_bitrate: str = "192k",
     ffmpeg: str | None = None,
 ) -> Path:
-    """Multiplex 16:9 master video into a 9:16 (1080x1920) vertical YouTube Shorts cut.
-
-    Uses smart center-crop and scaling: crop=ih*9/16:ih:(iw-ow)/2:0,scale=1080:1920
-    """
+    """Parametric aspect ratio multiplexer converting input footage to target dimensions."""
     ffmpeg = ffmpeg or config.resolve_ffmpeg()
     input_path = Path(input_path)
     out_path = Path(out_path)
@@ -741,22 +759,45 @@ def export_shorts_multiplex(
     if max_duration > 0:
         args += ["-t", f"{max_duration:.3f}"]
 
-    crop_filter = "crop=ih*9/16:ih:(iw-ow)/2:0,scale=1080:1920,setsar=1"
+    crop_filter = f"crop=ih*{aspect_w}/{aspect_h}:ih:(iw-ow)/2:0,scale={target_width}:{target_height},setsar=1"
     args += [
         "-i", str(input_path),
         "-vf", crop_filter,
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+        "-c:v", "libx264", "-preset", preset, "-crf", str(crf), "-pix_fmt", "yuv420p",
     ]
     if info.has_audio:
-        args += ["-c:a", "aac", "-b:a", "192k"]
+        args += ["-c:a", "aac", "-b:a", audio_bitrate]
     else:
         args += ["-an"]
     args.append(str(out_path))
 
     proc = _run(args)
     if proc.returncode != 0:
-        raise RuntimeError("export_shorts_multiplex failed:\n" + proc.stderr[-2000:])
+        raise RuntimeError("export_aspect_ratio_multiplex failed:\n" + proc.stderr[-2000:])
     return out_path
+
+
+def export_shorts_multiplex(
+    input_path: str | Path,
+    out_path: str | Path,
+    max_duration: float = 45.0,
+    start_time: float = 0.0,
+    target_width: int = 1080,
+    target_height: int = 1920,
+    ffmpeg: str | None = None,
+) -> Path:
+    """Parametric vertical cut multiplexer (backwards-compatible alias for export_aspect_ratio_multiplex)."""
+    return export_aspect_ratio_multiplex(
+        input_path=input_path,
+        out_path=out_path,
+        target_width=target_width,
+        target_height=target_height,
+        aspect_w=9,
+        aspect_h=16,
+        max_duration=max_duration,
+        start_time=start_time,
+        ffmpeg=ffmpeg,
+    )
 
 
 
@@ -775,7 +816,7 @@ def concat_audio_with_pauses(
     """Join `parts` with `pauses[i]` seconds of true silence after part i.
 
     edge-tts XML-escapes its input, so <break/> is spoken rather than honoured; the pauses
-    that give the narration its Zack-D register have to be real samples. `aevalsrc=0` is
+    that give the narration its dynamic register have to be real samples. `aevalsrc=0` is
     the generator and `concat` the joiner, but concat refuses to mix formats: edge-tts hands
     back 24 kHz mono while aevalsrc defaults elsewhere, so every leg is forced through
     aresample+aformat first. Without that the filter errors out instead of silently
@@ -1006,6 +1047,7 @@ def build_filtergraph(
     sfx_inputs: list[dict] | None = None,
     soundscape_index: int | None = None,
     enable_dcs: bool = False,
+    dcs_filter_expr: str | None = None,
     enable_countdown: bool = False,
     countdown_seconds: float = 4.0,
     countdown_text: str = "",
@@ -1017,7 +1059,7 @@ def build_filtergraph(
         n_blocks, punch_times, boundaries, final_polish, captions_path,
         quadrants, zoom_gain, block_durations, target_duration, boundary_kinds,
         transitions_enabled, coverage, editorial_plan, terminal_payoff,
-        enable_dcs=enable_dcs, enable_countdown=enable_countdown,
+        enable_dcs=enable_dcs, dcs_filter_expr=dcs_filter_expr, enable_countdown=enable_countdown,
         countdown_seconds=countdown_seconds, countdown_text=countdown_text,
         fps=fps,
     )
@@ -1045,6 +1087,7 @@ def render(
     sfx_cues: list[dict] | None = None,
     soundscape_path: Path | None = None,
     enable_dcs: bool = False,
+    dcs_filter_expr: str | None = None,
     enable_countdown: bool = False,
     countdown_seconds: float = 4.0,
     countdown_text: str = "",
@@ -1151,7 +1194,7 @@ def render(
         boundary_kinds=kinds, transitions_enabled=False, coverage=coverage,
         editorial_plan=editorial_plan, terminal_payoff=terminal_payoff, sfx_inputs=validated_sfx,
         soundscape_index=soundscape_index,
-        enable_dcs=enable_dcs, enable_countdown=enable_countdown,
+        enable_dcs=enable_dcs, dcs_filter_expr=dcs_filter_expr, enable_countdown=enable_countdown,
         countdown_seconds=countdown_seconds, countdown_text=countdown_text,
         fps=render_fps,
     )
@@ -1282,7 +1325,10 @@ class MotionEngine:
         # Scale drift and zoom relative to a base duration of 4.0s for duration sensitivity
         time_scale = duration / 4.0
 
-        f0, f1 = self.motion_zoom.get(cam["motion"], (1.0, 1.0))
+        motion_type = cam.get("motion", "push_in")
+        drift_direction = cam.get("drift", "none")
+
+        f0, f1 = self.motion_zoom.get(motion_type, (1.0, 1.0))
         # duration-sensitive zoom scaling for both start and end
         f0_scaled = 1.0 + (f0 - 1.0) * time_scale
         f1_scaled = 1.0 + (f1 - 1.0) * time_scale
@@ -1296,16 +1342,16 @@ class MotionEngine:
         float_x = _float_expr(self.motion_float_x, 'sin')
         float_y = _float_expr(self.motion_float_y, 'cos')
 
-        if cam["motion"] == "lateral_pan":
+        if motion_type == "lateral_pan":
             # True lateral pan across the entire overscan margin
-            if cam.get("drift") == "left":
+            if drift_direction == "left":
                 base_x = f"(iw-iw/zoom)*(1-{ease})"
             else:
                 base_x = f"(iw-iw/zoom)*{ease}"
             base_y = "ih/2-(ih/zoom/2)"
         else:
-            dx = {"left": -1.0, "right": 1.0}.get(cam["drift"], 0.0) * self.motion_drift_px * time_scale
-            dy = {"up": -1.0, "down": 1.0}.get(cam["drift"], 0.0) * self.motion_drift_px * time_scale
+            dx = {"left": -1.0, "right": 1.0}.get(drift_direction, 0.0) * self.motion_drift_px * time_scale
+            dy = {"up": -1.0, "down": 1.0}.get(drift_direction, 0.0) * self.motion_drift_px * time_scale
             base_x = f"iw/2-(iw/zoom/2)+({dx:.3f})*{ease}"
             base_y = f"ih/2-(ih/zoom/2)+({dy:.3f})*{ease}"
 
@@ -1345,7 +1391,7 @@ class MotionEngine:
         transition_hint: str | None = None,
     ) -> Path:
         cam = config.block_camera(block)
-        want_rack = (cam["rack_focus"] if transition_hint is None else False) if rack_focus is None else rack_focus
+        want_rack = (cam.get("rack_focus", False) if transition_hint is None else False) if rack_focus is None else rack_focus
         if want_rack and self._rack_focus_ok is False:
             want_rack = False
 

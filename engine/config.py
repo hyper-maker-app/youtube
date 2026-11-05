@@ -59,7 +59,7 @@ LLM_PROVIDER = env("LLM_PROVIDER")
 VIDEO_PROVIDER = env("VIDEO_PROVIDER")
 IMAGE_PROVIDER = env("IMAGE_PROVIDER")
 VOICE_PROVIDER = env("VOICE_PROVIDER")
-PRODUCTION_FORMAT = (env("PRODUCTION_FORMAT") or "zackd").casefold()
+PRODUCTION_FORMAT = (env("PRODUCTION_FORMAT") or "standard").casefold()
 IS_EXPLORER_FORMAT = PRODUCTION_FORMAT == "explorer"
 LONGFORM_MODE = env_bool("LONGFORM_MODE", True if IS_EXPLORER_FORMAT else False)
 LONGFORM_HYBRID_MODE = env_bool("LONGFORM_HYBRID_MODE", False)
@@ -372,21 +372,17 @@ WIDTH = 1920 if LONGFORM_MODE else 1080
 HEIGHT = 1080 if LONGFORM_MODE else 1920
 FPS = 30
 
-# Legacy compatibility defaults. New content-first plans use adapter capabilities.
-# Historically every provider-native motion clip was a four-second unit.  New runs begin with a
-# lightweight screenplay plan, synthesize the narration, then freeze the actual
-# 6..13-block plan from the measured audio duration.  The selected plan is persisted
-# in script.json and is never recomputed by --resume.
-BLOCK_DURATION = 4.0
-MIN_BLOCKS = 6
-MAX_BLOCKS = 13
-TAIL_HOLD = 1.5
+# Timing and block parameters.
+BLOCK_DURATION = float(env("BLOCK_DURATION") or "4.0")
+TAIL_HOLD = float(env("TAIL_HOLD") or "1.5")
 
-# Target duration and block profile for production Shorts (Sweet Spot: 45–55s, 11–13 blocks).
-TARGET_MIN_DURATION = float(env("TARGET_MIN_DURATION") or "45.0")
-TARGET_MAX_DURATION = float(env("TARGET_MAX_DURATION") or "52.0")
-TARGET_DURATION = float(env("TARGET_DURATION") or "48.0")
-DEFAULT_PRODUCTION_BLOCKS = int(env("DEFAULT_PRODUCTION_BLOCKS") or "12")
+
+def get_block_bounds(target_duration: float | None = None, block_duration: float = BLOCK_DURATION) -> tuple[int, int]:
+    """Compute dynamic block bounds driven by runtime target duration without hardcoded caps."""
+    if target_duration is None or target_duration <= 0:
+        return (1, 64)
+    target_count = max(1, round(target_duration / max(0.1, block_duration)))
+    return (max(1, round(target_count * 0.7)), max(1, round(target_count * 1.3)))
 
 
 
@@ -656,7 +652,7 @@ MAX_PAID_ATTEMPTS = 12
 # edge-tts (voiceover engine, no key)
 # --------------------------------------------------------------------------------------
 
-# Christopher is the News/Novel "Reliable, Authority" persona, which is the Zack D register.
+# Christopher is the News/Novel "Reliable, Authority" persona.
 # Fixed 24kHz mono 48kbps output; the bitrate is a library constant and cannot be raised.
 EDGE_RATE_MAX_PCT = 18  # past this the intonation flattens
 EDGE_RETRIES = 3
@@ -741,16 +737,6 @@ COMPOSITION_STRING = "16:9 horizontal composition" if LONGFORM_MODE else "9:16 v
 ORIENTATION_STRING = "landscape orientation" if LONGFORM_MODE else "portrait orientation"
 ASPECT_RATIO_FULL_STRING = "16:9 horizontal aspect ratio" if LONGFORM_MODE else "9:16 vertical aspect ratio"
 
-DOCUMENTARY_PBR_STYLE = (
-    "A clean, high-end 3D animated cinematic frame, minimalist dark studio void lighting, "
-    f"expressive smooth character design, dramatic side-shadows, {ASPECT_RATIO_FULL_STRING}, "
-    "vivid colors, hyper-detailed textures, Blender Cycles render aesthetic, "
-    "Glossy Stylized 3D Mannequin / Medical Animation Render; premium PBR materials, "
-    "smooth medical-mannequin surfaces, strong subsurface scattering on translucent material, "
-    "dark neutral 3D studio void background, 45-degree warm golden key light and sharp cyan rim light; "
-    f"crisp readable silhouette, {COMPOSITION_STRING}"
-)
-
 # Physical phenomena read badly when the same low-poly language used for a simple
 # explainer character is forced onto them.  This profile intentionally keeps the
 # documentary render language, but removes geometry-simplification directives.
@@ -822,16 +808,6 @@ EXPLORER_STYLE_NATURE = (
     f"vivid natural colors without oversaturation, {COMPOSITION_STRING}"
 )
 
-EXPLORER_STYLE_CHARACTER = (
-    f"Photorealistic portrait, {ASPECT_RATIO_FULL_STRING}, natural skin texture with pores and "
-    "micro-details, warm ambient lighting, soft catchlights in eyes, "
-    "shallow depth of field background blur, candid expedition field photography style, "
-    f"authentic engaging expression, {COMPOSITION_STRING}"
-)
-
-# Kept as the compatibility default for older scripts and asset sheets.  New scene
-# compilers select a profile per shot via style_for_profile().
-ZACK_STYLE = DOCUMENTARY_PBR_STYLE
 CANONICAL_STYLE_VERSION = "zdf-scene-intelligence-v3"
 
 VISUAL_PROFILE_DOCUMENTARY = "documentary_pbr"
@@ -977,8 +953,7 @@ def style_for_profile(profile: str | None) -> str:
         VISUAL_PROFILE_EXPLORER_HISTORICAL: EXPLORER_STYLE_HISTORICAL,
         VISUAL_PROFILE_EXPLORER_MYSTERY: EXPLORER_STYLE_MYSTERY,
         VISUAL_PROFILE_EXPLORER_NATURE: EXPLORER_STYLE_NATURE,
-        VISUAL_PROFILE_EXPLORER_CHARACTER: EXPLORER_STYLE_CHARACTER,
-    }.get(profile, DOCUMENTARY_PBR_STYLE)
+    }.get(profile, "")
 
 
 def structure_detail_prompt(domain: str, tags: list[str] | tuple[str, ...], intensity: str = "peak") -> str:
@@ -1108,7 +1083,7 @@ HOOK_MAX_WORDS = 12
 # Aura English is paced from the usable speech window, not a fixed 40-second band.
 # Keep this overrideable for a measured voice/model change.
 ENGLISH_PRODUCTION_WPS = (
-    # Zack D. Films viral pacing is snappy and staccato (160-175 WPM / ~2.75 spoken words/sec).
+    # Standard viral pacing is snappy and staccato (160-175 WPM / ~2.75 spoken words/sec).
     float(env("DEEPGRAM_ENGLISH_WPS") or "2.75") if TTS_PROVIDER == "deepgram"
     else 2.50 if TTS_PROVIDER == "elevenlabs" else 2.64
 )
@@ -1117,14 +1092,6 @@ LANG_PROFILES = {
         "name": "English",
         "voice": "en-US-ChristopherNeural",
         "wps": ENGLISH_PRODUCTION_WPS,
-        "target": 0,
-        "min": 0,
-        "max": 0,
-    },
-    "tr": {
-        "name": "Turkish",
-        "voice": "tr-TR-AhmetNeural",
-        "wps": 1.74,
         "target": 0,
         "min": 0,
         "max": 0,
@@ -1156,34 +1123,10 @@ def legacy_narration_profile(lang: str | None, voice_target_duration: float) -> 
     """Return a run-local word budget without mutating global language configuration."""
     profile = dict(lang_profile(lang))
     target = max(8, round(profile["wps"] * speech_budget_seconds(voice_target_duration)))
-    if (lang or DEFAULT_LANG).lower() == "tr":
-        # Turkish syllable structure and authored pauses make a duration estimate less
-        # reliable than the measured narration that locks the visual plan.
-        # Broad enough for 45..55-second shorts while preventing runaway scripts.
-        profile.update({"target": min(90, max(70, target)), "min": 70, "max": 90})
-        return profile
-    if (lang or DEFAULT_LANG).lower() == "en" and TTS_PROVIDER == "deepgram":
-        # Keep word count within safe 6-13 block Shorts envelope (100-120 words per ADR-013)
-        # to ensure measured narration lands reliably between 24-50s and never overflows MAX_BLOCKS (13).
-        if voice_target_duration >= 40.0:
-            safe_target = min(106, target)
-            profile.update({
-                "target": safe_target,
-                "min": max(100, round(safe_target * 0.94)),
-                "max": min(112, round(safe_target * 1.06)),
-            })
-        else:
-            safe_target = target
-            profile.update({
-                "target": safe_target,
-                "min": round(safe_target * 0.96),
-                "max": round(safe_target * 1.04),
-            })
-        return profile
     profile.update({
         "target": target,
-        "min": round(target * 0.91),
-        "max": round(target * 1.06),
+        "min": round(target * 0.92),
+        "max": round(target * 1.08),
     })
     return profile
 
@@ -1199,52 +1142,13 @@ def beat_word_range(beat: dict, profile: dict) -> tuple[int, int]:
 # Camera direction per block
 # --------------------------------------------------------------------------------------
 
-# Legacy/local fallback camera variation. New SceneCards pass their authored
-# transition_hint to MotionEngine; this block-number map is never fed into a new Flow/Fal
-# narrative prompt and is only used when no authored transition intent is available.
-BLOCK_CAMERA = {
-    1: {
-        "directive": "slow creeping push-in, subtle floating handheld camera",
+def block_camera(block: int = 1) -> dict:
+    """Return neutral fallback camera movement parameters without narrative prose."""
+    return {
         "motion": "push_in",
-        "drift": "up",
+        "drift": "none",
         "rack_focus": False,
-    },
-    2: {
-        "directive": "microscopic zoom-in, cross-section shift, focus pull",
-        "motion": "deep_push",
-        "drift": "down",
-        "rack_focus": True,
-    },
-    3: {
-        "directive": "slow pull-back reveal, shifting light",
-        "motion": "pull_out",
-        "drift": "up",
-        "rack_focus": False,
-    },
-    4: {
-        "directive": "low angle camera pan, macro depth of field",
-        "motion": "push_in",
-        "drift": "down",
-        "rack_focus": False,
-    },
-    5: {
-        "directive": "slow orbit rotation, diagnostic lighting change",
-        "motion": "deep_push",
-        "drift": "up",
-        "rack_focus": True,
-    },
-    6: {
-        "directive": "slow push-in and dramatic focus pull, cinematic rim light",
-        "motion": "pull_out",
-        "drift": "down",
-        "rack_focus": False,
-    },
-}
-
-
-def block_camera(block: int) -> dict:
-    idx = (block - 1) % len(BLOCK_CAMERA) + 1
-    return BLOCK_CAMERA[idx]
+    }
 
 
 # --------------------------------------------------------------------------------------
@@ -1290,21 +1194,6 @@ SHEET_RATIOS = {
     "character": "3:2" if LONGFORM_MODE else "2:3",
     "prop": "1:1",
     "environment": ASPECT_RATIO_STRING,
-}
-
-SHEET_STYLE_SUFFIX = {
-    "character": (
-        "Character reference sheet, full body, neutral standing pose, plain light-grey studio background — "
-        f"{ZACK_STYLE}, single character only, mouth closed and neutral"
-    ),
-    "prop": (
-        "Object reference, isolated on a plain light-grey background — "
-        f"{ZACK_STYLE}, single object only"
-    ),
-    "environment": (
-        "ENVIRONMENT SHEET — EMPTY LOCATION PLATE. ABSOLUTELY NO people, NO animals, NO characters, NO subject — "
-        f"{ZACK_STYLE}"
-    ),
 }
 
 
@@ -1494,9 +1383,8 @@ def vfx_layer(phase: str | None) -> tuple[str, str]:
 # Scale-aware lighting palette (#4 improvement)
 # --------------------------------------------------------------------------------------
 
-# The ZACK_STYLE string uses a single warm-golden / cobalt-blue rig that looks great at
-# human scale but is physically nonsensical inside a cell nucleus.  Each scale gets its
-# own rig that stays stylistically coherent at that magnification level.
+# Scale-aware lighting palette: each scale gets its own rig that stays
+# stylistically coherent at that magnification level.
 SCALE_LIGHT = {
     "wide": (
         "dramatic 45-degree warm golden key light from screen-left, "

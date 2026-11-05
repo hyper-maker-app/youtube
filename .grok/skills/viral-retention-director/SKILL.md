@@ -117,23 +117,23 @@ Failing screenplays are autonomously repaired by `ScreenplayHealer` before user 
 
 ## Learned Production Invariants (Adversarial Feedback)
 
-For an explicitly marked short integration test only, replace Scene 38 placement references with the final scene. Landscape retains the terminal CTA; vertical retains the CTA-free loop. This exception does not certify a production screenplay.
+For an explicitly marked short integration test only, use the requested scene count. Landscape retains the terminal CTA; vertical retains the CTA-free loop. This exception does not certify a production screenplay.
 
-Scene 38 CTA references in learned rules below apply only to the standard landscape catastrophe profile; the aspect-aware ending rules above govern all other profiles.
+CTA rules apply strictly to the terminal final scene across any production duration.
 
-- **[Scene 38]**: The final scene must always conclude with an explicit, engaging Call-to-Action directed at the viewer to drive algorithmic engagement.
+- **[Terminal Final Scene]**: The final scene must always conclude with an explicit, engaging Call-to-Action directed at the viewer to drive algorithmic engagement.
 
 - **[Scene 27]**: Do not break character POV to describe exterior macro-events; tether macro-events to the protagonist's senses.
 
 - **[Scene 7]**: Every narration sentence must strictly begin with 'You' or 'Your' to lock the viewer into the 2nd-person perspective.
 
-- **[Scene 38]**: CTA must be strictly isolated to the final sentence of scene_38 and nowhere else.
+- **[Terminal Final Scene]**: CTA must be strictly isolated to the final sentence of the terminal scene and nowhere else.
 
 - **[Scene 27]**: POV invariant is absolute: no scene may begin with 'The', 'Outside,', or any non-You/Your phrasing.
 
 - **[Scene 14]**: All scenes must maintain strict 'You/Your' opening to sustain 2nd-person immersion and viral retention.
 
-- **[Scene 38]**: The final scene narration must always conclude with an isolated, single-sentence Call to Action to drive algorithmic engagement.
+- **[Terminal Final Scene]**: The final scene narration must always conclude with an isolated, single-sentence Call to Action to drive algorithmic engagement.
 
 - **[Scene 4]**: Never drop the 'You/Your' prefix, especially during high-action sequences where POV anchoring is most critical for retention.
 
@@ -142,11 +142,11 @@ Scene 38 CTA references in learned rules below apply only to the standard landsc
 - **[Scene 1]**: Maintain continuous strict adherence to production schema and guardrails.
 
 - **[Scene 25]**: Never repeat identical narration or dead-protagonist beats across multiple trailing scenes; maintain progressive information density.
-- **[Scene 38]**: CTA lives only in the last spoken sentence; visuals must contain zero subscribe/notification/countdown text.
-- **[Scene 38]**: CTA lives in the last sentence of the last scene’s narration only—never in visuals.
+- **[Terminal Final Scene]**: CTA lives only in the last spoken sentence of the final scene; visuals must contain zero subscribe/notification/countdown text.
+- **[Terminal Final Scene]**: CTA lives in the last sentence of the final scene's narration only—never in visuals.
 - **[Scene s026]**: Maintain strict 2nd-person bodily containment; never cut to external or orbital viewpoints when the viewer is explicitly framed inside an enclosed space.
 - **[Scene s026]**: 2nd-person narration may only describe photons that could reach the protagonist’s eyes unless an explicit cutaway label is used.
-- **[Scene 37]**: Never exit the viewer's perspective prior to the call-to-action conclusion.
-- **[Scene 37]**: Penultimate scenes must keep 2nd-person lock so the final CTA still lands inside the viewer's body.
+- **[Penultimate Scene]**: Never exit the viewer's perspective prior to the call-to-action conclusion.
+- **[Penultimate Scene]**: Penultimate scenes must keep 2nd-person lock so the final CTA still lands inside the viewer's body.
 - **[Scene 19]**: Every scene narration must strictly maintain 2nd-person POV starting with 'You' or 'Your'.
 - **[Scene 4]**: Maintain strict 2nd-person sensory attachment to the protagonist's immediate physical vicinity.

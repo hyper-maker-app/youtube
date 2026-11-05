@@ -236,7 +236,12 @@ def produce_film(
     yes: bool = typer.Option(False, "--yes", "-y", help="Automatically confirm physical video rendering without prompting"),
     allow_deepmind_fallback: bool = typer.Option(False, "--allow-deepmind-fallback", help="Allow fallback to DeepMind heuristic if gemini_webapi is unavailable"),
     force_render: bool = typer.Option(False, "--force-render", help="Compatibility option; does not bypass the live review gate."),
-    export_shorts: bool = typer.Option(False, "--export-shorts", help="Automatically multiplex 9:16 vertical YouTube Shorts cut alongside 16:9 master."),
+    export_shorts: bool = typer.Option(
+        False,
+        "--export-shorts",
+        "--vertical-cut",
+        help="Automatically multiplex 9:16 vertical cut alongside 16:9 master.",
+    ),
     gemini_judge_model: str = typer.Option("gemini-3.1-pro", "--gemini-judge-model", help="Gemini judge model identifier (default: gemini-3.1-pro via Chrome CDP)"),
     grok_judge_model: str = typer.Option("grok-4.20-non-reasoning", "--grok-judge-model", help="xAI Grok judge model identifier (default: grok-4.20-0309-non-reasoning)"),
     short_test: bool = typer.Option(False, "--short-test", help="Use the explicitly authorized short integration-test contract; output is not production certified."),
@@ -754,12 +759,12 @@ def produce_film(
             except Exception as exc:
                 logger.warning(f"Fallback thumbnail generation notice: {exc}")
 
-        console.print(f"  + YouTube Thumbnail locked -> [dim]{thumbnail_path}[/dim]")
+        console.print(f"  + Thumbnail locked -> [dim]{thumbnail_path}[/dim]")
 
         shorts_path = None
         if export_shorts:
-            shorts_path = out_dir / f"{slug}_shorts_9x16.mp4"
-            console.print(f"\n[bold cyan][SHORTS] Multiplexing 9:16 vertical YouTube Shorts cut alongside 16:9 master...[/bold cyan]")
+            shorts_path = out_dir / f"{slug}_vertical_9x16.mp4"
+            console.print(f"\n[bold cyan][VERTICAL] Multiplexing 9:16 vertical cut alongside 16:9 master...[/bold cyan]")
             try:
                 import editor
                 if final_mp4 and Path(final_mp4).is_file():
@@ -769,13 +774,13 @@ def produce_film(
                         max_duration=45.0,
                         start_time=0.0,
                     )
-                    console.print(f"  + YouTube Shorts (9:16) produced -> [dim]{shorts_path}[/dim]")
+                    console.print(f"  + Vertical cut (9:16) produced -> [dim]{shorts_path}[/dim]")
                 else:
-                    logger.warning("Master video not found on disk; skipping Shorts multiplex.")
+                    logger.warning("Master video not found on disk; skipping vertical cut multiplex.")
             except Exception as exc:
-                logger.warning(f"Shorts multiplex generation notice: {exc}")
+                logger.warning(f"Vertical cut multiplex generation notice: {exc}")
 
-        shorts_line = f"\n[SHORTS] [b]YouTube Shorts (9:16):[/b] {shorts_path}" if (shorts_path and shorts_path.is_file()) else ""
+        shorts_line = f"\n[VERTICAL] [b]Vertical Cut (9:16):[/b] {shorts_path}" if (shorts_path and shorts_path.is_file()) else ""
         console.print(Panel(
             f"[bold green][DONE] Film Successfully Produced![/bold green]\n\n"
             f"[VIDEO] [b]Final MP4:[/b] {final_mp4}\n"

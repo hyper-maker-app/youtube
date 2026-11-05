@@ -1,7 +1,7 @@
 """Screenplay Reviewer (Dual-Agent Grok & Gemini Adversarial Quality Gate).
 
 Implements universal 7-layer cinematic evaluation:
-1. CTA Isolation (15 pts) - strictly confined to final sentence of Scene 38 only.
+1. CTA Isolation (15 pts) - strictly confined to the final sentence of the terminal scene.
 2. Veo Negative Guardrails (25 pts) - zero mirror faces, readable UI numbers, baked-in text.
 3. Thermodynamics & Physics (20 pts) - realistic phase transitions & atmospheric thermodynamics.
 4. Chronological Progression (15 pts) - multi-tier timescale (hours -> days -> months -> years -> cosmos).
@@ -9,7 +9,7 @@ Implements universal 7-layer cinematic evaluation:
 6. 2nd-Person POV Invariant (10 pts) - 100% scenes start with 'You ' or 'Your ' in English.
 
 When consult_ai=True:
-- Grok (xAI API) & Gemini (gemini_webapi Chrome CDP port 9223) inspect ALL 38 scenes in compact JSON.
+- Grok (xAI API) & Gemini (gemini_webapi Chrome CDP port 9223) inspect all scenes in compact JSON.
 - Pessimistic Scoring Gate: Final Score = min(Grok, Gemini).
 - Fail-Closed User Gate: Never silently fall back to DeepMind without explicit user approval.
 - Structured Defects: Directly tags responsible_skill and rule_to_learn.
@@ -484,8 +484,6 @@ class ScreenplayReviewer:
             defects.append("No structured world rules are available for the requested genre.")
         if self.aspect not in {"16:9", "9:16"}:
             defects.append("Unknown ending profile")
-        if genre.strip().lower() == "catastrophe" and not self.short_test and self.aspect == "16:9" and len(scenes) != 38:
-            defects.append("Standard catastrophe profile requires 38 scenes")
         if not scenes:
             defects.append("Screenplay is empty")
         for i, scene in enumerate(scenes, 1):
@@ -549,7 +547,7 @@ class ScreenplayReviewer:
         )
 
     def _audit_cta_isolation(self, scenes: list[dict[str, Any]]) -> tuple[int, list[str]]:
-        """Verify subscribe CTA is strictly confined to the final sentence of Scene 38."""
+        """Verify subscribe CTA is strictly confined to the final sentence of the terminal scene."""
         score = 15
         defects = []
         premature_cta_scenes = []
@@ -572,7 +570,7 @@ class ScreenplayReviewer:
                         last_sentence = sentences[-1]
                         if not _CTA_PATTERN.search(last_sentence):
                             defects.append(
-                                f"Scene {total_scenes} CTA is misplaced: Must be located strictly in the very last sentence."
+                                f"Scene {total_scenes} CTA is misplaced: Must be located strictly in the final sentence of the terminal scene (Scene {total_scenes})."
                             )
                             score = max(0, score - 3)
 

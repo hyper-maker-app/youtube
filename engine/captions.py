@@ -78,15 +78,15 @@ def _speaker_key(word: dict) -> tuple[str, str]:
         if role.casefold().startswith(("witness", "historical_witness", "interviewee")):
             speaker = "witness"
         else:
-            speaker = "nova"
+            speaker = "narrator"
     label = str(word.get("speaker_label") or "").strip()
     if not label:
         if speaker == "witness" and ":" in role:
             label = role.split(":", 1)[1].strip()
         elif speaker == "witness":
-            label = "Historical Witness"
+            label = "Witness"
         else:
-            label = getattr(config, "EXPLORER_CHARACTER_NAME", "Nova") or "Nova"
+            label = getattr(config, "EXPLORER_CHARACTER_NAME", "Narrator") or "Narrator"
     return speaker, label
 
 
@@ -166,14 +166,14 @@ def _group_events(
             events.append((start, end, "Pop", " ".join(parts)))
         return events
 
-    # 16:9 Longform mode: distinct styling and speaker tags for Nova vs Historical Witness
+    # 16:9 Longform mode: distinct styling and speaker tags for Narrator vs Historical Witness
     speaker, label = _speaker_key(group[0])
     is_witness = (speaker == "witness")
     # Longform dialogue is narrated voiceover, not on-camera character speech.
     # Keep one caption treatment and never label the narrator as a visible speaker.
-    style_name = "NovaSub"
+    style_name = "NarratorSub"
     # libass BGR colors:
-    # Nova tag: cyan-gold (&H00FFD447), active word: warm cyan (&H00FFE680)
+    # Narrator tag: cyan-gold (&H00FFD447), active word: warm cyan (&H00FFE680)
     # Witness tag: amber-orange (&H0047B8FF), active word: bright gold (&H0000D7FF)
     prefix = ""
     active_col = "&H00FFE680&"
@@ -197,23 +197,19 @@ def _group_events(
     return events
 
 
-def _resolve_era_stamp(topic: str | None) -> str:
-    try:
-        try:
-            from engine.services.character import detect_era, get_era_witness
-        except ImportError:
-            from services.character import detect_era, get_era_witness
-        era = detect_era(topic or "")
-        if era == "world_war_i":
-            return "DARDANELLES, OTTOMAN EMPIRE — 1915"
-        w1 = get_era_witness(era, 1)
-        stamp = w1.get("location_stamp") or "HISTORICAL ARCHIVE"
-        if topic and ("ANTIQUITY" in stamp or stamp == "HISTORICAL SITE — ANTIQUITY"):
-            clean_t = re.sub(r"[^\w\s-]", "", topic).strip().upper()[:32]
-            return f"{clean_t} — ARCHIVE"
-        return stamp
-    except Exception:
-        return "HISTORICAL ARCHIVE"
+def _resolve_era_stamp(topic: str | None, metadata: dict | None = None) -> str:
+    """Resolve location/era stamp dynamically based on input metadata or topic."""
+    if metadata:
+        stamp = metadata.get("location_stamp") or metadata.get("era_stamp")
+        if stamp:
+            return str(stamp).strip().upper()
+
+    if topic and str(topic).strip():
+        clean_t = re.sub(r"[^\w\s-]", "", str(topic)).strip().upper()[:36]
+        if clean_t:
+            return f"{clean_t} — FIELD ARCHIVE"
+
+    return "HISTORICAL ARCHIVE"
 
 
 def build_ass(
@@ -222,6 +218,7 @@ def build_ass(
     lang: str | None = None,
     *,
     topic: str | None = None,
+    metadata: dict | None = None,
     is_longform: bool | None = None,
     historical_stamp: bool = False,
 ) -> str:
@@ -244,7 +241,7 @@ def build_ass(
         # Opening historical era and location stamp (bottom-right, 0.4s -> 7.5s).
         stamp_end = min(limit, 7.5)
         if stamp_end > 0.6:
-            stamp_text = _ass_escape(_resolve_era_stamp(topic))
+            stamp_text = _ass_escape(_resolve_era_stamp(topic, metadata=metadata))
             events.append(
                 f"Dialogue: 2,{_ass_time(0.4)},{_ass_time(stamp_end)},EraStamp,,0,0,0,,{{\\fad(350,450)}}📍 {stamp_text}"
             )
@@ -277,6 +274,8 @@ def build_ass(
     longform_styles = ""
     if longform:
         longform_styles = (
+            f"\nStyle: NarratorSub,{config.CAPTION_FONT},40,&H00FFFFFF,&H000000FF,"
+            f"&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,2,2,80,80,52,1"
             f"\nStyle: NovaSub,{config.CAPTION_FONT},40,&H00FFFFFF,&H000000FF,"
             f"&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,2,2,80,80,52,1"
             f"\nStyle: EraStamp,{config.CAPTION_FONT},30,&H0080E6FF,&H000000FF,"

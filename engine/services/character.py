@@ -1,8 +1,8 @@
-"""Virtual Explorer character identity and character-sheet management.
+"""Generic character identity and character-sheet management.
 
-Defines the persistent persona (default: female explorer 'Nova') and enforces
-strict visual face/wardrobe locks across generations, with balanced A-Roll
-(on-camera lip-sync) vs B-Roll (cinematic voiceover) screen time pacing.
+Defines a generic, parametric character profile model designed for visual stability
+across AI models, supporting dynamic character attributes, wardrobe, and accessories
+without hardcoded narrative lore or static personas.
 Zero network/provider calls are made in this module.
 """
 
@@ -18,283 +18,80 @@ from typing import Any
 import config
 
 
-DEFAULT_TIME_DEVICE: str = (
-    "signature time-traveler artifact: an intricate celestial brass-and-bronze temporal chronometer wrist device "
-    "with subtle glowing gyroscopic rings and engraved astronomical glyphs worn on her left wrist, "
-    "accompanied by an antique miniature hourglass pendant on a slender bronze chain"
-)
-
-ERA_WARDROBE_CATALOG: dict[str, str] = {
-    "default": (
-        "weathered olive-green canvas safari utility jacket with rolled cuffs over a dark charcoal "
-        "moisture-wicking henley shirt, rugged tactical pocket detailing, practical field expedition trousers"
-    ),
-    "modern_expedition": (
-        "weathered olive-green canvas safari utility jacket with rolled cuffs over a dark charcoal "
-        "moisture-wicking henley shirt, rugged tactical pocket detailing, practical field expedition trousers"
-    ),
-    "egyptian": (
-        "historically authentic fine pleated unbleached linen kalasiris tunic with subdued earthy embroidery, "
-        "period-accurate braided sash, subtle sand-worn desert traveler draping"
-    ),
-    "greco_roman": (
-        "draped natural wool chiton and woven himation mantle in muted terracotta and ecru tones, "
-        "fastened with discreet antique bronze fibula brooches, authentic classical leather traveler sandals"
-    ),
-    "ottoman": (
-        "tailored silk-and-wool entari robe with delicate floral cordwork over wide fine-cotton salvar trousers, "
-        "understated traveling kaftan with subtle leather belt and period footwear"
-    ),
-    "neolithic": (
-        "expertly tailored stitched deerskin and soft woven flax tunic, natural sinew bindings, "
-        "raw-edge earthy fur-trimmed shoulder mantle, prehistoric amber bead accents"
-    ),
-    "world_war_i": (
-        "period-plausible ankle-length charcoal wool skirt, high-neck unbleached linen blouse, heavy olive wool field coat "
-        "with hand-stitched seams and small brass buttons, leather ankle boots; no synthetic fabrics or modern tactical gear"
-    ),
-    "medieval": (
-        "sturdy wool cotehardie dress with fitted sleeves, under-chemise of bleached flax, "
-        "earthy moss-green traveler cloak with hood, understated leather girdle belt"
-    ),
-    "mesopotamian": (
-        "fringed woolen kaunakes wrap with geometric woven border, layered unbleached linen under-tunic, "
-        "hammered copper wrist ornament"
-    ),
-    "victorian": (
-        "tailored 19th-century naturalist explorer ensemble, tailored tweed riding jacket with brass buttons, "
-        "high-collar linen blouse, pleated walking skirt, sturdy lace-up leather boots"
-    ),
-}
+# Generic default constants (empty / neutral for zero-hardcode invariant)
+DEFAULT_TIME_DEVICE: str = ""
+ERA_WARDROBE_CATALOG: dict[str, str] = {}
+ERA_WITNESS_CATALOG: dict[str, list[dict[str, str]]] = {}
 
 
 def detect_era(text: str) -> str:
-    """Infer historical era from topic or text keywords for wardrobe camouflage."""
-    lower = str(text or "").casefold()
-    if any(k in lower for k in ("gallipoli", "canakkale", "çanakkale", "1915", "world war i", "wwi", "first world war", "anzac", "ottoman empire", "dardanelles campaign", "seyit onbasi", "seyit onbaşı", "mecidiye", "pxixpeatiqc")):
-        return "world_war_i"
-    if any(k in lower for k in ("gobekli", "göbekli", "tepe", "neolithic", "stone age", "cave", "prehistoric", "ice age", "mammoth", "karahan", "tas tepeler", "taş tepeler", "catalhoyuk", "çatalhöyük")):
-        return "neolithic"
-    if any(k in lower for k in ("egypt", "pyramid", "pharaoh", "nile", "hawara", "tomb", "sphinx", "mummy", "luxor", "cairo")):
-        return "egyptian"
-    if any(k in lower for k in ("rome", "roman", "greek", "greece", "athens", "pompeii", "pompei", "vesuvius", "vezüv", "vezuv", "caesar", "sparta", "olympia", "gladiator", "qzzoxhjtliw")):
-        return "greco_roman"
-    if any(k in lower for k in ("ottoman", "istanbul", "constantinople", "sultan", "bazaar", "topkapi", "byzantine", "anatolia")):
-        return "ottoman"
-    if any(k in lower for k in ("medieval", "castle", "knight", "middle ages", "crusade", "viking", "feudal")):
-        return "medieval"
-    if any(k in lower for k in ("mesopotamia", "sumer", "babylon", "uruk", "tigris", "euphrates", "cuneiform")):
-        return "mesopotamian"
-    if any(k in lower for k in ("victorian", "19th century", "steampunk", "industrial", "darwin")):
-        return "victorian"
-    if any(k in lower for k in ("chernobyl", "nuclear", "reactor", "meltdown", "radiation", "titanic", "disaster", "explosion", "fire", "crash")):
-        return "modern_disaster"
-    if any(k in lower for k in ("apollo", "nasa", "space", "rocket", "astronaut", "moon landing", "shuttle", "iss", "satellite")):
-        return "modern_space"
-    return "default"
+    """Infer era identifier from input or return neutral default."""
+    if not text:
+        return "default"
+    cleaned = str(text).strip().casefold()
+    slug = re.sub(r"[^\w]+", "_", cleaned).strip("_")
+    return slug or "default"
 
 
-ERA_WITNESS_CATALOG: dict[str, list[dict[str, str]]] = {
-    "egyptian": [
-        {
-            "id": "witness_egypt_architect",
-            "name": "Chief Royal Architect Neferhotep",
-            "era_label": "1840 BC — Middle Kingdom Egypt",
-            "location_stamp": "HAWARA, EGYPT — 1840 BC",
-            "appearance": (
-                "50-year-old ancient Egyptian royal master architect from the 12th Dynasty reign of Pharaoh Amenemhat III, "
-                "weathered sun-bronzed Middle Eastern male facial features, deep intelligent dark eyes, closely shaved head, "
-                "wearing authentic Middle Kingdom fine pleated unbleached white linen shendyt kilt and broad collar, "
-                "holding an unrolled papyrus architectural blueprint scroll and bronze plumb-bob tool"
-            ),
-        },
-        {
-            "id": "witness_greek_historian",
-            "name": "Historian Herodotus of Halicarnassus",
-            "era_label": "450 BC — Classical Antiquity",
-            "location_stamp": "LAKE MOERIS, FAIYUM — 450 BC",
-            "appearance": (
-                "45-year-old ancient Greek traveler and historian Herodotus visiting Egypt, "
-                "bearded Mediterranean male scholar with gray-streaked dark curls, expressive weathered face, "
-                "wearing authentic classical draped natural wool chiton and terracotta himation travel cloak, "
-                "holding a wooden wax writing tablet and bronze stylus"
-            ),
-        },
-    ],
-    "greco_roman": [
-        {
-            "id": "witness_roman_engineer",
-            "name": "Master Engineer Marcus Vitruvius",
-            "era_label": "25 BC — Roman Empire",
-            "location_stamp": "ROME, ITALY — 25 BC",
-            "appearance": (
-                "52-year-old Roman imperial civil engineer and architect, stern weathered Mediterranean male face, "
-                "short cropped gray hair, wearing authentic wool tunic and off-white toga praetexta with bronze fibula, "
-                "holding a Roman groma surveying rod and wax parchment scroll"
-            ),
-        },
-        {
-            "id": "witness_greek_chronicler",
-            "name": "Chronicler Pausanias",
-            "era_label": "160 AD — Greco-Roman Era",
-            "location_stamp": "MEDITERRANEAN BASIN — 160 AD",
-            "appearance": (
-                "48-year-old Greek geographer and eyewitness traveler, full trimmed beard, deep-set observant eyes, "
-                "wearing woven linen chiton and weathered travel cloak, holding an ancient parchment codex"
-            ),
-        },
-        {
-            "id": "witness_pompeii_baker",
-            "name": "Master Baker Terentius Neo",
-            "era_label": "79 AD — Pompeii, Roman Empire",
-            "location_stamp": "PISTRINUM, POMPEII — 79 AD",
-            "appearance": (
-                "40-year-old Roman baker and pistrinum owner in Pompeii, weathered olive-skinned Mediterranean male face, "
-                "short dark curls, light dusting of flour on cheeks, wearing authentic Roman unbleached wool tunica with rope belt, "
-                "leather worker sandals, holding a wooden baker's peel beside a circular lava-stone grain mill and brick oven; "
-                "strictly NO medieval armor, NO sunglasses, NO wristwatches"
-            ),
-        },
-    ],
-    "world_war_i": [
-        {
-            "id": "witness_seyit_onbasi",
-            "name": "Corporal Seyit (Seyit Onbaşı)",
-            "era_label": "18 March 1915 — Mecidiye Bastion, Gallipoli",
-            "location_stamp": "RUMELİ MECİDİYE BASTION, ÇANAKKALE — 18 MARCH 1915",
-            "appearance": (
-                "26-year-old broad-shouldered muscular Ottoman artillery corporal Seyit Çabuk, "
-                "weathered Anatolian male face covered in powder soot and sweat, determined intense eyes, thick dark mustache, "
-                "wearing authentic 1915 Ottoman khaki wool service uniform, khaki cloth kabalak (Enveriye) folded sun-hat, "
-                "leather ammunition belt and worn field boots; strictly NO red fez, NO fez hat; "
-                "holding artillery rammer and grease cloth beside the 28cm Krupp coastal gun"
-            ),
-        },
-        {
-            "id": "witness_battery_commander",
-            "name": "Battery Commander Captain Nihat Bey",
-            "era_label": "18 March 1915 — Mecidiye Bastion",
-            "location_stamp": "DARDANELLES SHORE BATTERY — 1915",
-            "appearance": (
-                "35-year-old Ottoman artillery officer, dignified focused face with field mustache, soot on cheek, "
-                "wearing authentic 1915 Ottoman officer khaki wool field tunic with collar insignia, khaki cloth kabalak sun-hat, "
-                "leather map case and brass binoculars; strictly NO red fez, NO red felt hat"
-            ),
-        },
-    ],
-    "ottoman": [
-        {
-            "id": "witness_ottoman_architect",
-            "name": "Imperial Architect Sinan's Chief Kalfa Davud",
-            "era_label": "1557 AD — Ottoman Empire",
-            "location_stamp": "KONSTANTINIYYE — 1557 AD",
-            "appearance": (
-                "50-year-old Ottoman imperial master mason and hydraulic engineer, dignified bearded Anatolian male face, "
-                "wearing authentic 16th-century Ottoman quilted kavuk turban and earth-toned wool kaftan over silk entari, "
-                "holding brass dividers and an illuminated Ottoman architectural plan"
-            ),
-        },
-        {
-            "id": "witness_ottoman_traveler",
-            "name": "Traveler Evliya Çelebi",
-            "era_label": "1648 AD — Ottoman Era",
-            "location_stamp": "ISTANBUL — 1648 AD",
-            "appearance": (
-                "42-year-old Ottoman court chronicler and world traveler, sharp observant eyes, neatly trimmed mustache and beard, "
-                "wearing authentic dark green traveling kaftan and leather belt with brass inkhorn and reed pen"
-            ),
-        },
-    ],
-    "neolithic": [
-        {
-            "id": "witness_neolithic_carver",
-            "name": "Master Stone Carver Torkhan",
-            "era_label": "9600 BC — Pre-Pottery Neolithic",
-            "location_stamp": "TAŞ TEPELER, ANATOLIA — 9600 BC",
-            "appearance": (
-                "45-year-old Pre-Pottery Neolithic master monolith carver, rugged sun-weathered prehistoric male face, "
-                "long braided dark hair with bone beads, wearing stitched deerskin tunic and woven flax wrap, "
-                "holding a knapped flint chisel and heavy basalt hammerstone"
-            ),
-        },
-        {
-            "id": "witness_neolithic_elder",
-            "name": "Enclosure Keeper Arukh",
-            "era_label": "9500 BC — Pre-Pottery Neolithic",
-            "location_stamp": "GÖBEKLİTEPE — 9500 BC",
-            "appearance": (
-                "58-year-old Neolithic ritual astronomer and elder, gray-bearded weathered face with ochre markings, "
-                "wearing fur-trimmed hide mantle and carved limestone pendant"
-            ),
-        },
-    ],
-    "default": [
-        {
-            "id": "witness_ancient_builder",
-            "name": "Master Builder Kaelen",
-            "era_label": "Ancient Era — Primary Construction Phase",
-            "location_stamp": "HISTORICAL SITE — ANTIQUITY",
-            "appearance": (
-                "50-year-old historical master stonemason and chief architect of the era, "
-                "weathered authentic period-accurate male face, intelligent eyes, wearing historically authentic woven linen and wool craftsman attire, "
-                "holding period bronze measuring calipers and carved stone schematic"
-            ),
-        },
-        {
-            "id": "witness_ancient_chronicler",
-            "name": "Eyewitness Chronicler Damon",
-            "era_label": "Classical Era — Historical Record",
-            "location_stamp": "HISTORICAL ARCHIVE — ANTIQUITY",
-            "appearance": (
-                "46-year-old historical scholar and eyewitness chronicler, bearded weathered face, "
-                "wearing authentic period traveler cloak and natural linen tunic, holding an ancient manuscript scroll"
-            ),
-        },
-    ],
-}
-
-
-def get_era_witness(era: str = "default", slot: int = 1) -> dict[str, str]:
-    """Return a deterministic historical witness profile for the given era and slot (1 or 2)."""
+def get_era_witness(
+    era: str = "default",
+    slot: int = 1,
+    custom_witness: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Return a witness profile for the given era and slot."""
+    if custom_witness:
+        return dict(custom_witness)
     key = (era or "default").strip().casefold()
-    pool = ERA_WITNESS_CATALOG.get(key) or ERA_WITNESS_CATALOG["default"]
-    idx = max(0, min(len(pool) - 1, slot - 1))
-    return dict(pool[idx])
+    pool = ERA_WITNESS_CATALOG.get(key)
+    if pool:
+        idx = max(0, min(len(pool) - 1, slot - 1))
+        return dict(pool[idx])
+    return {
+        "id": f"witness_{slot}",
+        "name": f"Witness {slot}",
+        "era_label": era.replace("_", " ").title() if era and era != "default" else "Historical Record",
+        "location_stamp": f"{era.replace('_', ' ').upper()} — ON SITE" if era and era != "default" else "HISTORICAL ARCHIVE",
+        "appearance": "authentic individual in era-appropriate attire and setting",
+    }
 
 
 @dataclass(frozen=True)
 class CharacterProfile:
     """Immutable persistent character identity designed for visual stability across AI models."""
 
-    name: str = "Nova"
-    gender: str = "female"
-    age_range: str = "28 years old"
-    archetype: str = "adventurous field explorer & chronological time traveler"
-    face_traits: str = (
-        "striking hazel eyes with warm amber flecks, high defined cheekbones, natural photorealistic skin texture "
-        "with subtle faint freckles across nose bridge and upper cheeks, soft arched dark-brown eyebrows, "
-        "warm light-olive skin tone, symmetrical feminine facial bone structure, confident, intelligent, charismatic expression"
-    )
-    hair_traits: str = "dark chestnut-brown textured wavy hair, shoulder-length, practical loose adventurer cut"
+    name: str = "Protagonist"
+    gender: str = "unspecified"
+    age_range: str = "adult"
+    archetype: str = "lead subject"
+    face_traits: str = "natural skin texture, authentic facial features, focused and attentive expression"
+    hair_traits: str = "natural hair texture, practical cut"
     time_device: str = DEFAULT_TIME_DEVICE
-    wardrobe: str = ERA_WARDROBE_CATALOG["default"]
-    accessories: str = "compact wireless lapel microphone clipped to collar, distressed dark leather field wristband"
-    default_expression: str = "focused curiosity, adventurous enthusiasm, warm engaging presence"
+    wardrobe: str = "practical field attire with authentic textures"
+    accessories: str = ""
+    default_expression: str = "focused, attentive presence"
+    wardrobe_catalog: dict[str, str] = field(default_factory=dict)
 
     def wardrobe_for_era(self, era: str = "default") -> str:
-        """Return era-appropriate camouflage wardrobe."""
-        key = (era or "default").strip().casefold()
-        return ERA_WARDROBE_CATALOG.get(key, ERA_WARDROBE_CATALOG["default"])
+        """Return era-appropriate wardrobe from catalog or fallback to base wardrobe."""
+        if self.wardrobe_catalog:
+            key = (era or "default").strip().casefold()
+            return self.wardrobe_catalog.get(key, self.wardrobe)
+        return self.wardrobe
 
     def anchor_description(self, era: str = "default") -> str:
         """Condensed visual anchor string injected into prompts to lock appearance."""
         active_wardrobe = self.wardrobe_for_era(era) if era else self.wardrobe
-        return (
-            f"{self.name}, a {self.age_range} {self.gender} {self.archetype}; "
-            f"FACE LOCK: {self.face_traits}; HAIR: {self.hair_traits}; "
-            f"SIGNATURE ARTIFACT: {self.time_device}; "
-            f"WARDROBE CAMOUFLAGE: wearing {active_wardrobe}; {self.accessories}"
-        )
+        parts = [
+            f"{self.name}, a {self.age_range} {self.gender} {self.archetype}",
+            f"FACE LOCK: {self.face_traits}",
+            f"HAIR: {self.hair_traits}",
+        ]
+        if self.time_device:
+            parts.append(f"SIGNATURE ARTIFACT: {self.time_device}")
+        parts.append(f"WARDROBE: wearing {active_wardrobe}")
+        if self.accessories:
+            parts.append(self.accessories)
+        return "; ".join(parts)
 
 
 DEFAULT_CHARACTER = CharacterProfile()
@@ -311,8 +108,8 @@ class CharacterSheetSpec:
         return (
             f"CHARACTER REFERENCE SHEET [FRONTAL CLOSE-UP]: {self.character.anchor_description(era)}. "
             "Front-facing portrait, eye-level camera, direct gaze at viewer, neutral closed mouth, "
-            "subtle friendly confidence. Professional documentary studio lighting, soft fill light, "
-            "sharp focus on facial micro-features and skin pores, 8k resolution, cinematic photorealism, "
+            "subtle friendly confidence. Professional studio lighting, soft fill light, "
+            "sharp focus on facial micro-features and skin texture, 8k resolution, cinematic photorealism, "
             f"{self.aspect_ratio} composition. ZERO text, ZERO watermarks."
         )
 
@@ -324,44 +121,38 @@ class CharacterSheetSpec:
             f"documentary photography quality, {self.aspect_ratio} composition. ZERO text, ZERO watermarks."
         )
 
-    def field_action_prompt(self, location_hint: str = "ancient expedition site", era: str = "default") -> str:
+    def field_action_prompt(self, location_hint: str = "on location", era: str = "default") -> str:
         return (
-            f"CHARACTER REFERENCE SHEET [FIELD VLOG ACTION]: {self.character.anchor_description(era)}. "
-            f"Mid-shot holding camera in selfie/vlog style on location at {location_hint}. "
-            "Expedition background with cinematic atmospheric depth of field blur, natural golden hour lighting, "
-            "expressive speech posture, realistic fabric creases on utility jacket, "
+            f"CHARACTER REFERENCE SHEET [FIELD ACTION]: {self.character.anchor_description(era)}. "
+            f"Mid-shot holding camera in vlog style on location at {location_hint}. "
+            "Background with cinematic atmospheric depth of field blur, natural lighting, "
+            "expressive posture, realistic fabric creases, "
             f"photorealistic 8k documentary frame, {self.aspect_ratio} composition. ZERO text, ZERO watermarks."
         )
 
     def artifact_macro_prompt(self) -> str:
+        item = self.character.time_device or "character signature item"
         return (
-            f"CHARACTER REFERENCE SHEET [TEMPORAL ARTIFACT CLOSE-UP]: Extreme macro close-up of {self.character.time_device}. "
-            "Worn on female wrist with natural warm olive skin and subtle fine freckles, intricate rotating brass gears, "
-            "subtle glowing gyroscopic astrolabe rings, crystalline sapphire face, ancient celestial engravings. "
-            f"Dramatic cinematic directional macro lighting, shallow depth of field, 8k photorealism, {self.aspect_ratio} composition. "
+            f"CHARACTER REFERENCE SHEET [PROP CLOSE-UP]: Extreme macro close-up of {item}. "
+            "Authentic surface textures, fine material details, "
+            f"dramatic cinematic directional macro lighting, shallow depth of field, 8k photorealism, {self.aspect_ratio} composition. "
             "ZERO text, ZERO watermarks."
         )
 
     def era_camouflage_prompt(self, era: str) -> str:
         return (
-            f"CHARACTER REFERENCE SHEET [ERA CAMOUFLAGE - {era.upper()}]: {self.character.anchor_description(era)}. "
-            f"Medium full shot of host walking through historically authentic {era} setting, perfectly blending in with local population "
-            "while her subtle glowing temporal chronometer wrist device remains discreetly visible on her left wrist. "
+            f"CHARACTER REFERENCE SHEET [WARDROBE VARIATION - {era.upper()}]: {self.character.anchor_description(era)}. "
+            f"Medium full shot of character walking through authentic {era} setting. "
             f"Golden hour atmospheric volumetric lighting, authentic textures, 8k photorealistic cinema, {self.aspect_ratio} composition. "
             "ZERO text, ZERO watermarks."
         )
 
     def to_manifest(self) -> dict[str, Any]:
-        era_sheets = {
-            f"camouflage_{era}": self.era_camouflage_prompt(era)
-            for era in ("egyptian", "greco_roman", "ottoman", "neolithic", "medieval", "victorian")
-        }
         sheets = {
             "frontal": self.frontal_portrait_prompt(),
             "three_quarter": self.three_quarter_prompt(),
             "field_action": self.field_action_prompt(),
-            "temporal_artifact": self.artifact_macro_prompt(),
-            **era_sheets,
+            "artifact_macro": self.artifact_macro_prompt(),
         }
         return {
             "name": self.character.name,
@@ -374,23 +165,12 @@ class CharacterSheetSpec:
 
 def get_active_character() -> CharacterProfile:
     """Resolve active character profile from environment or default."""
-    char_name = getattr(config, "EXPLORER_CHARACTER_NAME", "Nova")
-    if char_name and char_name.strip().casefold() != "nova":
-        return CharacterProfile(name=char_name.strip().capitalize())
-    return DEFAULT_CHARACTER
+    char_name = getattr(config, "EXPLORER_CHARACTER_NAME", "") or "Protagonist"
+    return CharacterProfile(name=char_name.strip().capitalize())
 
 
 def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "explore") -> dict[str, Any]:
-    """Classify a shot into Nova Solo A-Roll, Historical Witness Interview, or Pure Architectural B-Roll.
-
-    User Invariant:
-    - Both Nova's solo time-traveler segments AND face-to-face historical witness interviews exist,
-      and are clearly differentiated from each other and from pure B-Roll.
-    - Nova on-camera A-Roll is strictly bounded to 3 pivotal shots (Opening, Midpoint, Closing).
-    - When total_shots >= 8, 2 dedicated Historical Witness Interview shots are scheduled
-      at ~28% and ~72% of the timeline (e.g. Shot 8 and Shot 20 in a 28-shot documentary).
-    - All remaining shots are 100% people-free architectural/archaeological B-Roll.
-    """
+    """Classify a shot into Host A-Roll, Eyewitness Interview, or Pure B-Roll."""
     is_opening = (shot_index == 1)
     is_closing = (shot_index == total_shots and total_shots >= 3)
     mid_index = max(2, (total_shots // 2) + 1)
@@ -406,7 +186,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
     if is_opening:
         return {
             "role": "a_roll",
-            "speaker": "nova",
+            "speaker": "narrator",
             "is_speaking_avatar": True,
             "is_witness_interview": False,
             "camera_style": "vlog_selfie_host",
@@ -416,7 +196,7 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
     if is_closing:
         return {
             "role": "a_roll",
-            "speaker": "nova",
+            "speaker": "narrator",
             "is_speaking_avatar": True,
             "is_witness_interview": False,
             "camera_style": "vlog_selfie_host",
@@ -426,11 +206,11 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
     if is_turning_point:
         return {
             "role": "a_roll",
-            "speaker": "nova",
+            "speaker": "narrator",
             "is_speaking_avatar": True,
             "is_witness_interview": False,
             "camera_style": "vlog_selfie_reaction",
-            "description": "On-camera host reaction: reacting to pivotal clue or shocking reveal",
+            "description": "On-camera host reaction: reacting to pivotal clue or reveal",
             "lip_sync_required": False,
         }
     if shot_index == witness_1_idx:
@@ -441,8 +221,8 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_speaking_avatar": False,
             "is_witness_interview": True,
             "camera_style": "historical_witness_interview",
-            "description": "Field interview with primary historical eyewitness in authentic period setting",
-            "lip_sync_required": False,  # Witness: closed-mouth, ADR-002
+            "description": "Field interview with eyewitness in authentic setting",
+            "lip_sync_required": False,
         }
     if shot_index == witness_2_idx:
         return {
@@ -452,13 +232,13 @@ def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "
             "is_speaking_avatar": False,
             "is_witness_interview": True,
             "camera_style": "historical_witness_interview",
-            "description": "Field interview with secondary historical chronicler in authentic period setting",
-            "lip_sync_required": False,  # Witness: closed-mouth, ADR-002
+            "description": "Field interview with secondary witness in authentic setting",
+            "lip_sync_required": False,
         }
 
     return {
         "role": "b_roll",
-        "speaker": "nova",
+        "speaker": "narrator",
         "is_speaking_avatar": False,
         "is_witness_interview": False,
         "camera_style": "cinematic_documentary",
@@ -474,7 +254,7 @@ def compile_character_shot_prompt(
     aspect_ratio: str = "16:9",
     era: str = "default",
 ) -> str:
-    """Compile photorealistic prompt for a Nova A-Roll shot incorporating the character anchor."""
+    """Compile photorealistic prompt for an on-camera character shot incorporating character anchor."""
     style_str = f"{aspect_ratio} widescreen composition, photorealistic 8k documentary cinema"
     camera_style = shot_role_info.get("camera_style", "vlog_selfie_host")
 
@@ -488,14 +268,14 @@ def compile_character_shot_prompt(
     elif camera_style == "vlog_selfie_reaction":
         framing = (
             "Medium eye-level shot with complete head and shoulders fully inside frame "
-            "(generous headroom above head, NEVER crop head), host turning toward camera with wide amazed eyes and a closed neutral mouth, "
-            "spontaneous real-time discovery reaction and expressive gestures toward background phenomenon; all narration is external voiceover"
+            "(generous headroom above head, NEVER crop head), host turning toward camera with wide attentive eyes and a closed neutral mouth, "
+            "spontaneous real-time discovery reaction and expressive posture; all narration is external voiceover"
         )
     else:
         framing = "Medium eye-level shot with full headroom, host standing in environment inspecting surroundings with a closed neutral mouth; all narration is external voiceover"
 
     return (
-        f"[SOLO TIME-TRAVELER HOST A-ROLL]: {character.anchor_description(era=era)}. {framing}. "
+        f"[CHARACTER A-ROLL]: {character.anchor_description(era=era)}. {framing}. "
         f"Background: {environment_scene}, deep atmospheric perspective, cinematic lighting, "
         f"accurate environmental color grading, authentic field dust and texture, {style_str}. "
         "STRICT VISUAL MANDATE: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
@@ -510,19 +290,18 @@ def compile_witness_shot_prompt(
     aspect_ratio: str = "16:9",
     era: str = "default",
 ) -> str:
-    """Compile photorealistic prompt for a Historical Witness field interview shot (distinct from Nova A-Roll)."""
-    style_str = f"{aspect_ratio} widescreen composition, photorealistic 8k historical documentary cinema"
-    name = witness.get("name", "Historical Eyewitness")
-    era_label = witness.get("era_label", "Antiquity")
-    appearance = witness.get("appearance", "authentic historical figure in period attire")
+    """Compile photorealistic prompt for an interview shot."""
+    style_str = f"{aspect_ratio} widescreen composition, photorealistic 8k documentary cinema"
+    name = witness.get("name", "Eyewitness")
+    era_label = witness.get("era_label", "Setting")
+    appearance = witness.get("appearance", "authentic individual in era-appropriate attire")
     return (
-        f"[HISTORICAL EYEWITNESS INTERVIEW — {name.upper()} ({era_label})]: "
+        f"[EYEWITNESS INTERVIEW — {name.upper()} ({era_label})]: "
         f"Medium eye-level documentary interview portrait of {appearance}, "
         "complete head and shoulders fully visible inside frame with generous headroom, "
         "quiet attentive expression with a closed neutral mouth; all narration is external voiceover, "
-        "warm flickering torchlight and natural directional key light on weathered skin textures. "
-        f"Background: {environment_scene}, authentic historical era atmosphere, shallow depth of field, {style_str}. "
-        "NO modern safari hats, NO modern clothing. "
+        "natural directional key light on weathered skin textures. "
+        f"Background: {environment_scene}, authentic setting atmosphere, shallow depth of field, {style_str}. "
         "STRICT VISUAL MANDATE: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
         "ZERO year numbers written on image, ZERO name plaques, ZERO title banners, ZERO graphic cards, "
         "ZERO caption boxes, ZERO lower thirds, ZERO subtitles, ZERO watermarks."
@@ -555,12 +334,9 @@ def get_grok_character_dna(character: CharacterProfile | None = None, era: str =
             facial_dna=char.face_traits,
             hair_grooming=char.hair_traits,
             clothing_style=char.wardrobe_for_era(era),
-            key_anchors=[char.time_device, char.accessories],
+            key_anchors=[char.time_device, char.accessories] if char.time_device or char.accessories else [],
         )
         identity = scaffold.get("core_identity", "")
         return f"[CHARACTER_DNA: {char.name.upper()} = {identity}, {char.face_traits}, {char.hair_traits}, wearing {char.wardrobe_for_era(era)}]"
     except Exception:
         return f"[CHARACTER_DNA: {char.name.upper()} = {char.anchor_description(era)}]"
-
-
-

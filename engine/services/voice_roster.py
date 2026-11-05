@@ -116,7 +116,7 @@ _TITLES_PATTERN = re.compile(
 
 _FEMALE_MARKERS: tuple[str, ...] = (
     "woman", "female", "lady", "queen", "priestess", "bree", "hannah", "alexis",
-    "maeve", "sienna", "mother", "sister", "nova", "empress", "princess", "duchess",
+    "maeve", "sienna", "mother", "sister", "empress", "princess", "duchess",
     "abbess", "nun", "matron", "maiden", "daughter", "wife",
 )
 
@@ -149,7 +149,7 @@ class VoiceAssigner:
         role = str(role_raw or "narrator").strip().casefold()
 
         # 1. Main narrator always retains primary voice
-        if role in ("narrator", "host_nova", "host_question", "default"):
+        if role in ("narrator", "host", "host_question", "default"):
             return self.primary_voice
 
         # 2. Extract normalized entity identifier
