@@ -1,0 +1,25 @@
+{
+  "version": "urban-infiltration-director-review-rules-v1",
+  "rules": [
+    {
+      "id": "urban-infiltration-director-battery-state-of-charge",
+      "category": "resource_sanity",
+      "scope": "scene",
+      "all_patterns": [
+        "\\bbattery\\s+state\\s+of\\s+charge\\b"
+      ],
+      "quantity_pattern": "\\bbattery\\s+state\\s+of\\s+charge\\s*(?:is\\s+at|is|at|:|=)\\s*(\\d+(?:\\.\\d+)?)\\s*%(?!\\s+of\\s+(?!full\\b))",
+      "violation_if_greater_than": 100,
+      "deduction": 10,
+      "description": "An explicitly stated battery state of charge as a percentage of full charge cannot exceed 100%."
+    },
+    {
+      "id": "outage-cold-food-storage",
+      "kind": "semantic",
+      "category": "world_law",
+      "scope": "scene",
+      "description": "During a power outage, perishable-food safety depends on time, actual temperature, and whether refrigeration remains closed; a closed refrigerator keeps food cold for approximately four hours under the cited guidance. Avoid a universal guaranteed spoilage time.",
+      "source_url": "https://www.ready.gov/sites/default/files/2024-03/ready.gov_power-outage_hazard-info-sheet.pdf"
+    }
+  ]
+}

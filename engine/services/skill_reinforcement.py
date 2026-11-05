@@ -98,9 +98,10 @@ class SkillResolver:
 class SkillReinforcementService:
     """Applies learned rules to .grok/skills/<slug>/SKILL.md under strict health bounds."""
 
-    def __init__(self, skills_dir: Path | None = None) -> None:
+    def __init__(self, skills_dir: Path | None = None, *, allow_writes: bool = False) -> None:
         self.skills_dir = skills_dir or _SKILLS_DIR
         self.resolver = SkillResolver(self.skills_dir)
+        self.allow_writes = allow_writes is True
 
     def reinforce_from_defects(
         self,
@@ -144,6 +145,9 @@ class SkillReinforcementService:
         category: str = "",
     ) -> dict[str, Any]:
         """Apply a single learned invariant to SKILL.md under the <500 lines limit."""
+        if not self.allow_writes:
+            return {"skill_slug": skill_slug, "applied": False,
+                    "reason": "Skill writes disabled; explicit opt-in required.", "rule": rule}
         skill_file = self.skills_dir / skill_slug / "SKILL.md"
         if not skill_file.is_file():
             return {
@@ -232,14 +236,8 @@ class SkillReinforcementService:
             prefix = parts[0] + active_header + "\n"
             suffix = parts[1]
 
-            # Enforce 150 line cap on learned section: keep last 9 + new one
-            if len(lines) >= 150:
-                suffix_lines = [l for l in suffix.splitlines() if l.strip()]
-                kept_invariants = [l for l in suffix_lines if l.strip().startswith("-")][-9:]
-                new_suffix = "\n" + "\n".join(kept_invariants) + f"\n{bullet}\n"
-                new_content = prefix + new_suffix
-            else:
-                new_content = prefix + f"\n{bullet}" + suffix
+            # Preserve all existing sections and rules, including long skills.
+            new_content = prefix + f"\n{bullet}" + suffix
         else:
             # Check 500 lines limit before adding new section
             if len(lines) >= 480:

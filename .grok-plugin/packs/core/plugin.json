@@ -17,15 +17,10 @@
   "skills": [
     ".grok/skills/grok-imagine-cinematic-studio",
     ".grok/skills/studio-director",
-    ".grok/skills/mega-production-architect",
     ".grok/skills/production-bible-workflow",
     ".grok/skills/cinematic-studio-meta-installer",
     ".grok/skills/skill-agent-architect",
     ".grok/skills/github-repo-manager",
-    ".grok/skills/character-dna-extractor",
-    ".grok/skills/identity-lock-specialist",
-    ".grok/skills/multi-character-identity-arbiter",
-    ".grok/skills/costume-wardrobe-continuity",
     ".grok/skills/imagine-prompt-master",
     ".grok/skills/grok-imagine-template-library",
     ".grok/skills/imagine-model-overrides",
@@ -40,7 +35,14 @@
     ".grok/skills/chain-qa-protocol",
     ".grok/skills/cinematic-skill-creator",
     ".grok/skills/grok-doctor",
-    ".grok/skills/parallel-brief-dispatcher"
+    ".grok/skills/parallel-brief-dispatcher",
+    ".grok/skills/catastrophe-director",
+    ".grok/skills/deepsea-survival-director",
+    ".grok/skills/micro-survival-director",
+    ".grok/skills/planetary-catastrophe-director",
+    ".grok/skills/urban-infiltration-director",
+    ".grok/skills/viral-retention-director",
+    ".grok/skills/youtube-factory"
   ],
   "commands": [
     "commands/cinematic.md",

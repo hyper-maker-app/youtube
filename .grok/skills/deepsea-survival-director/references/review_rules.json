@@ -1,0 +1,25 @@
+{
+  "version": "deepsea-survival-director-review-rules-v1",
+  "rules": [
+    {
+      "id": "deepsea-survival-director-battery-state-of-charge",
+      "category": "resource_sanity",
+      "scope": "scene",
+      "all_patterns": [
+        "\\bbattery\\s+state\\s+of\\s+charge\\b"
+      ],
+      "quantity_pattern": "\\bbattery\\s+state\\s+of\\s+charge\\s*(?:is\\s+at|is|at|:|=)\\s*(\\d+(?:\\.\\d+)?)\\s*%(?!\\s+of\\s+(?!full\\b))",
+      "violation_if_greater_than": 100,
+      "deduction": 10,
+      "description": "An explicitly stated battery state of charge as a percentage of full charge cannot exceed 100%."
+    },
+    {
+      "id": "seawater-pressure-depth",
+      "kind": "semantic",
+      "category": "world_law",
+      "scope": "scene",
+      "description": "For seawater under approximately normal terrestrial conditions, external hydrostatic pressure increases with depth; it increases by roughly one atmosphere per 10 metres. Consider fluid density, atmospheric pressure, pressure units, and whether a reading is gauge or absolute before deciding a contradiction.",
+      "source_url": "https://oceanservice.noaa.gov/facts/pressure.html"
+    }
+  ]
+}

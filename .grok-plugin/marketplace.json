@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "grok-imagine-cinematic-studio",
-      "description": "Full cinematic suite v3.11.3 — 25 Role-Card core agents, 64 skills, slash commands (catalog pin SHA matches tree after pin). Wave A P0 specialists included. Recommended one-click install.",
+      "description": "Full cinematic suite v3.11.3 — historical Role-Card roster, current skills, slash commands (catalog pin SHA matches tree after pin). Wave A P0 specialists included. Recommended one-click install.",
       "category": "creative",
       "version": "3.11.4",
       "source": {
@@ -83,7 +83,7 @@
     },
     {
       "name": "grok-imagine-nsfw",
-      "description": "Optional 18+ pack (SpaceXAI AUP https://x.ai/legal/acceptable-use-policy). R-rated fictional imaginary adults only. Requires nsfw attest (--i-am-18 --imaginary-adults --not-a-real-person --acknowledge-aup). Not affiliated with xAI/SpaceXAI.",
+      "description": "Legacy 18+ NSFW command entry subject to the SpaceXAI AUP and imaginary-adults attestation; no NSFW skills are currently shipped in this pack.",
       "category": "creative",
       "version": "3.11.4",
       "source": {

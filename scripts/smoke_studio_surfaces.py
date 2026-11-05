@@ -43,47 +43,16 @@ def main() -> int:
         errors.append(f"actions: {exc}")
         print("FAIL studio_core.actions", exc)
 
-    try:
-        import fastapi  # noqa: F401
-        from fastapi.testclient import TestClient
-        from studio_api.app import create_app
+    from typer.testing import CliRunner
+    from cinematic_studio_cli import app
 
-        client = TestClient(create_app())
-        assert client.get("/health").status_code == 200
-        assert client.get("/").status_code == 200
-        print("OK  studio_api /health")
-    except ImportError:
-        print("SKIP studio_api (fastapi not installed)")
-    except Exception as exp:  # noqa: BLE001
-        errors.append(f"api: {exp}")
-        print("FAIL studio_api", exp)
-
-    try:
-        import nicegui  # noqa: F401
-        from web_nicegui.app import create_app as create_nicegui
-
-        create_nicegui()
-        print("OK  web_nicegui create_app")
-    except ImportError:
-        print("SKIP web_nicegui (nicegui not installed)")
-    except Exception as exp:  # noqa: BLE001
-        errors.append(f"nicegui: {exp}")
-        print("FAIL web_nicegui", exp)
-
-    react_pkg = ROOT / "web_react" / "package.json"
-    if react_pkg.is_file():
-        try:
-            import json
-
-            pkg = json.loads(react_pkg.read_text(encoding="utf-8"))
-            scripts = pkg.get("scripts") or {}
-            assert "dev" in scripts and "build" in scripts
-            print("OK  web_react package.json", pkg.get("version", "?"))
-        except Exception as exp:  # noqa: BLE001
-            errors.append(f"web_react: {exp}")
-            print("FAIL web_react", exp)
-    else:
-        print("SKIP web_react (package.json missing)")
+    runner = CliRunner()
+    for command in ("web", "api", "web-react"):
+        result = runner.invoke(app, [command])
+        if result.exit_code != 1 or "retired" not in result.stdout.lower():
+            errors.append(f"{command}: unexpected retirement response")
+        else:
+            print(f"OK  {command} retirement")
 
     if errors:
         print("SMOKE FAILED:", "; ".join(errors))

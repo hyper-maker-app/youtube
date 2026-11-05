@@ -110,3 +110,9 @@ Generative AI video models fail when rendering urban survival scenes by generati
 2. **Strictly 2nd-Person Singular POV ("You / Your"):** Every scene opens with "You " or "Your ". The viewer is the tactical survivor navigating the dead metropolis.
 3. **In-Media-Res Crisis Hook (First 3 Seconds):** Immediate physical disruption in Scene 1 (the hum of the city dying instantly, magnetic locks snapping shut, elevator plunging into darkness).
 4. **Clean Narration Gateway:** Spoken prose must be stripped of all bracketed effects (`[bolt cutters snap]`, `(whispering)`) and scene headers prior to voice generation.
+
+## Structured Reviewer Rules
+
+The machine-readable resource bounds for review are in `references/review_rules.json`. An explicitly stated battery state of charge expressed as a percentage of full charge cannot exceed 100 percent. These checks cover only explicit stated quantities; evaluate domain-specific physics and conditions using the full directing instructions above.
+
+During a power outage, perishable-food safety depends on time, actual temperature, and whether refrigeration remains closed; a closed refrigerator keeps food cold for approximately four hours under the cited guidance. Avoid a universal guaranteed spoilage time. Source: https://www.ready.gov/sites/default/files/2024-03/ready.gov_power-outage_hazard-info-sheet.pdf

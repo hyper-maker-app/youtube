@@ -51,3 +51,20 @@ def test_repetition_never_replaces_original_narration():
     result,diagnostics = lint_scenes([scene,scene])
     assert result == [scene,scene]
     assert any("repetitive" in d for d in diagnostics)
+
+def test_direct_negative_visuals_do_not_trigger_but_positive_or_ambiguous_do():
+    negative = "A shelter, no faces, no dials, no gauges, no readable text"
+    assert _strip_veo_violations(negative, 0)[1] is None
+    assert _strip_veo_violations("A shelter, no faces, gauges", 0)[1]
+    assert _strip_veo_violations("A shelter, no faces or gauges", 0)[1]
+
+def test_linter_errors_block_review_even_with_two_high_judge_scores(monkeypatch):
+    from engine.services.screenplay_reviewer import ScreenplayReviewer
+    reviewer = ScreenplayReviewer(xai_api_key="test", short_test=True)
+    judge = lambda *args, **kwargs: {"screenplay_score": 99, "defects": []}
+    monkeypatch.setattr(reviewer, "_consult_grok_critique", judge)
+    monkeypatch.setattr(reviewer, "_consult_gemini_critique", judge)
+    scenes = [{"narration": "You wait. You subscribe.", "visual_prompt": "A gauge", "micro_math": "1 second"}]
+    card = reviewer.review(scenes, consult_ai=True)
+    assert not card.passed
+    assert any("Veo visual guardrail violation" in defect for defect in card.defects)

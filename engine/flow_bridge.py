@@ -32,6 +32,7 @@ if str(_ENGINE_DIR) not in sys.path:
 import captions
 import config
 import editor
+from providers.base import HandoffPending
 from providers.factory import (
     get_image_provider,
     get_llm_provider,
@@ -68,6 +69,8 @@ from services.director_agent import (
 from services.duration_packer import pack_durations_to_veo_blocks, is_data_broll_scene
 from services.multimodal_audit import audit_with_adapter
 from services.proxy_generator import build_audit_proxy
+from services.sampled_video_audit import audit_sampled_frames
+from services.surgical_patcher import execute_selective_patch, surgically_splice_timeline, media_signature, validate_av_timeline
 from services.prompt_compiler import compile_udse_prompt
 try:
     from services.series_architect import build_canonical_rigor_mortis_world_state
@@ -249,20 +252,17 @@ async def _run_video_qa_gate(
     video_qa_model: str,
     max_patch_passes: int,
     video_qa_adapter: Any | None,
+    render_block: Any | None = None,
+    validate_patch: Any | None = None,
+    simulated_defect: dict[str, Any] | None = None,
+    video_qa_batch_size: int = 12,
 ) -> None:
-    """Run full-video QA and fail closed before final assembly.
-
-    Selective patching is deliberately not claimed here. The existing patch primitive
-    needs a safe block renderer and a post-patch re-audit callback; this production path
-    does not have both without inventing provider prompt text or changing authored scenes.
-    """
-    if max_patch_passes < 0 or max_patch_passes > 2:
-        raise ValueError("max_patch_passes must be between 0 and 2")
+    """Audit, perform at most one selective patch, and fail closed on uncertainty."""
+    if max_patch_passes not in (0, 1):
+        raise ValueError("max_patch_passes must be 0 or 1")
     if video_qa_adapter is None and dry_run:
         logger.info("Video QA is bypassed for explicit dry-run simulation.")
         return
-    if video_qa_adapter is None and not os.getenv("GEMINI_API_KEY", "").strip():
-        raise RuntimeError("Live video QA requires an injected adapter or GEMINI_API_KEY")
 
     proxy_scenes = [
         {
@@ -274,66 +274,281 @@ async def _run_video_qa_gate(
     ]
     audit_adapter = video_qa_adapter
     if audit_adapter is None:
-        llm = get_llm_provider("gemini_flash", model=video_qa_model)
-
-        async def audit_adapter(proxy: Path, _llm=llm):
-            return await _llm.review_images([proxy], "Return strict block-level video QA JSON.")
+        async def audit_adapter(proxy: Path):
+            return await asyncio.to_thread(audit_sampled_frames, proxy, proxy_scenes, model=video_qa_model,
+                                           max_images_per_request=video_qa_batch_size)
 
     proxy_source = out_dir / "video_qa_source.mp4"
     proxy_path = out_dir / "video_qa_proxy.mp4"
-    editor.render(
-        block_paths=block_paths,
-        vo_path=vo_path,
-        out_path=proxy_source,
-        punch_times=[],
-        dry_run=False,
-        target_len=measured_duration + config.TAIL_HOLD,
-        timeline_durations=[float(s["audio_t1"]) - float(s["audio_t0"]) for s in aligned_scenes],
-    )
-    build_audit_proxy(proxy_source, proxy_path, proxy_scenes, aspect_ratio=aspect_ratio)
-    response = audit_adapter(proxy_path)
-    report_payload = await response if inspect.isawaitable(response) else response
-    audit_result = audit_with_adapter(
-        lambda _proxy: report_payload,
-        proxy_path,
-        expected_block_ids=[item["block_id"] for item in proxy_scenes],
-    )
+    sample_manifests = []
+    batch_metadata = []
+    async def audit(path: Path):
+        response = audit_adapter(path)
+        payload = await response if inspect.isawaitable(response) else response
+        parsed = audit_with_adapter(
+            lambda _proxy: payload, path,
+            expected_block_ids=[item["block_id"] for item in proxy_scenes],
+        )
+        sample_manifests.append(payload.get("sample_manifest") if isinstance(payload, dict) else None)
+        batch_metadata.append({"batches": payload.get("batches"),
+                               "max_images_per_request": payload.get("max_images_per_request")}
+                              if isinstance(payload, dict) else None)
+        return parsed
+
+    try:
+        editor.render(
+            block_paths=block_paths,
+            vo_path=vo_path,
+            out_path=proxy_source,
+            punch_times=[],
+            dry_run=False,
+            target_len=measured_duration + config.TAIL_HOLD,
+            timeline_durations=[float(s["audio_t1"]) - float(s["audio_t0"]) for s in aligned_scenes],
+        )
+        build_audit_proxy(proxy_source, proxy_path, proxy_scenes, aspect_ratio=aspect_ratio)
+        audit_result = await audit(proxy_path)
+    except Exception as exc:
+        (out_dir / "video_qa_report.json").write_text(json.dumps({
+            "model": video_qa_model,
+            "audit_scope": "sampled_frames_only" if video_qa_adapter is None else "injected_adapter",
+            "overall_verdict": "NEEDS_REVIEW", "review_required": True,
+            "error_type": type(exc).__name__,
+        }, indent=2), encoding="utf-8")
+        raise
+    initial_audit = audit_result
+    initial_patch_blocks = list(audit_result.patch_blocks)
+    patch_status = "not_needed"
+    patch_message = None
+    replacements: dict[int, Path] = {}
+    post_result = None
+    patch_validation = None
+    simulated_id = simulated_defect.get("block_id") if simulated_defect else None
+    normalise_id = lambda value: re.sub(r"(\d+)", lambda m: str(int(m.group(1))), value)
+    simulation_detected = bool(simulated_id and any(
+        normalise_id(block_id) == normalise_id(simulated_id) for block_id in initial_patch_blocks
+    ))
+    if simulated_id and not simulation_detected:
+        patch_status = "needs_review"
+        patch_message = "The video QA adapter did not flag the simulated defect for re-render."
+    elif simulated_id and any(normalise_id(block_id) != normalise_id(simulated_id)
+                              for block_id in initial_patch_blocks):
+        patch_status = "needs_review"
+        patch_message = "Simulation audit flagged additional blocks; no selective render was attempted."
+    elif initial_patch_blocks:
+        patch_status = "not_applied"
+        if max_patch_passes and render_block is not None:
+            loop = asyncio.get_running_loop()
+            # The parser accepts equivalent zero padding, while preserving the adapter's IDs.
+            normalized = lambda value: re.sub(r"(\d+)", lambda m: str(int(m.group(1))), value)
+            ids_by_path = {
+                path: next(block.block_id for block in audit_result.blocks
+                           if normalized(block.block_id) == normalized(proxy_scenes[index]["block_id"]))
+                for index, path in enumerate(block_paths)
+            }
+            index_by_id = {block_id: index for index, block_id in enumerate(ids_by_path.values())}
+            patched_source = out_dir / "video_qa_patched.mp4"
+            patched_proxy = out_dir / "video_qa_patched_proxy.mp4"
+
+            def render_callback(block_id, _block, _pass):
+                index = index_by_id[block_id]
+                destination = out_dir / "blocks" / f"block_{index + 1:02d}.patch.mp4"
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                async def invoke():
+                    result = render_block(index, destination)
+                    return await result if inspect.isawaitable(result) else result
+                result = asyncio.run_coroutine_threadsafe(invoke(), loop).result()
+                replacements[index] = Path(result)
+                return result
+
+            def splice_callback(updated):
+                def assemble(paths, output):
+                    editor.render(
+                        block_paths=paths, vo_path=vo_path, out_path=output,
+                        punch_times=[], dry_run=False,
+                        target_len=measured_duration + config.TAIL_HOLD,
+                        timeline_durations=[float(s["audio_t1"]) - float(s["audio_t0"]) for s in aligned_scenes],
+                    )
+                return surgically_splice_timeline(
+                    proxy_source, updated, block_paths, patched_source, assemble=assemble,
+                )
+
+            def reaudit_callback(path):
+                nonlocal post_result
+                build_audit_proxy(path, patched_proxy, proxy_scenes, aspect_ratio=aspect_ratio)
+                post_result = asyncio.run_coroutine_threadsafe(audit(patched_proxy), loop).result()
+                return post_result
+
+            try:
+                await asyncio.to_thread(
+                    execute_selective_patch, audit_result, block_paths, render_callback, splice_callback,
+                    max_passes=1, reaudit=reaudit_callback,
+                    block_id_for_path=lambda path: ids_by_path[Path(path)],
+                )
+                audit_result = post_result
+                if audit_result.overall_verdict == "PASS" and not audit_result.review_required:
+                    if validate_patch is None:
+                        raise RuntimeError("Patch boundary and A/V verification is unavailable")
+                    validation = validate_patch(dict(replacements), patched_source)
+                    patch_validation = await validation if inspect.isawaitable(validation) else validation
+                    if not isinstance(patch_validation, dict) or patch_validation.get("passed") is not True:
+                        raise RuntimeError("Patch boundary or A/V verification failed")
+                    for index, path in replacements.items():
+                        block_paths[index] = path
+                    patch_status = "applied"
+                else:
+                    patch_status = "needs_review"
+            except HandoffPending:
+                raise
+            except Exception as exc:
+                if post_result is not None:
+                    audit_result = post_result
+                patch_status = "needs_review"
+                patch_message = str(exc)
+        else:
+            patch_message = "Patch budget is zero or a block renderer is unavailable."
 
     flagged_blocks = [
-        block.block_id
-        for block in audit_result.blocks
+        block.block_id for block in audit_result.blocks
         if block.verdict != "PASS" or block.review_required
     ]
-    patch_blocks = list(audit_result.patch_blocks)
-    if patch_blocks:
-        patch_status = "not_applied_blocked_pending_safe_renderer"
-        patch_message = (
-            "Selective patching was not applied: this production path lacks a safe "
-            "block-render/re-audit callback pair."
-        )
-    else:
-        patch_status = "not_needed"
-        patch_message = None
     video_qa_report_path = out_dir / "video_qa_report.json"
     video_qa_report_path.write_text(json.dumps({
         "model": video_qa_model,
-        "overall_verdict": audit_result.overall_verdict,
+        "audit_scope": "sampled_frames_only" if video_qa_adapter is None else "injected_adapter",
+        "sample_fractions_per_block": [0.25, 0.5, 0.75] if video_qa_adapter is None else None,
+        "proxy_sha256": file_fingerprint(proxy_path),
+        "expected_blocks": [item["block_id"] for item in proxy_scenes],
+        "sample_manifest": sample_manifests[0] if sample_manifests else None,
+        "post_patch_sample_manifest": sample_manifests[1] if len(sample_manifests) > 1 else None,
+        "batch_metadata": batch_metadata[0] if batch_metadata else None,
+        "post_patch_batch_metadata": batch_metadata[1] if len(batch_metadata) > 1 else None,
+        "overall_verdict": "NEEDS_REVIEW" if patch_status in {"needs_review", "not_applied"} else audit_result.overall_verdict,
         "confidence": audit_result.confidence,
-        "review_required": audit_result.review_required,
+        "review_required": patch_status in {"needs_review", "not_applied"} or audit_result.review_required,
         "flagged_blocks": flagged_blocks,
-        "patch_blocks": patch_blocks,
+        "patch_blocks": initial_patch_blocks,
         "patch_status": patch_status,
         "patch_message": patch_message,
+        "patch_validation": patch_validation,
+        "simulated_defect": simulated_defect,
+        "simulation_detected_by_video_qa": simulation_detected if simulated_defect else None,
+        "initial_audit": {
+            "overall_verdict": initial_audit.overall_verdict,
+            "blocks": [block.raw for block in initial_audit.blocks],
+        },
+        "post_patch_audit": None if post_result is None else {
+            "overall_verdict": post_result.overall_verdict,
+            "review_required": post_result.review_required,
+            "blocks": [block.raw for block in post_result.blocks],
+        },
+        "replacements": [
+            {"block_id": f"block_{index + 1:02d}", "path": str(path),
+             "sha256": file_fingerprint(path) if path.is_file() else None}
+            for index, path in sorted(replacements.items())
+        ],
         "max_patch_passes": max_patch_passes,
         "blocks": [block.raw for block in audit_result.blocks],
     }, indent=2), encoding="utf-8")
     logger.info("Video QA report written -> %s", video_qa_report_path)
-    if audit_result.overall_verdict != "PASS" or audit_result.review_required:
+    if patch_status in {"needs_review", "not_applied"} or audit_result.overall_verdict != "PASS" or audit_result.review_required:
         raise RuntimeError(
-            "Video QA gate blocked final assembly: "
-            f"verdict={audit_result.overall_verdict}, review_required={audit_result.review_required}, "
-            f"flagged_blocks={flagged_blocks}, patch_status={patch_status}"
+            "Video QA gate blocked final assembly: NEEDS_REVIEW, "
+            f"verdict={audit_result.overall_verdict}, flagged_blocks={flagged_blocks}, patch_status={patch_status}"
         )
+
+
+def _verify_final_qa_timeline(final_mp4: Path, target_len: float, report_path: Path) -> None:
+    """Add final assembled stream timing to the existing sampled-frame report."""
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    try:
+        timings = validate_av_timeline(final_mp4)
+        if abs(timings["video_duration"] - target_len) > 0.1:
+            raise ValueError("Final video duration differs from the planned timeline")
+        report["final_timeline"] = {"status": "PASS", "scope": "stream_timing_only",
+                                    "target_duration": target_len, **timings}
+    except Exception as exc:
+        report["final_timeline"] = {"status": "NEEDS_REVIEW", "scope": "stream_timing_only",
+                                    "target_duration": target_len, "error_type": type(exc).__name__}
+        report["overall_verdict"] = "NEEDS_REVIEW"
+        report["review_required"] = True
+        report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        raise RuntimeError("Final timeline QA failed; review required") from exc
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+
+def _simulate_block_blackout(source: Path, output: Path) -> dict[str, Any]:
+    """Create a labelled test-only media defect without modifying the Flow source."""
+    signature = media_signature(source)
+    if signature.video_codec != "h264":
+        raise RuntimeError("Simulated blackout requires an H.264 source block")
+    start, end = 0.0, signature.duration * 0.90
+    numerator, denominator = (int(x) for x in signature.time_base.split("/"))
+    if numerator != 1 or denominator <= 0:
+        raise RuntimeError("Simulated blackout cannot preserve the source time base")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        config.resolve_ffmpeg(), "-y", "-hide_banner", "-loglevel", "error", "-i", str(source),
+        "-map", "0:v:0", "-map", "0:a?", "-vf",
+        f"drawbox=x=0:y=0:w=iw:h=ih:color=black:t=fill:enable='between(t,{start:.6f},{end:.6f})'",
+        "-c:v", "libx264", "-pix_fmt", signature.pixel_format,
+        "-video_track_timescale", str(denominator), "-c:a", "copy", str(output),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode:
+        raise RuntimeError(f"Failed to create simulated blackout: {result.stderr[-1000:]}")
+    actual = media_signature(output)
+    for field in ("video_codec", "width", "height", "pixel_format", "frame_rate", "time_base", "has_audio"):
+        if getattr(actual, field) != getattr(signature, field):
+            raise RuntimeError(f"Simulated blackout changed media field: {field}")
+    if abs(actual.duration - signature.duration) > 1 / 30:
+        raise RuntimeError("Simulated blackout changed block duration")
+    return {
+        "kind": "simulated_blackout", "source_path": str(source), "test_path": str(output),
+        "source_sha256": file_fingerprint(source), "test_sha256": file_fingerprint(output),
+        "start_seconds": start, "end_seconds": end,
+    }
+
+
+async def _render_block_by_index(
+    *, index: int, scene: dict[str, Any], output_path: Path, duration: float,
+    aspect_ratio: str, dry_run: bool, video_provider: Any, full_prompt: str,
+    start_frame_path: Path | None = None, is_defect_attempt: bool = False,
+    total_blocks: int = 1, attempt: int = 1, max_retries: int = 1,
+) -> Path:
+    """Render one indexed block using the same backend as the production loop."""
+    is_broll = is_scene_data_broll(scene)
+    if is_broll:
+        template = (scene.get("data_broll_template") or scene.get("template_name")
+                    or scene.get("broll_template") or scene.get("broll_type") or "")
+        payload = next((scene[key] for key in
+                        ("data_broll_payload", "data_payload", "payload", "broll_props")
+                        if scene.get(key) is not None), {})
+        if not template:
+            raise ValueError("Data B-roll requires an explicit template_name or data_broll_template")
+        logger.info("Rendering Remotion B-Roll block %s/%s (%s, duration=%.1fs)...",
+                    index, total_blocks, template, duration)
+        try:
+            render_remotion_broll(
+                template_name=template, data_payload=payload, output_path=output_path,
+                width=config.WIDTH, height=config.HEIGHT, fps=60, duration_seconds=duration,
+            )
+        except Exception as exc:
+            if not dry_run:
+                raise
+            logger.warning("Dry-run Remotion render skipped/fallback: %s", exc)
+            color = "red" if is_defect_attempt else "black"
+            synthesize_dry_run_video_block(output_path, duration=duration, aspect=aspect_ratio, color=color)
+    elif dry_run:
+        color = "red" if is_defect_attempt else "black"
+        synthesize_dry_run_video_block(output_path, duration=duration, aspect=aspect_ratio, color=color)
+    else:
+        logger.info("Rendering block %s/%s (attempt %s/%s) via Flow: %s...",
+                    index, total_blocks, attempt, max_retries, full_prompt[:60])
+        await video_provider.animate_block(
+            start_frame=start_frame_path, end_frame=None, motion_prompt=full_prompt,
+            out_path=output_path, duration=duration,
+        )
+    return output_path
 
 
 async def execute_grok_flow_production(
@@ -355,8 +570,11 @@ async def execute_grok_flow_production(
     simulate_defect_block: int | None = None,
     video_qa: bool = False,
     video_qa_model: str = "gemini-3.1-pro",
+    video_qa_batch_size: int = 12,
     max_patch_passes: int = 1,
     video_qa_adapter: Any | None = None,
+    target_duration: float | None = None,
+    allow_flow_text_fallback: bool = False,
 ) -> Path:
     """Take Grok Studio planned scenes and execute full physical render with Flow + Voice + FFmpeg."""
     if not dry_run and any(scene.get("simulation_only") for scene in scenes):
@@ -416,6 +634,21 @@ async def execute_grok_flow_production(
     write_cache_fingerprint(vo_path, voice_fingerprint)
     logger.info(f"[1/3] Voiceover ready: {measured_duration:.2f}s, {len(words)} timed words.")
 
+    # Do not silently turn a short requested film into a much longer render.
+    # A small tolerance accounts for natural speech timing and provider padding.
+    if target_duration is not None:
+        import math
+        if not math.isfinite(target_duration) or target_duration <= 0:
+            raise ValueError("Target duration must be finite and positive")
+        if not math.isfinite(measured_duration) or measured_duration <= 0:
+            raise ValueError("Measured narration duration must be finite and positive")
+        limit = target_duration + max(1.0, target_duration * 0.1)
+        if measured_duration > limit:
+            raise ValueError(
+                f"Narration duration {measured_duration:.2f}s exceeds target "
+                f"{target_duration:.2f}s (maximum {limit:.2f}s); revise the screenplay before rendering"
+            )
+
     # Step 2: Native Dynamic Video Block Allocation via DurationPacker (Grok 4.6 Standard)
     block_plans = pack_durations_to_veo_blocks(
         scenes=scenes,
@@ -434,6 +667,8 @@ async def execute_grok_flow_production(
     # Unified Video Block Generation & Transition Boundary QA (Dry-run & Live parity)
     import cv2
     video_prov = None if dry_run else get_video_provider("playwright_flow")
+    if video_prov is not None:
+        video_prov.allow_text_fallback = allow_flow_text_fallback
     slug = sanitize_slug(project_title)
     if slug == "project-rigor-mortis-episode-01":
         world_state = build_canonical_rigor_mortis_world_state()
@@ -463,6 +698,7 @@ async def execute_grok_flow_production(
             "size": [config.WIDTH, config.HEIGHT], "duration": dur, "dry_run": dry_run,
             "model": os.getenv("FLOW_VIDEO_MODEL", ""),
             "quality": os.getenv("FLOW_VIDEO_TEST_QUALITY" if dry_run else "FLOW_VIDEO_REAL_QUALITY", ""),
+            "allow_flow_text_fallback": allow_flow_text_fallback,
             "previous_reference": file_fingerprint(block_paths[-1]) if depends_on_previous else None,
         })
         if block_file.is_file() and not cache_matches(block_file, block_fingerprint):
@@ -486,6 +722,9 @@ async def execute_grok_flow_production(
 
         if block_file.is_file() and block_file.stat().st_size > 1000:
             logger.info(f"Block {i}/{len(aligned_scenes)} already rendered -> reusing: {block_file.name}")
+            if not block_paths:
+                block_paths.append(block_file)
+                continue
             if len(block_paths) >= 1:
                 qa_rep = await inspect_transition_boundary(
                     hero_plate_path=hero_plate_path,
@@ -509,9 +748,16 @@ async def execute_grok_flow_production(
                     "inspected_by": str(qa_rep.inspected_by),
                 })
                 if not qa_rep.passed:
-                    raise RuntimeError(f"Cached transition failed QA: {block_file.name}: {qa_rep.violations}")
-            block_paths.append(block_file)
-            continue
+                    logger.warning(
+                        f"Cached transition failed QA ({qa_rep.continuity_score:.2f} < {TRANSITION_SCORE_THRESHOLD:.2f}): "
+                        f"{block_file.name} invalidated; re-rolling via self-healing pipeline: {qa_rep.violations}"
+                    )
+                    block_file.unlink(missing_ok=True)
+                    state_dir = block_file.parent / f"{block_file.stem}.flow-state"
+                    remove_flow_state_cache(state_dir, out_dir)
+                else:
+                    block_paths.append(block_file)
+                    continue
 
         # Extract exit-frame from previous block for abra_i2v temporal pixel lock
         start_frame_path: Path | None = None
@@ -530,57 +776,16 @@ async def execute_grok_flow_production(
                     simulate_defect_block is not None
                     and i == simulate_defect_block
                     and attempt == 1
+                    and (not video_qa or dry_run)
                 )
 
-                if is_broll:
-                    # Pure engine: Render motion graphics B-Roll directly with Remotion (no Flow CDP/Veo call)
-                    broll_tmpl = (sc.get("data_broll_template") or sc.get("template_name")
-                                  or sc.get("broll_template") or sc.get("broll_type") or "")
-                    broll_payload = next((sc[key] for key in
-                        ("data_broll_payload", "data_payload", "payload", "broll_props")
-                        if sc.get(key) is not None), {})
-                    if not broll_tmpl:
-                        raise ValueError("Data B-roll requires an explicit template_name or data_broll_template")
-                    logger.info(
-                        f"Rendering Remotion B-Roll block {i}/{len(aligned_scenes)} ({broll_tmpl}, duration={dur:.1f}s)..."
-                    )
-                    if dry_run:
-                        try:
-                            render_remotion_broll(
-                                template_name=broll_tmpl,
-                                data_payload=broll_payload,
-                                output_path=block_file,
-                                width=config.WIDTH,
-                                height=config.HEIGHT,
-                                fps=60,
-                                duration_seconds=dur,
-                            )
-                        except Exception as remotion_err:
-                            logger.warning(f"Dry-run Remotion render skipped/fallback: {remotion_err}")
-                            color = "red" if is_defect_attempt else "black"
-                            synthesize_dry_run_video_block(block_file, duration=dur, aspect=aspect_ratio, color=color)
-                    else:
-                        render_remotion_broll(
-                            template_name=broll_tmpl,
-                            data_payload=broll_payload,
-                            output_path=block_file,
-                            width=config.WIDTH,
-                            height=config.HEIGHT,
-                            fps=60,
-                            duration_seconds=dur,
-                        )
-                elif dry_run:
-                    color = "red" if is_defect_attempt else "black"
-                    synthesize_dry_run_video_block(block_file, duration=dur, aspect=aspect_ratio, color=color)
-                else:
-                    logger.info(f"Rendering block {i}/{len(aligned_scenes)} (attempt {attempt}/{max_retries}) via Flow: {full_prompt[:60]}...")
-                    await video_prov.animate_block(
-                        start_frame=start_frame_path,
-                        end_frame=None,
-                        motion_prompt=full_prompt,
-                        out_path=block_file,
-                        duration=dur,
-                    )
+                await _render_block_by_index(
+                    index=i, scene=sc, output_path=block_file, duration=dur,
+                    aspect_ratio=aspect_ratio, dry_run=dry_run, video_provider=video_prov,
+                    full_prompt=full_prompt, start_frame_path=start_frame_path,
+                    is_defect_attempt=is_defect_attempt, total_blocks=len(aligned_scenes),
+                    attempt=attempt, max_retries=max_retries,
+                )
 
                 if not block_file.is_file() or block_file.stat().st_size <= 1000:
                     raise RuntimeError(f"Renderer did not produce a valid video source: {block_file.name}")
@@ -698,7 +903,68 @@ async def execute_grok_flow_production(
     logger.info(f"Transition QA report written -> {qa_report_path} (inspected={len(qa_evaluations)}, failed={len(failed_transitions)})")
     # Full-video QA runs after block and boundary QA, before final master assembly.
     if video_qa:
+        simulated_defect = None
+        if simulate_defect_block is not None and not dry_run:
+            index = simulate_defect_block - 1
+            if index < 0 or index >= len(block_paths):
+                raise ValueError("Simulated defect block is outside the generated timeline")
+            if broll_flags[index]:
+                raise ValueError("A Flow block is required for the simulated defect")
+            source = block_paths[index]
+            defect_path = out_dir / "blocks" / f"block_{index + 1:02d}.simulated-defect.mp4"
+            simulated_defect = _simulate_block_blackout(source, defect_path)
+            simulated_defect["block_id"] = f"block_{index + 1:02d}"
+            block_paths[index] = defect_path
+            logger.warning("SIMULATION ONLY: inserted a blackout in %s; original Flow block retained at %s",
+                           defect_path.name, source)
+
+        async def render_patch_block(index: int, output_path: Path) -> Path:
+            sc = aligned_scenes[index]
+            vp = str(sc.get("visual_prompt", "")).strip()
+            mp = str(sc.get("motion_prompt", "")).strip()
+            compiled_vp = compile_udse_prompt(
+                visual_prompt=vp, world_state=world_state, shot_spec=sc,
+            ) if vp else ""
+            full_prompt = f"{compiled_vp}. {mp}" if compiled_vp else mp
+            start_frame_path = None
+            if index > 0 and not broll_flags[index] and not broll_flags[index - 1]:
+                exit_img = extract_video_frame(block_paths[index - 1], position="last")
+                if exit_img is not None:
+                    start_frame_path = out_dir / "keyframes" / f"patch_exit_frame_b{index:02d}.jpg"
+                    cv2.imwrite(str(start_frame_path), exit_img)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            await _render_block_by_index(
+                index=index + 1, scene=sc, output_path=output_path,
+                duration=float(sc.get("duration", block_duration)), aspect_ratio=aspect_ratio,
+                dry_run=dry_run, video_provider=video_prov, full_prompt=full_prompt,
+                start_frame_path=start_frame_path, total_blocks=len(aligned_scenes),
+            )
+            validate_video_source(output_path, is_broll=broll_flags[index],
+                                  width=config.WIDTH, height=config.HEIGHT)
+            return output_path
+
+        async def validate_patched_timeline(replacements: dict[int, Path], source: Path) -> dict[str, Any]:
+            timings = await asyncio.to_thread(validate_av_timeline, source)
+            candidate = [replacements.get(index, path) for index, path in enumerate(block_paths)]
+            boundaries = sorted({edge for index in replacements for edge in (index - 1, index)
+                                 if 0 <= edge < len(candidate) - 1})
+            results = []
+            for edge in boundaries:
+                report = await inspect_transition_boundary(
+                    hero_plate_path=hero_plate_path,
+                    block_n_video=candidate[edge], block_n_plus_1_video=candidate[edge + 1],
+                    dry_run=dry_run, is_data_broll=broll_flags[edge] or broll_flags[edge + 1],
+                    expected_width=config.WIDTH, expected_height=config.HEIGHT,
+                    data_broll_sides=(broll_flags[edge], broll_flags[edge + 1]),
+                )
+                results.append({"left": edge + 1, "right": edge + 2, **report.to_dict()})
+            return {"passed": all(item["passed"] for item in results), "boundaries": results,
+                    "av_timing": timings, "av_scope": "stream_timing_only"}
+
         await _run_video_qa_gate(
+            render_block=render_patch_block,
+            validate_patch=validate_patched_timeline,
+            simulated_defect=simulated_defect,
             out_dir=out_dir,
             block_paths=block_paths,
             aligned_scenes=aligned_scenes,
@@ -707,6 +973,7 @@ async def execute_grok_flow_production(
             aspect_ratio=aspect_ratio,
             dry_run=dry_run,
             video_qa_model=video_qa_model,
+            video_qa_batch_size=video_qa_batch_size,
             max_patch_passes=max_patch_passes,
             video_qa_adapter=video_qa_adapter,
         )
@@ -752,7 +1019,7 @@ async def execute_grok_flow_production(
                 })
             curr_t += sc_dur
         logger.info(f"Integrated {len(sfx_cues)} procedural SFX foley cues into audio mix.")
-    except Exception as sfx_err:
+    except (Exception, asyncio.CancelledError) as sfx_err:
         logger.warning(f"SFX synthesis encountered notice: {sfx_err}. Continuing with music bed.")
 
     music_path: Path | None = None
@@ -819,6 +1086,10 @@ async def execute_grok_flow_production(
             shutil.copy2(block_paths[0], final_mp4)
         else:
             synthesize_dry_run_video_block(final_mp4, duration=4.0, aspect=aspect_ratio)
+
+    if video_qa and not dry_run:
+        await asyncio.to_thread(_verify_final_qa_timeline, final_mp4, target_len,
+                                out_dir / "video_qa_report.json")
 
     # Seal ending continuity state into out_dir (ADR-090 Zero-Hardcoding)
     last_scene = aligned_scenes[-1] if aligned_scenes else {}

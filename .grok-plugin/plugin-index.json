@@ -13,10 +13,6 @@
             "description": "Central production commander and visionary Studio Director. Orchestrates the entire cinematic pipeline, activates other…"
           },
           {
-            "name": "mega-production-architect",
-            "description": "All-in-one cinematic super-agent that transforms any idea into a complete production-ready audiovisual package. Creates…"
-          },
-          {
             "name": "production-bible-workflow",
             "description": "End-to-end Production Bible onboarding workflow for Grok Imagine Cinematic Studio. Guides create-bible DNA init sequenc…"
           },
@@ -31,22 +27,6 @@
           {
             "name": "github-repo-manager",
             "description": "Use for all GitHub repository management tasks including creating, listing, forking, file operations, branches, issues,…"
-          },
-          {
-            "name": "character-dna-extractor",
-            "description": "Forensic Character DNA extraction and Identity Lock handoff for Grok Imagine. Uses Grok 4.6 (Chat Expert / API grok-4.6…"
-          },
-          {
-            "name": "identity-lock-specialist",
-            "description": "Guardian of character consistency and visual identity. Maintains Character DNA Bible, tracks character drift, enforces…"
-          },
-          {
-            "name": "multi-character-identity-arbiter",
-            "description": "Arbitrate primary and secondary Character DNA locks for multi-cast Grok Imagine scenes. Builds dual inject blocks and c…"
-          },
-          {
-            "name": "costume-wardrobe-continuity",
-            "description": "Structured outfit DNA wardrobe lock and inject blocks nested on Character DNA for Grok Imagine stills i2v and extend ch…"
           },
           {
             "name": "imagine-prompt-master",
@@ -109,12 +89,36 @@
             "description": "Parallel Brief dispatcher for Studio Director under MAXIMUM AGENTIC MODE. Templates logs and anti-blocks concurrent spe…"
           },
           {
-            "name": "director-of-photography",
-            "description": "Visual language architect and cinematic lens master. Designs lighting motivation, camera choreography, lens choices, an…"
+            "name": "catastrophe-director",
+            "description": "Directs procedural catastrophe and mega-disaster YouTube productions with five-stage geological escalation engines micr…"
           },
           {
-            "name": "director-of-photography-v3-3",
-            "description": "Visual language architect and cinematic lens master. Defines camera moves, framing, lens choices, and translates emotio…"
+            "name": "deepsea-survival-director",
+            "description": "Directs abyssal deep-sea survival narratives with Mariana Trench bathypelagic physics 1100 bar hydrostatic pressure met…"
+          },
+          {
+            "name": "micro-survival-director",
+            "description": "Directs immediate micro-survival scenarios adhering to FEMA Kizilay and USGS emergency protocols with concrete resource…"
+          },
+          {
+            "name": "planetary-catastrophe-director",
+            "description": "Directs planetary and cosmic catastrophe productions based on NASA USGS and NOAA astrophysical standards with mega-scal…"
+          },
+          {
+            "name": "urban-infiltration-director",
+            "description": "Directs urban tactical survival and infrastructure collapse productions with metropolitan blackout cascades sub-15 dB a…"
+          },
+          {
+            "name": "viral-retention-director",
+            "description": "Directs viral second-person retention architecture aspect-aware smart endings micro-mathematics survival metrics and ad…"
+          },
+          {
+            "name": "youtube-factory",
+            "description": "Orchestrates end-to-end automated YouTube video factory pipelines with 300-second longform narratives, three-layer broa…"
+          },
+          {
+            "name": "director-of-photography",
+            "description": "Visual language architect and cinematic lens master. Designs lighting motivation, camera choreography, lens choices, an…"
           },
           {
             "name": "production-designer-set-decorator",
@@ -125,10 +129,6 @@
             "description": "General-purpose Image-to-Image cinematic refinement specialist for Grok Imagine productions. Handles multi-pass refinem…"
           },
           {
-            "name": "i2i-refiner",
-            "description": "Advanced Image-to-Image refinement specialist for Grok Imagine cinematic productions. Manages multi-pass i2i workflows,…"
-          },
-          {
             "name": "ai-image-recreation",
             "description": "AI recreation editing style transfer enhancement and variation of user-uploaded images via Grok Imagine image_edit and…"
           },
@@ -137,12 +137,12 @@
             "description": "Theatrical key art, poster, and marketing visual specialist. Creates emotionally powerful single images that capture th…"
           },
           {
-            "name": "reference-asset-curator",
-            "description": "Reference and asset curator for Grok Imagine productions. Assigns hero, standard or draft tiers, routes grok-imagine-im…"
+            "name": "thumbnail-designer",
+            "description": "Designs high-CTR YouTube thumbnails using four-layer PIL composites with climax keyframes, red-to-orange gradient overl…"
           },
           {
-            "name": "characters-props-locations-refs",
-            "description": ">-"
+            "name": "reference-asset-curator",
+            "description": "Reference and asset curator for Grok Imagine productions. Assigns hero, standard or draft tiers, routes grok-imagine-im…"
           },
           {
             "name": "image-to-video-specialist",
@@ -165,10 +165,6 @@
             "description": "Specialist for expanding short clips into longer seamless cinematic sequences (60-180s+) with native extend/stitch, cha…"
           },
           {
-            "name": "extend-frame-to-video",
-            "description": "Create cinematic rough-cut animatics and storyboards from Grok Imagine still sequences using Extend from Frame promptin…"
-          },
-          {
             "name": "narrative-arc-pacing-strategist",
             "description": "Story rhythm master and emotional architect. Designs three-act structure, pacing heatmap, tension/release curves, and e…"
           },
@@ -189,10 +185,6 @@
             "description": "Multi-agent continuity commander for long-form and multi-clip productions. Manages LAST_FRAME_RECAP + MOMENTUM_VECTOR +…"
           },
           {
-            "name": "performance-emotion-director",
-            "description": "Emotional architect and micro-expression specialist. Designs actor performance, emotional evolution, body language, and…"
-          },
-          {
             "name": "trailer-teaser-director",
             "description": "High-impact trailer and teaser specialist. Crafts emotionally powerful 15–60s trailers and teasers with native audio, o…"
           },
@@ -209,44 +201,12 @@
             "description": "Cultural adaptation, SDH subtitles, and multi-language support specialist. Ensures emotional tone, cultural nuance, and…"
           },
           {
-            "name": "stunt-action-choreographer",
-            "description": "Professional stunt, fight, and high-impact action design specialist. Creates safe, visually powerful, and emotionally g…"
-          },
-          {
             "name": "vfx-sfx-supervisor",
             "description": "Particle systems, creatures, destruction, and practical-to-VFX transition specialist. Designs high-quality visual effec…"
           },
           {
-            "name": "sfw-batch-orchestrator",
-            "description": "SFW batch production orchestrator for long Grok Imagine cinematic sessions. Plans hero-first shot batches under quota a…"
-          },
-          {
-            "name": "hair-makeup-continuity",
-            "description": "Hair and makeup continuity lock nested on Character DNA for Grok Imagine multi-clip work. Owns hmu_lock sweat smudge we…"
-          },
-          {
-            "name": "dialogue-adr-director",
-            "description": "Dialogue and ADR director for Grok Imagine native-audio and post-sync speech. Owns dialogue blocks VO ADR timing and li…"
-          },
-          {
             "name": "score-temp-music-supervisor",
             "description": "Score and temp music supervisor for Grok Imagine sequences and trailers. Owns music cues temp score emotional_tone_audi…"
-          },
-          {
-            "name": "erosforge-nsfw-director",
-            "description": "Adult/R-rated content specialist. Designs emotionally authentic, artistically justified intimate scenes with proper phy…"
-          },
-          {
-            "name": "nsfw-quota-orchestrator",
-            "description": "Quota-aware NSFW production orchestrator for SuperGrok Heavy. Plans and executes batches of erotic image and video gene…"
-          },
-          {
-            "name": "nsfw-sequence-extender",
-            "description": "NSFW sensual sequence extension from reference frame or short clip to 30-120+ seconds. Plans erotic tension curves, Gro…"
-          },
-          {
-            "name": "nsfw-chain-qa-protocol",
-            "description": "NSFW extend and stitch chain QA protocol for intimate Grok Imagine Video 1.5 sequences. Runs the weighted 8-point artif…"
           },
           {
             "name": "assembly-editor",
@@ -338,10 +298,6 @@
             "description": "Central production commander and visionary Studio Director. Orchestrates the entire cinematic pipeline, activates other…"
           },
           {
-            "name": "mega-production-architect",
-            "description": "All-in-one cinematic super-agent that transforms any idea into a complete production-ready audiovisual package. Creates…"
-          },
-          {
             "name": "production-bible-workflow",
             "description": "End-to-end Production Bible onboarding workflow for Grok Imagine Cinematic Studio. Guides create-bible DNA init sequenc…"
           },
@@ -356,22 +312,6 @@
           {
             "name": "github-repo-manager",
             "description": "Use for all GitHub repository management tasks including creating, listing, forking, file operations, branches, issues,…"
-          },
-          {
-            "name": "character-dna-extractor",
-            "description": "Forensic Character DNA extraction and Identity Lock handoff for Grok Imagine. Uses Grok 4.6 (Chat Expert / API grok-4.6…"
-          },
-          {
-            "name": "identity-lock-specialist",
-            "description": "Guardian of character consistency and visual identity. Maintains Character DNA Bible, tracks character drift, enforces…"
-          },
-          {
-            "name": "multi-character-identity-arbiter",
-            "description": "Arbitrate primary and secondary Character DNA locks for multi-cast Grok Imagine scenes. Builds dual inject blocks and c…"
-          },
-          {
-            "name": "costume-wardrobe-continuity",
-            "description": "Structured outfit DNA wardrobe lock and inject blocks nested on Character DNA for Grok Imagine stills i2v and extend ch…"
           },
           {
             "name": "imagine-prompt-master",
@@ -432,6 +372,34 @@
           {
             "name": "parallel-brief-dispatcher",
             "description": "Parallel Brief dispatcher for Studio Director under MAXIMUM AGENTIC MODE. Templates logs and anti-blocks concurrent spe…"
+          },
+          {
+            "name": "catastrophe-director",
+            "description": "Directs procedural catastrophe and mega-disaster YouTube productions with five-stage geological escalation engines micr…"
+          },
+          {
+            "name": "deepsea-survival-director",
+            "description": "Directs abyssal deep-sea survival narratives with Mariana Trench bathypelagic physics 1100 bar hydrostatic pressure met…"
+          },
+          {
+            "name": "micro-survival-director",
+            "description": "Directs immediate micro-survival scenarios adhering to FEMA Kizilay and USGS emergency protocols with concrete resource…"
+          },
+          {
+            "name": "planetary-catastrophe-director",
+            "description": "Directs planetary and cosmic catastrophe productions based on NASA USGS and NOAA astrophysical standards with mega-scal…"
+          },
+          {
+            "name": "urban-infiltration-director",
+            "description": "Directs urban tactical survival and infrastructure collapse productions with metropolitan blackout cascades sub-15 dB a…"
+          },
+          {
+            "name": "viral-retention-director",
+            "description": "Directs viral second-person retention architecture aspect-aware smart endings micro-mathematics survival metrics and ad…"
+          },
+          {
+            "name": "youtube-factory",
+            "description": "Orchestrates end-to-end automated YouTube video factory pipelines with 300-second longform narratives, three-layer broa…"
           }
         ],
         "commands": [
@@ -483,20 +451,12 @@
             "description": "Visual language architect and cinematic lens master. Designs lighting motivation, camera choreography, lens choices, an…"
           },
           {
-            "name": "director-of-photography-v3-3",
-            "description": "Visual language architect and cinematic lens master. Defines camera moves, framing, lens choices, and translates emotio…"
-          },
-          {
             "name": "production-designer-set-decorator",
             "description": "Environment DNA, prop memory bank, and world-building specialist. Designs detailed, consistent environments and prop sy…"
           },
           {
             "name": "i2i-cinematic-refiner",
             "description": "General-purpose Image-to-Image cinematic refinement specialist for Grok Imagine productions. Handles multi-pass refinem…"
-          },
-          {
-            "name": "i2i-refiner",
-            "description": "Advanced Image-to-Image refinement specialist for Grok Imagine cinematic productions. Manages multi-pass i2i workflows,…"
           },
           {
             "name": "ai-image-recreation",
@@ -507,12 +467,12 @@
             "description": "Theatrical key art, poster, and marketing visual specialist. Creates emotionally powerful single images that capture th…"
           },
           {
-            "name": "reference-asset-curator",
-            "description": "Reference and asset curator for Grok Imagine productions. Assigns hero, standard or draft tiers, routes grok-imagine-im…"
+            "name": "thumbnail-designer",
+            "description": "Designs high-CTR YouTube thumbnails using four-layer PIL composites with climax keyframes, red-to-orange gradient overl…"
           },
           {
-            "name": "characters-props-locations-refs",
-            "description": ">-"
+            "name": "reference-asset-curator",
+            "description": "Reference and asset curator for Grok Imagine productions. Assigns hero, standard or draft tiers, routes grok-imagine-im…"
           },
           {
             "name": "image-to-video-specialist",
@@ -542,10 +502,6 @@
             "description": "Specialist for expanding short clips into longer seamless cinematic sequences (60-180s+) with native extend/stitch, cha…"
           },
           {
-            "name": "extend-frame-to-video",
-            "description": "Create cinematic rough-cut animatics and storyboards from Grok Imagine still sequences using Extend from Frame promptin…"
-          },
-          {
             "name": "narrative-arc-pacing-strategist",
             "description": "Story rhythm master and emotional architect. Designs three-act structure, pacing heatmap, tension/release curves, and e…"
           },
@@ -566,10 +522,6 @@
             "description": "Multi-agent continuity commander for long-form and multi-clip productions. Manages LAST_FRAME_RECAP + MOMENTUM_VECTOR +…"
           },
           {
-            "name": "performance-emotion-director",
-            "description": "Emotional architect and micro-expression specialist. Designs actor performance, emotional evolution, body language, and…"
-          },
-          {
             "name": "trailer-teaser-director",
             "description": "High-impact trailer and teaser specialist. Crafts emotionally powerful 15–60s trailers and teasers with native audio, o…"
           },
@@ -586,24 +538,8 @@
             "description": "Cultural adaptation, SDH subtitles, and multi-language support specialist. Ensures emotional tone, cultural nuance, and…"
           },
           {
-            "name": "stunt-action-choreographer",
-            "description": "Professional stunt, fight, and high-impact action design specialist. Creates safe, visually powerful, and emotionally g…"
-          },
-          {
             "name": "vfx-sfx-supervisor",
             "description": "Particle systems, creatures, destruction, and practical-to-VFX transition specialist. Designs high-quality visual effec…"
-          },
-          {
-            "name": "sfw-batch-orchestrator",
-            "description": "SFW batch production orchestrator for long Grok Imagine cinematic sessions. Plans hero-first shot batches under quota a…"
-          },
-          {
-            "name": "hair-makeup-continuity",
-            "description": "Hair and makeup continuity lock nested on Character DNA for Grok Imagine multi-clip work. Owns hmu_lock sweat smudge we…"
-          },
-          {
-            "name": "dialogue-adr-director",
-            "description": "Dialogue and ADR director for Grok Imagine native-audio and post-sync speech. Owns dialogue blocks VO ADR timing and li…"
           },
           {
             "name": "score-temp-music-supervisor",
@@ -615,24 +551,7 @@
     },
     "grok-imagine-nsfw": {
       "components": {
-        "skills": [
-          {
-            "name": "erosforge-nsfw-director",
-            "description": "Adult/R-rated content specialist. Designs emotionally authentic, artistically justified intimate scenes with proper phy…"
-          },
-          {
-            "name": "nsfw-quota-orchestrator",
-            "description": "Quota-aware NSFW production orchestrator for SuperGrok Heavy. Plans and executes batches of erotic image and video gene…"
-          },
-          {
-            "name": "nsfw-sequence-extender",
-            "description": "NSFW sensual sequence extension from reference frame or short clip to 30-120+ seconds. Plans erotic tension curves, Gro…"
-          },
-          {
-            "name": "nsfw-chain-qa-protocol",
-            "description": "NSFW extend and stitch chain QA protocol for intimate Grok Imagine Video 1.5 sequences. Runs the weighted 8-point artif…"
-          }
-        ],
+        "skills": [],
         "commands": [
           {
             "name": "nsfw",

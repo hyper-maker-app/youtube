@@ -76,6 +76,92 @@ def test_apply_extinction_countdown_overlay(sample_16x9_video: Path, tmp_path: P
     assert abs(info.duration - 2.0) < 0.4
 
 
+def test_countdown_does_not_replace_explicit_ffmpeg(tmp_path, monkeypatch):
+    import os
+    import subprocess
+    from types import SimpleNamespace
+
+    if os.name != 'nt':
+        pytest.skip('Windows access-violation handling')
+    calls = []
+    monkeypatch.setattr(editor, 'probe', lambda *args: SimpleNamespace(has_audio=False))
+    def fail(args):
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0xC0000005, '', 'drawtext crash')
+    monkeypatch.setattr(editor, '_run', fail)
+    with pytest.raises(RuntimeError, match='drawtext crash'):
+        editor.apply_extinction_countdown_overlay(tmp_path / 'input.mp4', tmp_path / 'out.mp4',
+                                                  banner_text='TEST', ffmpeg='explicit.exe')
+    assert len(calls) == 1 and calls[0][0] == 'explicit.exe'
+
+
+def test_countdown_retries_only_windows_access_violation(tmp_path, monkeypatch):
+    import os
+    import subprocess
+    from types import SimpleNamespace
+    import imageio_ffmpeg
+
+    if os.name != 'nt':
+        pytest.skip('Windows access-violation handling')
+    monkeypatch.delenv('FFMPEG_BINARY', raising=False)
+    monkeypatch.setattr(editor.config, 'resolve_ffmpeg', lambda: 'automatic.exe')
+    monkeypatch.setattr(imageio_ffmpeg, 'get_ffmpeg_exe', lambda: 'bundled.exe')
+    monkeypatch.setattr(editor, 'probe', lambda *args: SimpleNamespace(has_audio=False))
+    calls = []
+    def crash_then_pass(args):
+        calls.append(args[0])
+        return subprocess.CompletedProcess(args, 0xC0000005 if len(calls) == 1 else 0, '', 'crash')
+    monkeypatch.setattr(editor, '_run', crash_then_pass)
+    editor.apply_extinction_countdown_overlay(tmp_path / 'input.mp4', tmp_path / 'out.mp4', banner_text='TEST')
+    assert calls == ['automatic.exe', 'bundled.exe']
+
+    calls.clear()
+    def ordinary_failure(args):
+        calls.append(args[0])
+        return subprocess.CompletedProcess(args, 1, '', 'invalid filter')
+    monkeypatch.setattr(editor, '_run', ordinary_failure)
+    with pytest.raises(RuntimeError, match='invalid filter'):
+        editor.apply_extinction_countdown_overlay(tmp_path / 'input.mp4', tmp_path / 'out.mp4', banner_text='TEST')
+    assert calls == ['automatic.exe']
+
+
+@pytest.mark.parametrize('returncode,override,expected_calls', [
+    (0xC0000005, None, 2),
+    (1, None, 1),
+    (0xC0000005, 'custom.exe', 1),
+])
+def test_countdown_retry_requires_unconfigured_windows_access_violation(
+    tmp_path, monkeypatch, returncode, override, expected_calls
+):
+    import os
+    import subprocess
+    from types import SimpleNamespace
+    import imageio_ffmpeg
+
+    if os.name != 'nt':
+        pytest.skip('Windows access-violation handling')
+    if override:
+        monkeypatch.setenv('FFMPEG_BINARY', override)
+    else:
+        monkeypatch.delenv('FFMPEG_BINARY', raising=False)
+    monkeypatch.setattr(editor.config, 'resolve_ffmpeg', lambda: override or 'primary.exe')
+    monkeypatch.setattr(imageio_ffmpeg, 'get_ffmpeg_exe', lambda: 'bundled.exe')
+    monkeypatch.setattr(editor, 'probe', lambda *args: SimpleNamespace(has_audio=False))
+    calls = []
+    def run(args):
+        calls.append(args)
+        return subprocess.CompletedProcess(args, returncode if len(calls) == 1 else 0, '', 'failed')
+    monkeypatch.setattr(editor, '_run', run)
+    kwargs = dict(input_path=tmp_path / 'in.mp4', out_path=tmp_path / 'out.mp4', banner_text='TEST')
+    if expected_calls == 1:
+        with pytest.raises(RuntimeError):
+            editor.apply_extinction_countdown_overlay(**kwargs)
+    else:
+        editor.apply_extinction_countdown_overlay(**kwargs)
+        assert calls[1][0] == 'bundled.exe' and calls[1][1:] == calls[0][1:]
+    assert len(calls) == expected_calls
+
+
 def test_export_shorts_multiplex(sample_16x9_video: Path, tmp_path: Path):
     """Verify export_shorts_multiplex center-crops 16:9 footage into vertical 9:16 1080x1920."""
     out_shorts = tmp_path / "shorts_9x16.mp4"

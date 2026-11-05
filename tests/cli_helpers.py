@@ -54,7 +54,7 @@ def run_cli(
         encoding="utf-8",
         errors="replace",
         cwd=str(cwd or ROOT),
-        input=stdin,
+        input=stdin if stdin is not None else "",
         env=env or cli_env(),
     )
     return subprocess.CompletedProcess(

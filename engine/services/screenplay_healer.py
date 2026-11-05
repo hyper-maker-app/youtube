@@ -5,8 +5,7 @@ If the score is below the Grade A+ threshold (< 90/100) or contains critical def
 1. Full-Screenplay Context-Aware Healing: Reads all 38 scenes in compact format to maintain
    unbroken chronological arc and continuity while rewriting flagged defective scenes via Grok LLM.
 2. Lightweight Deterministic Polishing: Cleans syntax, premature CTAs, and POV prefixes.
-3. Closed-Loop Skill Reinforcement: Automatically persists learned rules into matching
-   .grok/skills/<slug>/SKILL.md department guidelines under the <500-line cap.
+3. Optional skill reinforcement: persists learned rules only with explicit opt-in.
 """
 
 from __future__ import annotations
@@ -73,13 +72,14 @@ class ScreenplayHealer:
         reviewer: ScreenplayReviewer | None = None,
         xai_api_key: str | None = None,
         target_score: int = 90,
-        grok_model: str = "grok-4.20-0309-non-reasoning",
+        grok_model: str | None = None,
+        allow_skill_writes: bool = False,
     ) -> None:
         self.xai_api_key = xai_api_key if xai_api_key is not None else os.getenv("XAI_API_KEY")
-        self.grok_model = grok_model
+        self.grok_model = grok_model or os.getenv("XAI_MODEL") or "grok-4.20-0309-non-reasoning"
         self.reviewer = reviewer or ScreenplayReviewer(xai_api_key=self.xai_api_key, grok_model=self.grok_model)
         self.target_score = target_score
-        self.reinforcement_service = SkillReinforcementService()
+        self.reinforcement_service = SkillReinforcementService(allow_writes=allow_skill_writes)
 
     def _extract_target_scene_ids(self, scorecard: Scorecard, total_scenes: int) -> list[int]:
         """Extract explicit 1-based scene numbers from structured defects and text defects."""
@@ -133,7 +133,18 @@ class ScreenplayHealer:
         )
 
         while (not scorecard.passed or scorecard.total_score < self.target_score) and iteration < max_iterations:
+            if (getattr(self.reviewer, "screenplay_mode", "strict-checklist") == "holistic"
+                    and not scorecard.structured_defects and scorecard.defects
+                    and all(d.startswith(("Grok judge unavailable or invalid:",
+                                          "Gemini judge unavailable or invalid:",
+                                          "Holistic review is incomplete without both judges",
+                                          "World-law context unavailable:",
+                                          "No director skill matches", "No structured world rules"))
+                            for d in scorecard.defects)):
+                repair_log.append("Review infrastructure or rule context is unavailable; screenplay was not rewritten.")
+                break
             iteration += 1
+            round_pre_scenes = copy.deepcopy(current_scenes)
             round_pre_scorecard = copy.deepcopy(scorecard)
             round_actions: list[str] = []
             round_reinf_actions: list[str] = []
@@ -168,12 +179,22 @@ class ScreenplayHealer:
                     logger.warning("Full-context Grok healing round failed: %s", exc)
 
             # 3. Deterministic Safety Polish (CTA isolation, 2nd-person, Veo safety)
-            current_scenes, det_actions = self._apply_deterministic_polishing(current_scenes, scorecard.defects)
+            if getattr(self.reviewer, "screenplay_mode", "strict-checklist") == "holistic":
+                det_actions = []
+            else:
+                current_scenes, det_actions = self._apply_deterministic_polishing(current_scenes, scorecard.defects)
             repair_log.extend(det_actions)
             round_actions.extend(det_actions)
 
             # 4. Re-evaluate
             post_scorecard = self.reviewer.review(current_scenes, title=title, genre=genre, consult_ai=consult_ai)
+            if getattr(self.reviewer, "screenplay_mode", "strict-checklist") == "holistic":
+                previous_critical = {(str(d.get("scene_id")), d.get("rule_id")) for d in scorecard.structured_defects if d.get("severity") == "critical"}
+                current_critical = {(str(d.get("scene_id")), d.get("rule_id")) for d in post_scorecard.structured_defects if d.get("severity") == "critical"}
+                if current_critical - previous_critical or (len(current_scenes) != len(round_pre_scenes)):
+                    current_scenes = round_pre_scenes
+                    post_scorecard = round_pre_scorecard
+                    repair_log.append("Rejected repair introducing a critical defect or changing scene count.")
             repair_log.append(f"Round {iteration} Evaluation: {post_scorecard.total_score}/100 ({post_scorecard.grade}).")
 
             # 5. Record complete round progression
@@ -220,23 +241,33 @@ class ScreenplayHealer:
     ) -> tuple[list[dict[str, Any]], list[str], list[str | int]]:
         """Rewrite defective scenes while providing all scenes as context to maintain continuity."""
         compact_all = build_compact_scenes_payload(scenes)
-        model_name = self.grok_model or "grok-4.20-0309-non-reasoning"
+        model_name = self.grok_model or os.getenv("XAI_MODEL") or "grok-4.20-0309-non-reasoning"
         try:
-            from tools.models import resolve_chat_model
-            model_name = resolve_chat_model(model_name)
+            from tools.models import _CHAT_ALIAS_MAP, resolve_chat_model
+            if model_name.strip().lower() in _CHAT_ALIAS_MAP:
+                model_name = resolve_chat_model(model_name)
         except Exception:
             if model_name in ("grok-4.20-non-reasoning", "grok-4.20"):
                 model_name = "grok-4.20-0309-non-reasoning"
         target_scene_ids = self._extract_target_scene_ids(scorecard, len(scenes))
         if not target_scene_ids:
+            if getattr(self.reviewer, "screenplay_mode", "strict-checklist") == "holistic":
+                raise ValueError("Holistic repair requires an identified target scene")
             target_scene_ids = [len(scenes)]  # Default to final scene if none parsed
 
         from engine.services.skill_loader import get_skill_loader
         skill_prompt = get_skill_loader().build_unified_system_prompt(
             title=title, genre=genre,
             duration=max(1,int(sum(float(scene.get("duration",0)) for scene in scenes))),
-            aspect="16:9",
+            aspect=getattr(self.reviewer, "aspect", "16:9"),
         )
+        if getattr(self.reviewer, "short_test", False):
+            for slug in ("catastrophe-director", "viral-retention-director"):
+                instructions = get_skill_loader().load_skill_instructions(slug, max_chars=0)
+                test_rule = next((line for line in instructions.splitlines() if line.startswith("For an explicitly marked short integration test only,")), "")
+                if not test_rule:
+                    raise ValueError(f"Short-test skill contract is missing: {slug}")
+                skill_prompt += "\nTEST-ONLY CONTRACT (authoritative for this run):\n" + test_rule
         prompt = json.dumps({
             "title": title, "genre": genre,
             "defects": scorecard.defects,
@@ -267,7 +298,7 @@ class ScreenplayHealer:
         }
 
         req = urllib.request.Request(
-            "https://api.x.ai/v1/chat/completions",
+            f"{((os.getenv('XAI_API_BASE') or '').strip().rstrip('/') or 'https://api.x.ai/v1')}/chat/completions",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.xai_api_key}",
@@ -306,6 +337,10 @@ class ScreenplayHealer:
         for rep in repaired_list:
             sid = rep.get("scene_id") or rep.get("id")
             norm_target = _norm_id(sid)
+            if getattr(self.reviewer, "screenplay_mode", "strict-checklist") == "holistic":
+                allowed_indices = {scene_map.get(_norm_id(target), scene_map.get(str(target))) for target in target_scene_ids}
+                if scene_map.get(norm_target, scene_map.get(str(sid))) not in allowed_indices:
+                    raise ValueError("Healer returned an untargeted scene")
             if norm_target in scene_map or str(sid) in scene_map:
                 idx = scene_map.get(norm_target, scene_map.get(str(sid)))
                 orig = merged[idx]

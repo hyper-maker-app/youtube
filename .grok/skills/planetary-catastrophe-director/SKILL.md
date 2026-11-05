@@ -132,3 +132,9 @@ Generative AI video models fail when forced to render micro-detailed human faces
 
 ## Universal Physics & Causality Invariants
 - **[Scene 20]**: Seismic energy release scaling must obey physical limits; do not stack high-magnitude earthquakes at impossible high-frequency intervals.
+
+## Structured Reviewer Rules
+
+The machine-readable resource bounds for review are in `references/review_rules.json`. An explicitly stated battery state of charge expressed as a percentage of full charge cannot exceed 100 percent. These checks cover only explicit stated quantities; evaluate domain-specific physics and conditions using the full directing instructions above.
+
+At an Earth-Sun distance of approximately one astronomical unit, light and changes in sunlight take about eight minutes and twenty seconds to arrive. Account for stated distance and observation time; do not apply this delay to local effects or other planets. Source: https://science.nasa.gov/learn/basics-of-space-flight/chapter1-1/

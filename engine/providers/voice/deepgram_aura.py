@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 import os
 import re
 from pathlib import Path
@@ -228,8 +229,7 @@ class DeepgramAuraProvider(BaseVoiceProvider):
         except (ValueError, TypeError, KeyError):
             raise ProviderError("Deepgram alignment response invalid; response omitted") from None
         duration = float(measured["duration"])
-        if any(w["start"] < 0 or w["end"] < w["start"] or w["end"] > duration + .15 for w in words):
-            raise ProviderError("Word alignment lies outside probed audio duration")
+        self._validate_word_timing(words, duration)
         extra_meta: dict[str, Any] = {}
         if self._voice_assigner is not None:
             extra_meta["locked_voices"] = self._voice_assigner.get_locked_voices()
@@ -245,6 +245,20 @@ class DeepgramAuraProvider(BaseVoiceProvider):
         return {"vo_path": out_path, "duration": duration, "words": words,
                 "audio_probe": measured, "provenance": invocation,
                 "delivery": [p for _, _, p in chunks], "alignment_end": max(w["end"] for w in words)}
+
+    @staticmethod
+    def _validate_word_timing(words: list[dict[str, Any]], duration: float) -> None:
+        """Reject invalid alignment and report only timing metadata, never transcript text."""
+        if not math.isfinite(duration) or duration <= 0:
+            raise ProviderError("Word alignment has invalid probed audio duration")
+        for index, word in enumerate(words):
+            start, end = word["start"], word["end"]
+            if (not math.isfinite(start) or not math.isfinite(end) or start < 0
+                    or end < start or end > duration + .15):
+                raise ProviderError(
+                    f"Word alignment lies outside probed audio duration "
+                    f"(word_index={index}, start={start}, end={end}, duration={duration:.3f}s)"
+                )
 
     @staticmethod
     def _words_from_response(payload: dict[str, Any]) -> list[dict[str, Any]]:

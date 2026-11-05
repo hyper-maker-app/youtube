@@ -1,7 +1,7 @@
 {
   "name": "grok-imagine-nsfw",
   "version": "3.11.4",
-  "description": "Optional 18+ pack (SpaceXAI AUP https://x.ai/legal/acceptable-use-policy). R-rated fictional imaginary adults only. Requires nsfw attest (--i-am-18 --imaginary-adults --not-a-real-person --acknowledge-aup). Not affiliated with xAI/SpaceXAI.",
+  "description": "Legacy 18+ NSFW command entry subject to the SpaceXAI AUP and imaginary-adults attestation; no NSFW skills are currently shipped in this pack.",
   "author": {
     "name": "FineComputer14451",
     "url": "https://github.com/FineComputer14451"
@@ -14,12 +14,7 @@
     "nsfw",
     "cinematic studio"
   ],
-  "skills": [
-    ".grok/skills/erosforge-nsfw-director",
-    ".grok/skills/nsfw-quota-orchestrator",
-    ".grok/skills/nsfw-sequence-extender",
-    ".grok/skills/nsfw-chain-qa-protocol"
-  ],
+  "skills": [],
   "commands": [
     "commands/nsfw.md"
   ],

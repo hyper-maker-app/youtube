@@ -1,3 +1,9 @@
+# Retired web surfaces
+
+The web and API surfaces described below are historical and no longer shipped. Use `cinematic-studio ui` or the CLI. The `web`, `web-react`, and `api` commands exit with a migration notice and status 1.
+
+---
+
 # Web shells — Streamlit · NiceGUI · React (multi-run)
 
 Grok Imagine Cinematic Studio exposes **multiple browser UIs** that share one service layer (`studio_core`). They are complementary, not mutually exclusive.

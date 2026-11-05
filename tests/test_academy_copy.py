@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 ACADEMY_DIRS = (ROOT / "web_academy", ROOT / "docs" / "academy")
 SCAN_SUFFIXES = {".ts", ".tsx", ".md"}
@@ -82,9 +84,12 @@ def _iter_academy_files() -> list[Path]:
             if path.suffix.lower() not in SCAN_SUFFIXES:
                 continue
             paths.append(path)
+    if not paths:
+        raise AssertionError("No active Academy documentation found to scan")
     return paths
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_activation_v3114_present_in_studio() -> None:
     studio = ROOT / "web_academy" / "src" / "data" / "studio.ts"
     text = studio.read_text(encoding="utf-8")
@@ -194,6 +199,7 @@ def test_no_stale_v39_version_stamps() -> None:
     )
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_canonical_activations_and_tier3_core_pipeline() -> None:
     studio = ROOT / "web_academy" / "src" / "data" / "studio.ts"
     text = studio.read_text(encoding="utf-8")
@@ -213,6 +219,7 @@ def test_canonical_activations_and_tier3_core_pipeline() -> None:
     assert "ErosForge" not in agents_block
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_core_roster_ids_present() -> None:
     studio = ROOT / "web_academy" / "src" / "data" / "studio.ts"
     text = studio.read_text(encoding="utf-8")
@@ -250,6 +257,7 @@ def test_removed_roster_ids_absent() -> None:
     )
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_academy_module_footer_badge_3114() -> None:
     studio = ROOT / "web_academy" / "src" / "data" / "studio.ts"
     studio_text = studio.read_text(encoding="utf-8")
@@ -276,6 +284,7 @@ def test_academy_module_footer_badge_3114() -> None:
         )
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_graduate_quiz_pass_keeps_seventy_percent() -> None:
     graduate = (ROOT / "web_academy" / "src" / "routes" / "graduate.tsx").read_text(
         encoding="utf-8"
@@ -285,6 +294,7 @@ def test_graduate_quiz_pass_keeps_seventy_percent() -> None:
     assert quiz.count('id: "q') == 13
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_quiz_wrong_options_do_not_leak_answer() -> None:
     quiz = ROOT / "web_academy" / "src" / "data" / "quiz.ts"
     text = quiz.read_text(encoding="utf-8")
@@ -314,6 +324,7 @@ def test_video_20_not_a_live_product() -> None:
     )
 
 
+@pytest.mark.skipif(not (ROOT / "web_academy").is_dir(), reason="Academy surface retired")
 def test_academy_api_docs_official_files_imagine_surface() -> None:
     """Academy /docs must pin the public Files + Imagine REST paths from docs.x.ai."""
     path = ROOT / "web_academy" / "src" / "data" / "api-docs.ts"

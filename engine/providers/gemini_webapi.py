@@ -6,12 +6,15 @@ import base64
 import json
 import logging
 import os
+import socket
+import sqlite3
 from pathlib import Path
 import subprocess
 import sys
 import time
 from typing import Any
 import urllib.request
+import urllib.error
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -65,6 +68,33 @@ async def extract_google_cookies(cdp_port: int = 9223) -> str:
 def sync_cookies_sync(cdp_port: int = 9223) -> str:
     """Synchronous wrapper for extract_google_cookies."""
     return asyncio.run(extract_google_cookies(cdp_port))
+
+def check_and_repair_db() -> None:
+    """Check database integrity after stopping the sidecar without deleting data.
+
+    A lock may belong to another process. Never treat it as corruption or remove
+    the database and WAL files; let the caller fail closed if the lock persists.
+    """
+    db_candidates = [VENDOR_DIR / "data" / "gemini.db", config.ROOT / "data" / "gemini.db"]
+    for db_path in db_candidates:
+        if not db_path.is_file():
+            continue
+        try:
+            with sqlite3.connect(str(db_path), timeout=2.0) as con:
+                rows = con.execute("PRAGMA integrity_check;").fetchall()
+        except sqlite3.Error as err:
+            raise RuntimeError(f"Cannot verify Gemini database; files preserved: {db_path}") from err
+        if not rows or any(row[0] != "ok" for row in rows):
+            raise RuntimeError(f"Gemini database integrity check failed; files preserved: {db_path}")
+
+
+def heal_gemini_server(cdp_port: int = 9223) -> None:
+    """Execute complete self-healing recovery: kill daemon, repair DB, sync cookies, restart."""
+    logger.info("Executing Gemini Web2API self-healing recovery...")
+    kill_server()
+    check_and_repair_db()
+    # Server startup handles the CDP check and one cookie sync itself.
+    ensure_server_running(cdp_port=cdp_port, force_refresh=True)
 
 
 def is_cdp_port_open(port: int = 9223) -> bool:
@@ -179,26 +209,39 @@ def ensure_server_running(cdp_port: int = 9223, force_refresh: bool = False) -> 
     raise RuntimeError(f"gemini-web2api failed to start on port {PORT} within timeout")
 
 
-def _post_with_retry(payload: dict[str, Any], timeout: float = 30.0) -> dict[str, Any]:
-    """Execute chat completion request with automatic daemon recovery if port is closed."""
-    ensure_server_running()
+def _is_recoverable_error(exc: Exception) -> bool:
+    """Classify transient sidecar failures, including wrapped socket timeouts."""
+    reason = getattr(exc, "reason", None)
+    if isinstance(exc, (TimeoutError, socket.timeout)) or isinstance(reason, (TimeoutError, socket.timeout)):
+        return True
+    if isinstance(exc, urllib.error.HTTPError) and exc.code in (500, 502, 503, 504):
+        return True
+    message = f"{exc} {reason or ''}".lower()
+    return any(token in message for token in (
+        "10061", "refused", "502", "bad gateway", "500", "malformed",
+        "disk image", "timed out", "timeout", "database is locked", "database table is locked",
+    ))
 
+
+def _post_with_retry(payload: dict[str, Any], timeout: float = 30.0) -> dict[str, Any]:
+    """Perform one request and at most one retry after sidecar recovery."""
     data_bytes = json.dumps(payload).encode("utf-8")
     headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
-    try:
+    def post() -> dict[str, Any]:
         req = urllib.request.Request(f"{BASE_URL}/chat/completions", data=data_bytes, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
+
+    try:
+        ensure_server_running()
+        return post()
     except Exception as exc:
-        # Only force-restart daemon if connection was actively refused or reset
-        if "10061" in str(exc) or "refused" in str(exc).lower() or not is_server_alive():
-            logger.warning("gemini-web2api connection dropped (%s); recovering daemon...", exc)
-            ensure_server_running(force_refresh=True)
-            req = urllib.request.Request(f"{BASE_URL}/chat/completions", data=data_bytes, headers=headers)
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        raise exc
+        if not _is_recoverable_error(exc):
+            raise
+        logger.warning("gemini-web2api encountered recoverable error (%s); executing self-healing recovery...", exc)
+        heal_gemini_server()
+        return post()
 
 
 def call_gemini_vision(
@@ -214,7 +257,7 @@ def call_gemini_vision(
     for img in images:
         path = Path(img).resolve()
         if not path.is_file():
-            continue
+            raise FileNotFoundError(f"Vision input image is unavailable: {path}")
         mime = "image/png" if path.suffix.lower() == ".png" else "image/jpeg"
         b64 = base64.b64encode(path.read_bytes()).decode("utf-8")
         content_parts.append({

@@ -38,8 +38,8 @@ def test_skill_membership_exclusive_and_covers_disk() -> None:
     for pid in PACK_IDS:
         union.extend(cfg["packs"][pid]["skills"])
     assert len(union) == len(set(union))
-    # Full suite skill count (template-library + orphans → 68)
-    assert len(union) == 68
+    disk = {p.parent.name for p in (ROOT / '.grok' / 'skills').glob('*/SKILL.md')}
+    assert set(union) == disk
 
 
 def test_commands_domain_mapped() -> None:
@@ -87,12 +87,8 @@ def test_pack_manifest_subset() -> None:
     cfg = load_plugin_packs()
     m = build_pack_plugin_manifest(cfg, "nsfw")
     assert m["name"] == "grok-imagine-nsfw"
-    assert m["skills"] == [
-        ".grok/skills/erosforge-nsfw-director",
-        ".grok/skills/nsfw-quota-orchestrator",
-        ".grok/skills/nsfw-sequence-extender",
-        ".grok/skills/nsfw-chain-qa-protocol",
-    ]
+    assert cfg["packs"]["nsfw"]["skills"] == []  # Retired skills are not advertised.
+    assert m["skills"] == [f".grok/skills/{slug}" for slug in cfg["packs"]["nsfw"]["skills"]]
     assert m["commands"] == ["commands/nsfw.md"]
 
 
@@ -102,12 +98,7 @@ def test_index_per_plugin_not_global() -> None:
     index = build_index_from_packs(market, cfg)
     nsfw = index["plugins"]["grok-imagine-nsfw"]["components"]["skills"]
     names = {s["name"] for s in nsfw}
-    assert names == {
-        "erosforge-nsfw-director",
-        "nsfw-quota-orchestrator",
-        "nsfw-sequence-extender",
-        "nsfw-chain-qa-protocol",
-    }
+    assert names == set()
+    assert names == set(cfg["packs"]["nsfw"]["skills"])
     full = index["plugins"][FULL_PLUGIN_NAME]["components"]["skills"]
-    # Full suite skill count (template-library + orphans → 68)
-    assert len(full) == 68
+    assert {item['name'] for item in full} == {p.parent.name for p in (ROOT / '.grok' / 'skills').glob('*/SKILL.md')}

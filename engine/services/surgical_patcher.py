@@ -10,6 +10,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
+from .media_tools import find_ffprobe
 
 
 class PatchError(RuntimeError):
@@ -30,9 +31,34 @@ class MediaSignature:
 
 
 def _probe(path: Path, executable: str | None = None) -> dict[str, Any]:
-    binary = executable or shutil.which("ffprobe")
+    binary = executable or find_ffprobe()
     if not binary:
-        raise PatchError("ffprobe is required for surgical media validation")
+        # PyAV uses the same container metadata and time bases as FFmpeg.  Do
+        # not invent absent stream durations: the timing gate must fail closed.
+        try:
+            import av
+            with av.open(str(path)) as container:
+                streams = []
+                for stream in container.streams:
+                    if stream.type not in {"video", "audio"}:
+                        continue
+                    time_base = stream.time_base
+                    row = {"codec_type": stream.type,
+                           "codec_name": stream.codec_context.name,
+                           "time_base": str(time_base) if time_base else ""}
+                    if time_base and stream.start_time is not None:
+                        row["start_time"] = str(float(stream.start_time * time_base))
+                    if time_base and stream.duration is not None:
+                        row["duration"] = str(float(stream.duration * time_base))
+                    if stream.type == "video":
+                        row.update(width=stream.codec_context.width, height=stream.codec_context.height,
+                                   pix_fmt=stream.codec_context.format.name if stream.codec_context.format else "",
+                                   avg_frame_rate=str(stream.average_rate) if stream.average_rate else "")
+                    streams.append(row)
+                duration = container.duration / av.time_base if container.duration is not None else 0
+                return {"streams": streams, "format": {"duration": str(duration)}}
+        except Exception as exc:
+            raise PatchError("ffprobe or a working PyAV installation is required for media validation") from exc
     result = subprocess.run(
         [binary, "-v", "error", "-show_streams", "-show_format", "-of", "json", str(path)],
         capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
@@ -83,6 +109,28 @@ def _hash(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_av_timeline(path: str | Path, *, tolerance: float = 0.1,
+                         probe: Callable[[Path], dict[str, Any]] | None = None) -> dict[str, float]:
+    """Check stream timing metadata; this does not assess semantic lip sync."""
+    data = (probe or _probe)(Path(path))
+    streams = data.get("streams") or []
+    video = next((s for s in streams if s.get("codec_type") == "video" and not s.get("disposition", {}).get("attached_pic")), None)
+    audio = next((s for s in streams if s.get("codec_type") == "audio"), None)
+    if not video or not audio:
+        raise PatchError("Patched timeline requires audio and video streams")
+    try:
+        vs, aus = float(video.get("start_time", 0)), float(audio.get("start_time", 0))
+        vd, ad = float(video["duration"]), float(audio["duration"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise PatchError("Patched timeline lacks stream timing") from exc
+    import math
+    if not all(math.isfinite(n) for n in (vs, aus, vd, ad)) or min(vd, ad) <= 0:
+        raise PatchError("Invalid patched timeline stream timing")
+    if abs(vs - aus) > tolerance or abs((vs + vd) - (aus + ad)) > tolerance:
+        raise PatchError("Patched timeline audio and video timings differ")
+    return {"video_start": vs, "audio_start": aus, "video_duration": vd, "audio_duration": ad}
+
+
 def _concat_line(path: Path) -> str:
     escaped = path.resolve().as_posix().replace("'", "'\\''")
     return f"file '{escaped}'"
@@ -99,6 +147,7 @@ def surgically_splice_timeline(
     ffmpeg: str | None = None,
     probe: Callable[[Path], dict[str, Any]] | None = None,
     runner: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
+    assemble: Callable[[list[Path], Path], Any] | None = None,
 ) -> Path:
     """Replace selected blocks, reassemble, then validate the resulting media."""
     master = Path(master_video_path)
@@ -106,6 +155,9 @@ def surgically_splice_timeline(
     output = Path(output_path)
     if not master.is_file() or not blocks:
         raise PatchError("Master video and block list are required")
+    protected = [master, *blocks, *(Path(p) for p in replacement_blocks.values())]
+    if any(output.resolve() == path.resolve() for path in protected):
+        raise PatchError("Output must not overwrite the master or timeline blocks")
     if any(not path.is_file() or path.stat().st_size <= 0 for path in blocks):
         raise PatchError("Every timeline block must exist and be non-empty")
     if captions_path is not None and not Path(captions_path).is_file():
@@ -127,30 +179,35 @@ def surgically_splice_timeline(
             raise PatchError("Untouched block changed during patch preparation")
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    ffmpeg_bin = ffmpeg or shutil.which("ffmpeg")
-    if not ffmpeg_bin:
-        raise PatchError("ffmpeg is required for surgical splicing")
-    audio = Path(master_audio_path) if master_audio_path else master
-    if not audio.is_file():
-        raise PatchError("Master audio or master video is missing")
-    with tempfile.TemporaryDirectory(prefix="surgical_splice_", dir=output.parent) as temp_dir:
-        concat_file = Path(temp_dir) / "blocks.txt"
-        concat_file.write_text("\n".join(_concat_line(path) for path in updated) + "\n", encoding="utf-8")
-        filters = ["[0:v]fps=30,format=yuv420p[v]"]
-        current = "[v]"
-        if captions_path and Path(captions_path).is_file():
-            subtitle = Path(captions_path).resolve().as_posix().replace(":", "\\:").replace("'", "\\'")
-            filters.append(f"{current}subtitles='{subtitle}'[vs]")
-            current = "[vs]"
-        args = [
-            ffmpeg_bin, "-y", "-hide_banner", "-f", "concat", "-safe", "0", "-i", str(concat_file),
-            "-i", str(audio), "-filter_complex", ";".join(filters), "-map", current, "-map", "1:a?",
-            "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", str(output),
-        ]
-        result = (runner or _run)(args)
-    if result.returncode != 0 or not output.is_file() or output.stat().st_size <= 0:
-        raise PatchError("FFmpeg surgical splice failed")
+    if assemble is not None:
+        assemble(updated, output)
+    else:
+        ffmpeg_bin = ffmpeg or shutil.which("ffmpeg")
+        if not ffmpeg_bin:
+            raise PatchError("ffmpeg is required for surgical splicing")
+        audio = Path(master_audio_path) if master_audio_path else master
+        if not audio.is_file():
+            raise PatchError("Master audio or master video is missing")
+        with tempfile.TemporaryDirectory(prefix="surgical_splice_", dir=output.parent) as temp_dir:
+            concat_file = Path(temp_dir) / "blocks.txt"
+            concat_file.write_text("\n".join(_concat_line(path) for path in updated) + "\n", encoding="utf-8")
+            filters = ["[0:v]fps=30,format=yuv420p[v]"]
+            current = "[v]"
+            if captions_path and Path(captions_path).is_file():
+                subtitle = Path(captions_path).resolve().as_posix().replace(":", "\\:").replace("'", "\\'")
+                filters.append(f"{current}subtitles='{subtitle}'[vs]")
+                current = "[vs]"
+            args = [
+                ffmpeg_bin, "-y", "-hide_banner", "-f", "concat", "-safe", "0", "-i", str(concat_file),
+                "-i", str(audio), "-filter_complex", ";".join(filters), "-map", current, "-map", "1:a?",
+                "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", str(output),
+            ]
+            result = (runner or _run)(args)
+        if result.returncode != 0:
+            raise PatchError("FFmpeg surgical splice failed")
+    if not output.is_file() or output.stat().st_size <= 0:
+        raise PatchError("Surgical splice produced no output")
     output_sig = media_signature(output, probe=probe)
     master_sig = media_signature(master, probe=probe)
     if abs(output_sig.duration - master_sig.duration) > 0.05:
@@ -187,6 +244,9 @@ def execute_selective_patch(
             raise PatchError("Patch budget exhausted before audit passed")
         replacements: dict[int, str | Path] = {}
         by_id = {getattr(block, "block_id"): block for block in getattr(report, "blocks", ())}
+        path_ids = [get_block_id(path) for path in paths]
+        if len(set(path_ids)) != len(path_ids) or not set(patch_ids).issubset(set(path_ids) & set(by_id)):
+            raise PatchError("Audit block IDs do not map uniquely to supplied block paths")
         for index, path in enumerate(paths):
             block_id = get_block_id(path)
             if block_id in patch_ids:

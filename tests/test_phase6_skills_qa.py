@@ -10,7 +10,7 @@ Verifies:
    - Model Layer (Grok 4.6) block present with model_compatibility
    - Skills registered in scripts/required_skills.manifest
 2. Boundary Inspector updates:
-   - TRANSITION_SCORE_THRESHOLD == 0.80
+   - TRANSITION_SCORE_THRESHOLD == 0.85
    - BoundaryQAReport.to_dict() produces valid serializable dictionary
    - write_qa_report() writes comprehensive qa_report.json with failed_transitions logs
    - inspect_transition_boundary() accepts report_path and persists report
@@ -128,12 +128,12 @@ def test_phase6_skills_registered_in_manifest():
 # 2. Boundary Inspector & QA Report Tests
 # =========================================================================
 
-def test_boundary_inspector_threshold_is_80():
-    """Verify transition score threshold is lowered from 0.85 to 0.80."""
-    assert TRANSITION_SCORE_THRESHOLD == 0.80
+def test_boundary_inspector_threshold_is_85():
+    """Verify transition score threshold is 0.85 according to Protocol v4.0."""
+    assert TRANSITION_SCORE_THRESHOLD == 0.85
     ok, msg = verify_boundary_inspector()
     assert ok is True
-    assert "0.80" in msg
+    assert "0.85" in msg
 
 
 def test_boundary_qa_report_to_dict():
@@ -149,7 +149,7 @@ def test_boundary_qa_report_to_dict():
     d = rep.to_dict()
     assert d["continuity_score"] == 0.825
     assert d["passed"] is True
-    assert d["threshold"] == 0.80
+    assert d["threshold"] == 0.85
     assert d["inspected_by"] == "opencv_histogram_correlation"
     assert "triplet_bytes" not in d
 
@@ -183,7 +183,7 @@ def test_write_qa_report_creates_json(tmp_path: Path):
     assert out_path.is_file()
 
     data = json.loads(qa_file.read_text(encoding="utf-8"))
-    assert data["threshold"] == 0.80
+    assert data["threshold"] == 0.85
     assert data["total_inspections"] == 2
     assert data["passed_count"] == 1
     assert data["failed_count"] == 1
@@ -214,7 +214,7 @@ def test_inspect_transition_boundary_report_path_persistence(tmp_path: Path):
     assert rep is not None
     assert qa_path.is_file()
     saved = json.loads(qa_path.read_text(encoding="utf-8"))
-    assert saved["threshold"] == 0.80
+    assert saved["threshold"] == 0.85
 
 
 # =========================================================================

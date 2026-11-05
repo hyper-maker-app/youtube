@@ -121,3 +121,9 @@ AI video generation models fail when instructed with human facial close-ups or a
 
 ## Universal Physics & Causality Invariants
 - **[Scene 35]**: Maintain continuous temporal perspective in 2nd-person narratives; avoid massive time jumps that abruptly abandon the protagonist's localized experience.
+
+## Structured Reviewer Rules
+
+The machine-readable resource bounds for review are in `references/review_rules.json`. An explicitly stated battery state of charge expressed as a percentage of full charge cannot exceed 100 percent. These checks cover only explicit stated quantities; evaluate domain-specific physics and conditions using the full directing instructions above.
+
+In an enclosed fire, smoke can rapidly impair visibility and breathing; evaluate escape actions in their specific conditions, including whether an exit remains accessible, rather than treating smoke as harmless. Source: https://www.ready.gov/sites/default/files/2025-04/step_fires_instructor-guide.pdf

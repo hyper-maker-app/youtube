@@ -8,6 +8,7 @@ from fractions import Fraction
 from pathlib import Path
 import shutil
 import subprocess
+from .media_tools import find_ffprobe
 
 EVIDENCE_SCHEMA_VERSION = 2
 PINNED_SOURCE_REVISION = "70ec73861091267dd1f57184bcf809a922bea85b"
@@ -15,7 +16,7 @@ PINNED_SOURCE_REVISION = "70ec73861091267dd1f57184bcf809a922bea85b"
 
 def probe_media(path: Path, executable: str | None = None) -> dict:
     """Read stream evidence, including SAR/DAR. Never infer it from the request."""
-    binary = executable or shutil.which("ffprobe")
+    binary = executable or find_ffprobe()
     if not binary:
         raise ValueError("ffprobe is required for Flow media evidence; repair the probe dependency")
     result = subprocess.run([binary, "-v", "error", "-show_streams", "-show_format",

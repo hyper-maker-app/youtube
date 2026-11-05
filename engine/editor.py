@@ -15,6 +15,8 @@ was written. Notable traps that are already solved below:
 
 from __future__ import annotations
 
+import os
+import logging
 import re
 import subprocess
 import tempfile
@@ -671,6 +673,7 @@ def apply_extinction_countdown_overlay(
     """
     if not banner_text.strip():
         raise ValueError("Countdown overlay requires explicit banner_text")
+    explicit_ffmpeg = ffmpeg is not None or bool(os.environ.get("FFMPEG_BINARY"))
     ffmpeg = ffmpeg or config.resolve_ffmpeg()
     input_path = Path(input_path)
     out_path = Path(out_path)
@@ -698,6 +701,17 @@ def apply_extinction_countdown_overlay(
     args.append(str(out_path))
 
     proc = _run(args)
+    if os.name == "nt" and not explicit_ffmpeg and proc.returncode == 0xC0000005:
+        # Some FFmpeg builds crash inside fontconfig on drawtext. Keep explicit
+        # selections authoritative; otherwise retry with the bundled binary.
+        try:
+            import imageio_ffmpeg
+            bundled = imageio_ffmpeg.get_ffmpeg_exe()
+        except (ImportError, OSError, RuntimeError):
+            bundled = ffmpeg
+        if Path(bundled).resolve() != Path(ffmpeg).resolve():
+            logging.getLogger(__name__).warning("FFmpeg drawtext crashed; retrying with imageio-ffmpeg")
+            proc = _run([bundled, *args[1:]])
     if proc.returncode != 0:
         raise RuntimeError("apply_extinction_countdown_overlay failed:\n" + proc.stderr[-2000:])
     return out_path

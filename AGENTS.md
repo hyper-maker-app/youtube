@@ -96,10 +96,6 @@ This workspace is designed for advanced **Grok 4.5** agent workflows, with heavy
 ├── artifacts/                   # Generated outputs (gitignored contents; keep .gitkeep)
 ├── scripts/                     # Install/verify/update helpers + thin shims
 ├── studio_core/                 # UI-agnostic services (dashboard · ActionSpec · execute_action)
-├── web_ui/                      # Streamlit dashboard (Bible wizard, DNA, quota, Tools)
-├── web_nicegui/                 # NiceGUI shell (cinematic-studio web)
-├── web_react/                   # React/TanStack SPA (cinematic-studio web-react + API)
-├── studio_api/                  # FastAPI control plane (cinematic-studio api)
 ├── tools/                       # CLI + model registry (models.py is canonical stack)
 ├── references/                  # MODELS.md · MODELS_v3.6.md · agents/ Role Cards
 ├── docs/                        # Human docs: guides/, templates/, releases/, archive/
@@ -112,45 +108,14 @@ This workspace is designed for advanced **Grok 4.5** agent workflows, with heavy
 └── (other: config/, examples/, tests/, assets/)
 ```
 
-Full map: `docs/REPOSITORY_LAYOUT.md`. Dual-run web shells: `docs/guides/WEB_SHELLS.md`.
+Full map: `docs/REPOSITORY_LAYOUT.md`. Retired web surfaces: `docs/guides/WEB_SHELLS.md`.
 
 User-global skills (all projects): `~/.grok/skills/`.  
 User config: `~/.grok/config.toml`.
 
-## Multi-Surface Control Plane (v3.11.0)
+## Control Plane
 
-All operator surfaces share **`studio_core`** so dashboard snapshots, ActionSpec allowlists, and `execute_action` stay consistent. Prefer extending `studio_core.services` over duplicating logic in a single UI.
-
-| Surface | Path / entry | When to use |
-|---------|--------------|-------------|
-| **Shared core** | `studio_core/services/` — `dashboard.py`, `actions.py`, `execute.py` | Any control-plane feature (new ActionSpec, dashboard fields, execute modes) |
-| **CLI** | `cinematic-studio` / `python tools/cinematic_studio_cli.py` | Scripts, CI, agents, headless production (Bible, DNA, sequence, handoff, doctor) |
-| **TUI** | `cinematic-studio ui` (Textual; optional `ui --print` non-TTY) | SSH / no-browser; live dashboard + launcher/cockpit; `execute` via **subprocess** |
-| **Streamlit** | `streamlit run web_ui/app.py` (`requirements.txt`) | Community Cloud, live Imagine batch when `XAI_API_KEY` is set, PDF tools, full NSFW planners |
-| **NiceGUI** | `cinematic-studio web --port 8088` (`requirements-nicegui.txt`) | Browser cockpit parity with ActionSpec forms; low-latency **in-process** execute |
-| **React** | `cinematic-studio web-react` (`web_react/` · Node 20+) | TanStack SPA on FastAPI; guided Bible + Tools/Settings; same ActionSpec safety |
-| **FastAPI** | `cinematic-studio api --port 8090` (`requirements-api.txt`) | Automation / React / custom UIs; OpenAPI at `/docs`; dashboard + ActionSpec + meta + bible |
-
-**Rules for agents:**
-
-1. Do **not** invent parallel dashboard/action registries per surface — wire through `studio_core`.
-2. TUI, NiceGUI, and React (via API) enforce the ActionSpec allowlist + forbidden argv tokens; keep that invariant.
-3. Surfaces are complementary: Streamlit + NiceGUI + React may run together on different ports; none replace the CLI.
-4. Smoke without long-running servers: `python scripts/smoke_studio_surfaces.py` · React: `cd web_react && npm run test:smoke`.
-5. Full multi-shell matrix: `docs/guides/WEB_SHELLS.md`.
-
-```bash
-# Orient (TUI)
-cinematic-studio ui
-cinematic-studio ui --print          # non-TTY fallback
-
-# Browser shells
-streamlit run web_ui/app.py
-pip install -r requirements-nicegui.txt && cinematic-studio web --host 127.0.0.1 --port 8088
-pip install -r requirements-api.txt     && cinematic-studio api --host 127.0.0.1 --port 8090
-# React SPA (needs API above + Node)
-cinematic-studio web-react             # → http://127.0.0.1:5173
-```
+The active operator surfaces are the CLI and TUI, backed by `studio_core`. Use `cinematic-studio ui` or `cinematic-studio ui --print`; extend shared services rather than creating a parallel registry. The former Streamlit, NiceGUI, React and FastAPI surfaces are retired. Their `web`, `web-react` and `api` commands exit with a migration notice and status 1. Run `python scripts/smoke_studio_surfaces.py` for an offline smoke check.
 
 ## Grok 4.6 Model Layer (Required Knowledge)
 
@@ -236,7 +201,7 @@ When working with or creating skills:
 
 ## Core Agent Skill Slugs
 
-**25 Role-Card core agents** power the department; **64 skills** power agents + specialists (i2i, batch, chain QA, polish, Wave A P0, packs, etc.). Full activation table: `references/agents/AGENT_INDEX.md`.
+The historical **25 Role-Card core agent** roster does not imply every skill remains present; **58 present skill directories** power agents + specialists (i2i, batch, chain QA, polish, Wave A P0, packs, etc.). Full activation table: `references/agents/AGENT_INDEX.md`.
 
 | Display name | Skill slug (activate this) |
 |--------------|----------------------------|
@@ -245,7 +210,7 @@ When working with or creating skills:
 | Director of Photography | `director-of-photography` |
 | Production Designer | `production-designer-set-decorator` |
 | Color Grading Supervisor | `post-production-color-grading-supervisor` |
-| Character DNA Extractor | `character-dna-extractor` |
+| Character DNA Extractor (retired; skill absent) | `character-dna-extractor` |
 | Performance & Emotion Director | `performance-emotion-director` |
 | Identity Lock Specialist | `identity-lock-specialist` |
 | Narrative Arc Pacing Strategist | `narrative-arc-pacing-strategist` |
@@ -288,7 +253,7 @@ Core membership matches `tools/cli/shared.py` `CORE_AGENT_CATEGORIES` (includes 
 - **Still → video**: `image_to_video` (when available in session)
 - **Multi-ref → video**: `reference_to_video` (when available)
 - **AI recreation / style transfer / enhancement** of uploaded images: Activate `ai-image-recreation`
-- **Extract Character DNA** for consistency: Activate `character-dna-extractor`
+- **Character DNA:** the former `character-dna-extractor` skill is absent; use only currently verified character and handoff tooling.
 - **Extend cinematic sequences** (60–120s+): Activate `cinematic-sequence-extender` or `extend-frame-to-video`
 - **Refine / iterate on previously generated images**: `generated-image-editor` (user-global when present)
 - **Upscale video for final delivery** (720p → 1080p/4K, face restoration): Activate `ai-video-upscaler`
@@ -336,7 +301,7 @@ Document skills are typically **session / user-global** (not always in the 64-sk
 - Pre-publish plugin gate: `cinematic-studio plugin catalog check --release` or `bash scripts/verify_plugins.sh --release` (passes when pin == HEAD or pin is ancestor with only catalog paths after it)
 - Dev/test deps: `pip install -r requirements-dev.txt` then `pytest`
 - Use `cinematic-studio-meta-installer` skill for full bootstrap/verify in agent sessions
-- The **64 skills + slash commands** (in `commands/`) are the primary way to extend Grok Build with studio capabilities
+- The **available skills + slash commands** (in `commands/`) are the primary way to extend Grok Build with studio capabilities
 
 ### Memory & Personalization
 
@@ -357,11 +322,11 @@ For any complex visual storytelling, film-style image sequences, video productio
 **Primary activation command:**  
 `Activate Grok Imagine Cinematic Studio v3.11.4` or `Start cinematic production`
 
-This engages the full **25 specialized agents** (Role Cards labeled v3.6.5–v4.5 under studio **v3.11.4**; Studio Director owns **Imagine Agent Mode Handoff**) plus pipeline specialists and **Wave A** scaffolds. **64 skills** implement the department. Core list (`CORE_AGENT_CATEGORIES` — DNA in, ErosForge opt-in):
+The historical roster lists **25 specialized agents** (Role Cards labeled v3.6.5–v4.5 under studio **v3.11.4**; Studio Director owns **Imagine Agent Mode Handoff**) plus pipeline specialists and **Wave A** scaffolds. **58 present skill directories** implement the department. Core list (`CORE_AGENT_CATEGORIES` — DNA in, ErosForge opt-in):
 
 - Studio Director (`studio-director`), Mega Production Architect (`mega-production-architect`)
 - Director of Photography, Production Designer, Color Grading Supervisor
-- Character DNA Extractor (`character-dna-extractor`), Performance & Emotion Director, Identity Lock Specialist, Narrative Arc Pacing Strategist
+- Character DNA Extractor (`character-dna-extractor`, retired skill), Performance & Emotion Director, Identity Lock Specialist, Narrative Arc Pacing Strategist
 - Sequence Director, Cinematic Sequence Extender, Continuity Guardian, Multi-Clip Continuity Orchestrator
 - Imagine Prompt Master, Quality Assurance Guardian, **Grok Doctor** (`grok-doctor`), Workflow Quota Optimizer
 - Sonic Architect, Foley Specialist
@@ -444,7 +409,7 @@ Entry points by task (not exhaustive). Prefer slugs; full map = `AGENT_INDEX.md`
 | **Imagine Handoff** | `imagine-execution-bridge`, `handoff-packet-validator`, Studio Director handoff | grok.com/imagine packets, Agent Mode routing, packet validation |
 | **Video Upscale & Polish** | `ai-polish-director`, `ai-video-upscaler` | Final delivery upscale, face restoration, artifact cleanup |
 | **Image Recreation & Editing** | `ai-image-recreation`, `generated-image-editor`, `i2i-refiner`, `i2i-cinematic-refiner` | Style transfer, enhancement, variation, iterative refinement |
-| **Character Consistency** | `character-dna-extractor`, `identity-lock-specialist`, `costume-wardrobe-continuity`, `multi-character-identity-arbiter` | DNA extraction, Identity Lock,wardrobe lock, multi-cast arbitration |
+| **Character Consistency** | `identity-lock-specialist`, `costume-wardrobe-continuity`, `multi-character-identity-arbiter` | DNA extraction, Identity Lock,wardrobe lock, multi-cast arbitration |
 | **Sequence & Story** | `sequence-director`, `cinematic-sequence-extender`, `extend-frame-to-video`, `narrative-arc-pacing-strategist`, `arc-replan-copilot` | Long-form sequencing, extend/stitch, pacing, mid-chain replan |
 | **Camera / Set / Performance** | `director-of-photography` (prefer over legacy `director-of-photography-v3-3`), `production-designer-set-decorator`, `performance-emotion-director` | Lighting, environments, acting beats |
 | **Continuity & QA** | `continuity-consistency-guardian`, `multi-clip-continuity-orchestrator`, `costume-wardrobe-continuity`, `quality-assurance-guardian`, `chain-qa-protocol`, `nsfw-chain-qa-protocol` | Continuity, multi-clip audits, wardrobe seams, 16-point QA, extend/stitch gates |
@@ -469,10 +434,10 @@ Entry points by task (not exhaustive). Prefer slugs; full map = `AGENT_INDEX.md`
 - Primary project: **Grok Imagine Cinematic Studio** **v3.11.4** — registry default **`grok-4.6`** + specialist **4.6 / grok-4-auto** Model Layer + dual Imagine Video **1.0 / 1.5** + Imagine Agent Mode Handoff + Identity Continuity + Parallel Brief Protocol + multi-surface control plane (`studio_core` · TUI · Streamlit · NiceGUI · FastAPI · React) + guided Bible wizard + **plugin modularity packs**.
 - All generated artifacts **must** be saved under `artifacts/` (repo root).
 - Project skills live in `.grok/skills/`; user-global skills in `~/.grok/skills/`.
-- Plugin marketplace lives in `.grok-plugin/` (full suite + 5 packs, **64 skills** + commands; Wave A P0 included). Install full suite via `grok plugin install FineComputer14451/Grok-Imagine-Cinematic-Studio --trust`.
+- Plugin marketplace lives in `.grok-plugin/`; validate its catalog against the current on-disk skills before installation. Install full suite via `grok plugin install FineComputer14451/Grok-Imagine-Cinematic-Studio --trust`.
 - Workspace supports SFW cinematic work and NSFW/erotic pipelines (**ErosForge only when explicitly activated**).
 - **Model stack:** cinematic + Build/coding registry default **`grok-4.6`**; specialist routing **4.6 / grok-4-auto** when available; optional 1M **`grok-4.3`**; Imagine **1.0** default; `VIDEO_PIPELINE_SPEC` via registry helpers; **1.5** for native-audio / high-physics / intimacy workflows.
-- **Control plane:** shared `studio_core` powers `cinematic-studio ui` · `streamlit run web_ui/app.py` · `cinematic-studio web` · `cinematic-studio api` — see Multi-Surface section above and `docs/guides/WEB_SHELLS.md`.
+- **Control plane:** shared `studio_core` powers the CLI and `cinematic-studio ui`; the former web and API commands are retired.
 - Full suite: **64/64** skills + Role Cards (includes `grok-doctor`, `multi-clip-continuity-orchestrator`, `ai-image-recreation`).
 - **Recent history:** **3.11.4** — leftover grok-4.5 live defaults / pickers pin grok-4.6. **3.11.3** — official Image 2.0 multi-edit `images[]` + preserve served `model`. **3.11.2** — Imagine Image Quality retirement (slug → 2.0 `quality=low`). **3.11.1** — SpaceXAI AUP fail-closed gates + CLI help IA. **3.11.0** — Grok 4.6 stack lock + Grok Build ≥ 1.0.5 (`grok-4.5` aliases wrap 4.6). **3.10.0** — official Imagine Image 2.0 + Video 1.0/1.5 surface map (no Video 2.0); Agent Mode surface E; REST edit/extend/r2v. **3.9.1** — React/TanStack cockpit + API meta/guided Bible. **3.9.0** — multi-surface control plane (`studio_core` · NiceGUI · FastAPI + Streamlit wiring). **3.8.9** — TUI + Streamlit compact/ops/full view modes. **3.8.8** — Operator UX control plane. **3.8.7** — Wave A · Grok Doctor · Multi-Clip Continuity. **3.8.0** — plugin packs. **3.7.1** — Imagine Agent Mode Handoff.
 - Keep this `AGENTS.md` in sync with the GitHub repository and other canonical docs (README, CHANGELOG, `docs/releases/`, `docs/guides/WEB_SHELLS.md`, `references/MODELS.md`, `references/agents/MODEL_LAYER_v4.5.md`, `docs/guides/Quick_Start_Guide.md`).

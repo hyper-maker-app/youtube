@@ -117,6 +117,10 @@ Failing screenplays are autonomously repaired by `ScreenplayHealer` before user 
 
 ## Learned Production Invariants (Adversarial Feedback)
 
+For an explicitly marked short integration test only, replace Scene 38 placement references with the final scene. Landscape retains the terminal CTA; vertical retains the CTA-free loop. This exception does not certify a production screenplay.
+
+Scene 38 CTA references in learned rules below apply only to the standard landscape catastrophe profile; the aspect-aware ending rules above govern all other profiles.
+
 - **[Scene 38]**: The final scene must always conclude with an explicit, engaging Call-to-Action directed at the viewer to drive algorithmic engagement.
 
 - **[Scene 27]**: Do not break character POV to describe exterior macro-events; tether macro-events to the protagonist's senses.
@@ -138,9 +142,8 @@ Failing screenplays are autonomously repaired by `ScreenplayHealer` before user 
 - **[Scene 1]**: Maintain continuous strict adherence to production schema and guardrails.
 
 - **[Scene 25]**: Never repeat identical narration or dead-protagonist beats across multiple trailing scenes; maintain progressive information density.
-- **[Scene 38]**: The last scene’s spoken track must contain nothing except the single CTA sentence; no residual story copy before it.
 - **[Scene 38]**: CTA lives only in the last spoken sentence; visuals must contain zero subscribe/notification/countdown text.
-- **[Scene 38]**: CTA lives in the last sentence of the last scene’s narration only—never in visuals, never as the whole scene.
+- **[Scene 38]**: CTA lives in the last sentence of the last scene’s narration only—never in visuals.
 - **[Scene s026]**: Maintain strict 2nd-person bodily containment; never cut to external or orbital viewpoints when the viewer is explicitly framed inside an enclosed space.
 - **[Scene s026]**: 2nd-person narration may only describe photons that could reach the protagonist’s eyes unless an explicit cutaway label is used.
 - **[Scene 37]**: Never exit the viewer's perspective prior to the call-to-action conclusion.

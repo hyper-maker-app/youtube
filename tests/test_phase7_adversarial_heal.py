@@ -94,8 +94,8 @@ def test_screenplay_reviewer_scorecard_rubric_weights():
 
     card = reviewer.review(clean_scenes, title="What if the Sun Disappeared", genre="catastrophe")
     assert card.total_score >= 90
-    assert card.passed is True
-    assert card.grade == "Grade A+"
+    assert card.passed is False
+    assert "Checklist-only" in card.defects[-1]
 
     weights = {
         "cta_isolation": 15,
@@ -215,16 +215,9 @@ def test_catastrophe_procedural_scenes_certified_grade_a_plus():
     reviewer = ScreenplayReviewer()
     card = reviewer.review(scenes, title="What if 1000 Volcanoes Erupted at Once", genre="catastrophe")
 
-    # If minor defects are present, healer guarantees Grade A+
-    if not card.passed:
-        healer = ScreenplayHealer(reviewer=reviewer)
-        heal_res = healer.heal(scenes)
-        card = heal_res.final_scorecard
-        scenes = heal_res.repaired_scenes
-
     assert card.total_score >= 90, f"Expected >= 90, got {card.total_score}. Defects: {card.defects}"
-    assert card.passed is True
-    assert card.grade == "Grade A+"
+    assert card.passed is False
+    assert "Checklist-only" in card.defects[-1]
 
 
 def test_produce_film_cli_adversarial_gate_plan_only(monkeypatch: pytest.MonkeyPatch):
@@ -402,7 +395,7 @@ def test_skill_reinforcement_deduplication_and_cap(tmp_path: Path):
         encoding="utf-8",
     )
 
-    service = SkillReinforcementService(skills_dir=tmp_path)
+    service = SkillReinforcementService(skills_dir=tmp_path, allow_writes=True)
     res1 = service.apply_learned_rule("catastrophe-director", "Ocean water latent heat delays cooling", scene_id=12)
     assert res1["applied"] is True
 
@@ -460,12 +453,12 @@ def test_pessimistic_gate_strict_fail_closed_when_judge_fails(monkeypatch):
     for scene in scenes:
         scene.pop("simulation_only", None)
 
-    # Case 1: Both judges respond with high scores -> Grade A+ certified
+    # Case 1: Both legacy judge scores are high, but checklist-only remains uncertified.
     monkeypatch.setattr(reviewer, "_consult_grok_critique", lambda *a, **k: {"screenplay_score": 92, "defects": []})
     monkeypatch.setattr(reviewer, "_consult_gemini_critique", lambda *a, **k: {"screenplay_score": 90, "defects": []})
     card_both = reviewer.review(scenes, title="Test", genre="catastrophe", consult_ai=True)
-    assert card_both.passed is True
-    assert card_both.grade == "Grade A+"
+    assert card_both.passed is False
+    assert "Checklist-only" in card_both.defects[-1]
     assert card_both.total_score == 90
 
     # Case 2: Grok times out (None) while Gemini gives 95 -> Must FAIL closed, NO fake Grade A+
@@ -484,8 +477,9 @@ def test_pessimistic_gate_strict_fail_closed_when_judge_fails(monkeypatch):
     assert any("Gemini judge did not return a valid score" in d for d in card_gemini_fail.defects)
 
 
-def test_screenplay_reviewer_and_healer_dynamic_models():
+def test_screenplay_reviewer_and_healer_dynamic_models(monkeypatch):
     """Verify default and dynamic model configurations for ScreenplayReviewer and ScreenplayHealer."""
+    monkeypatch.delenv("XAI_MODEL", raising=False)
     # 1. Default reviewer models
     default_rev = ScreenplayReviewer()
     assert default_rev.gemini_model == "gemini-3.1-pro"

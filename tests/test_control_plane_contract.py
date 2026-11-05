@@ -1,5 +1,5 @@
 # tests/test_control_plane_contract.py
-"""Phase 1: shared severity/attention contract (TUI + Web adapters)."""
+"""Shared severity and attention contract for the active CLI and TUI."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "web_ui"))
 
 
 def _snap(**overrides: object) -> dict:
@@ -105,32 +104,11 @@ def test_attention_families_contract() -> None:
     assert any("risk" in a.lower() for a in alerts)
 
 
-def test_web_dashboard_ui_shares_tui_severity() -> None:
-    from cli.tui.widgets import strip_severity
-    from lib import dashboard_ui as dui
-
-    for snap in (
-        _snap(),
-        _snap(project={"title": "X", "genre": "G", "has_bible": False}),
-    ):
-        assert dui.severity(snap) == strip_severity(snap)
-        assert dui.attention_rows(snap) == list(
-            __import__("cli.tui.widgets", fromlist=["collect_home_alerts"]).collect_home_alerts(
-                snap
-            )
-        )
-
-
 def test_live_snapshot_contract() -> None:
     from cli.dashboard import build_studio_dashboard
     from cli.tui.widgets import collect_home_alerts, strip_severity
-    from lib import dashboard_ui as dui
 
-    snap = dui.attach_quota_alignment(build_studio_dashboard())
+    snap = build_studio_dashboard()
     sev = strip_severity(snap)
     assert sev in {"ok", "warn", "critical"}
-    assert dui.severity(snap) == sev
     assert isinstance(collect_home_alerts(snap), list)
-    assert isinstance(dui.attention_rows(snap), list)
-    html = dui.status_strip_html(snap, studio_version="3.9.0")
-    assert f"sev-{sev}" in html

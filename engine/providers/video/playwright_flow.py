@@ -23,6 +23,7 @@ def sanitize_flow_prompt(prompt: str) -> str:
 class PlaywrightFlowVideoProvider(BaseVideoProvider):
     def __init__(self, *, test_mode=False, client=None):
         self.test_mode = test_mode
+        self.allow_text_fallback = False
         self.contract = settings(test=test_mode)
         self.capabilities = default_capabilities()
         self.client = client or BrowserNativeFlowTransport()
@@ -70,6 +71,7 @@ class PlaywrightFlowVideoProvider(BaseVideoProvider):
             quality=self.contract["quality"], model=self.contract["video_model"],
             test_mode=self.test_mode,
             authorize=True,
+            allow_text_fallback=self.allow_text_fallback,
         )
 
     async def close(self) -> None:

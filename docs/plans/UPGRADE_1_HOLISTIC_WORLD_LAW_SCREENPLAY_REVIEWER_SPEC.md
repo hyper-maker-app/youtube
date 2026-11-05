@@ -1,4 +1,13 @@
 # UPGRADE 1: TECHNICAL ARCHITECTURE & DESIGN SPECIFICATION
+
+> **Implementation status (5 November 2026):** The following is a historical
+> design, not evidence of live provider verification. `--screenplay-mode holistic`
+> is opt-in and requires two valid judges and passing hard checks. The default
+> `strict-checklist` is partial review and cannot certify a production screenplay.
+> Structured world rules currently ship for catastrophe; other genres without a
+> matching director and rule set fail closed. Skill and rule provenance is recorded
+> in the review context. Offline fixtures do not establish provider reliability,
+> dramatic quality, or audience retention.
 ## "Holistic World-Law & System-First Screenplay Reviewer and Healer"
 
 **Version:** 4.5.0-ARCH  

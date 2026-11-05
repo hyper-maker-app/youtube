@@ -26,8 +26,8 @@ _VEO_BANNED = re.compile(
     r"|warning\s+sign\s+(?:that\s+)?(?:reads?|says?)|written\s+text\s+(?:on|in)\s+frame"
     r"|(?:analog\s+)?(?:pressure\s+)?gauge(?:s)?(?:\s+(?:with\s+needles?|needle\s+thrashing|in\s+emergency\s+lighting))?"
     r"|(?:analog\s+)?dial(?:s)?(?:\s+on\s+(?:the\s+)?(?:elevator\s+)?wall)?"
-    r"|(?:mercury\s+|pressure\s+)?column(?:s)?(?:\s+visibly\s+climbing)?"
-    r"|needle(?:s)?\s+(?:thrashing|pointing|twitching|vibrating|in\s+red\s+emergency\s+lighting)"
+    r"|(?:mercury|pressure|liquid|manometer|barometer)\s+column(?:s)?|column(?:s)?\s+visibly\s+climbing"
+    r"|needle(?:s)?\s+(?:thrashing|pointing|twitching|in\s+red\s+emergency\s+lighting)"
     r"|temperature\s+strip(?:s)?(?:\s+changing\s+color(?:\s+from\s+bottom\s+to\s+top)?)?"
     r"|manometer(?:s)?"
     r"|scale\s+marking(?:s)?"
@@ -76,7 +76,16 @@ def _strip_veo_violations(prompt: str, scene_index: int) -> tuple[str, str | Non
     if "[DATA_BROLL]" in prompt.upper():
         return prompt, None
     positive = prompt.partition("--no")[0]
-    if _VEO_BANNED.search(positive) or _HUMAN_FEATURE_BANNED.search(positive):
+    # Only suppress a directly negated match. Ambiguous conjunctions remain
+    # violations so a positive request cannot hide behind an earlier negation.
+    def has_positive_match(pattern: re.Pattern[str]) -> bool:
+        for match in pattern.finditer(positive):
+            prefix = positive[max(0, match.start() - 24):match.start()]
+            if not re.search(r"\b(?:no|without|zero|gloved|protective|hazmat)\s+$", prefix, re.IGNORECASE):
+                return True
+        return False
+
+    if has_positive_match(_VEO_BANNED) or has_positive_match(_HUMAN_FEATURE_BANNED):
         return prompt, f"Scene {scene_index + 1}: ERROR -- Veo visual guardrail violation; model-authored repair required."
     return prompt, None
 

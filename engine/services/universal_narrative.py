@@ -90,8 +90,19 @@ def screenplay_schema(scene_count: int) -> dict[str, Any]:
         "data_payload":{"type":"object","additionalProperties":True}})
     return {"type":"object","properties":{"act_summary":{"type":"string"},"scenes":{"type":"array","minItems":scene_count,"maxItems":scene_count,"items":{"type":"object","properties":fields,"required":["id","narration","visual_prompt","motion_prompt","duration","micro_math"]}}},"required":["scenes"]}
 
-async def _generate_script_async(title: str, genre: str, duration: int, aspect: str, llm_provider: Any, skill_loader: Any = None) -> list[dict[str,Any]]:
+async def _generate_script_async(title: str, genre: str, duration: int, aspect: str, llm_provider: Any, skill_loader: Any = None, short_test: bool = False) -> list[dict[str,Any]]:
     system_prompt = skill_loader.build_unified_system_prompt(title=title,genre=genre,duration=duration,aspect=aspect) if skill_loader is not None else build_llm_genre_system_prompt(title,genre,duration,aspect)
+    if short_test:
+        loader = skill_loader
+        if loader is None:
+            from engine.services.skill_loader import get_skill_loader
+            loader = get_skill_loader()
+        for slug in ("catastrophe-director", "viral-retention-director"):
+            instructions = loader.load_skill_instructions(slug, max_chars=0)
+            test_rule = next((line for line in instructions.splitlines() if line.startswith("For an explicitly marked short integration test only,")), "")
+            if not test_rule:
+                raise ValueError(f"Short-test skill contract is missing: {slug}")
+            system_prompt += "\nTEST-ONLY CONTRACT (authoritative for this run):\n" + test_rule
     payload_schema_path = Path(__file__).resolve().parents[1] / "motion_graphics" / "payload_schema.json"
     payload_schema = json.loads(payload_schema_path.read_text(encoding="utf-8"))
     system_prompt += "\nB-roll data interchange schema (template_name and data_payload):\n" + json.dumps(payload_schema)
@@ -106,12 +117,23 @@ async def _generate_script_async(title: str, genre: str, duration: int, aspect: 
         act_names = [f"Act {c + 1} of {len(chunk_ranges)}" for c in range(len(chunk_ranges))]
 
     result: list[dict[str, Any]] = []
+    if short_test:
+        from engine import config
+        narration_word_budget = max(1, round(duration * config.lang_profile("en")["wps"]))
     for chunk, (start, end) in enumerate(chunk_ranges):
+        if short_test:
+            remaining_words = max(0, narration_word_budget - sum(len(s["narration"].split()) for s in result))
         topic = json.dumps({
             "title": title,
             "genre": genre,
             "aspect": aspect,
             "target_duration": duration,
+            **({
+                "chunk_target_duration": duration * (end - start) / scene_count,
+                "total_narration_word_budget": narration_word_budget,
+                "remaining_narration_word_budget": remaining_words,
+                "chunk_narration_word_budget": round(remaining_words * (end - start) / (scene_count - start)),
+            } if short_test else {}),
             "act_number": chunk + 1,
             "act_description": act_names[chunk],
             "chunk": chunk + 1,
@@ -165,14 +187,14 @@ async def _generate_script_async(title: str, genre: str, duration: int, aspect: 
         result.extend(scenes)
     return result
 
-def generate_5act_script(title: str, genre: str = "catastrophe", duration: int = 300, aspect: str = "16:9", llm_provider: Any = None, *, simulation: bool = False, skill_loader: Any = None) -> list[dict[str,Any]]:
+def generate_5act_script(title: str, genre: str = "catastrophe", duration: int = 300, aspect: str = "16:9", llm_provider: Any = None, *, simulation: bool = False, skill_loader: Any = None, short_test: bool = False) -> list[dict[str,Any]]:
     if simulation:
         return load_simulation_scenes(genre,duration,aspect)
     if llm_provider is None:
         raise RuntimeError("Live screenplay authoring requires an LLM provider; use explicit dry-run simulation for offline tests")
     if duration <= 0:
         raise ValueError("duration must be positive")
-    return asyncio.run(_generate_script_async(title,genre,duration,aspect,llm_provider,skill_loader))
+    return asyncio.run(_generate_script_async(title,genre,duration,aspect,llm_provider,skill_loader,short_test))
 
 def generate_catastrophe_scenes(title: str, duration: int = 300, aspect: str = "16:9", *, llm_provider: Any = None, simulation: bool = False) -> list[dict[str,Any]]:
     return generate_5act_script(title,"catastrophe",duration,aspect,llm_provider,simulation=simulation)
@@ -185,6 +207,6 @@ class UniversalNarrativeEngine:
         self.skill_loader = skill_loader
         self.llm_provider = llm_provider
     def generate_screenplay(self,title: str,genre: str = "catastrophe",duration: int = 300,aspect: str = "16:9",voice_provider: str = "deepgram",dry_run: bool = False,**kwargs: Any) -> list[dict[str,Any]]:
-        return generate_5act_script(title,genre,duration,aspect,self.llm_provider,simulation=dry_run,skill_loader=self.skill_loader)
+        return generate_5act_script(title,genre,duration,aspect,self.llm_provider,simulation=dry_run,skill_loader=self.skill_loader,short_test=kwargs.get("short_test", False))
 
 __all__ = ["GENRE_CATASTROPHE","GenreArchetype","UniversalNarrativeEngine","detect_genre_archetype","generate_catastrophe_scenes","generate_universal_scenes","generate_5act_script","build_llm_genre_system_prompt","build_llm_catastrophe_system_prompt","standardize_catastrophe_title","format_catastrophe_title","is_catastrophe_title","snap_to_veo_duration","load_simulation_scenes","screenplay_schema"]

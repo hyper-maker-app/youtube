@@ -1177,7 +1177,12 @@ cinematic_studio_zip_dir() {
         (cd "$staging" && zip -qr "$output" .)
         return
     fi
-    python3 - "$staging" "$output" <<'PY'
+    local py=python3
+    # Windows Git Bash may resolve python3 to the Microsoft Store launcher.
+    if command -v python >/dev/null 2>&1 && python -c 'import sys; sys.exit(sys.version_info.major != 3)' >/dev/null 2>&1; then
+        py=python
+    fi
+    "$py" - "$staging" "$output" <<'PY'
 import sys
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile

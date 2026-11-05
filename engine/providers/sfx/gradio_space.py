@@ -76,7 +76,7 @@ class GradioSpaceSfxProvider(BaseSfxProvider):
                     used_source = space
                     logger.info(f"Hugging Face Space SFX successfully generated via {space} -> {out_wav.name}")
                     break
-            except Exception as exc:
+            except (Exception, asyncio.CancelledError, TimeoutError) as exc:
                 logger.warning(
                     f"Gradio Space SFX generation via '{space}' failed or timed out ({type(exc).__name__}: {exc})."
                 )

@@ -92,6 +92,24 @@ def test_authoring_uses_injected_skill_loader_and_broll_contract():
     fields=screenplay_schema(1)["properties"]["scenes"]["items"]["properties"]
     assert {"is_data_broll","template_name","data_payload"} <= fields.keys()
 
+def test_short_test_authoring_distributes_total_duration_across_chunks():
+    loader = Mock()
+    loader.build_unified_system_prompt.return_value = "directing rules"
+    loader.load_skill_instructions.return_value = "For an explicitly marked short integration test only, follow the total duration."
+    class Provider:
+        def __init__(self): self.topics = []
+        async def generate_script(self, **kwargs):
+            self.topics.append(json.loads(kwargs["topic"]))
+            return {"scenes": [{"narration": "You wait.", "visual_prompt": "fixture", "duration": 2.4, "motion_prompt": "", "micro_math": ""}]}
+    provider = Provider()
+    UniversalNarrativeEngine(skill_loader=loader, llm_provider=provider).generate_screenplay(
+        "fixture", duration=12, short_test=True,
+    )
+    assert len(provider.topics) == 5
+    assert sum(topic["chunk_target_duration"] for topic in provider.topics) == pytest.approx(12)
+    assert all(topic["target_duration"] == 12 for topic in provider.topics)
+    assert provider.topics[1]["remaining_narration_word_budget"] == provider.topics[0]["total_narration_word_budget"] - 2
+
 @pytest.mark.parametrize("field",["narration","visual_prompt"])
 def test_missing_authored_text_cannot_certify(monkeypatch,baseline,field):
     baseline[0][field]=""

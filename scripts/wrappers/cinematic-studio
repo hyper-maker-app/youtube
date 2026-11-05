@@ -37,7 +37,7 @@ _cli_py() {
 _python() {
     if [[ -x "${PROJECT_DIR}/.venv/bin/python" ]]; then
         printf '%s\n' "${PROJECT_DIR}/.venv/bin/python"
-    elif command -v python3 >/dev/null 2>&1; then
+    elif command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; sys.exit(sys.version_info.major != 3)' >/dev/null 2>&1; then
         printf '%s\n' "python3"
     else
         printf '%s\n' "python"

@@ -1,4 +1,28 @@
 # UPGRADE 2: TECHNICAL ARCHITECTURE & DESIGN SPECIFICATION
+
+> **Current implementation notice (5 November 2026):** The design below is
+> historical and is not evidence that full-video or audio multimodal review is
+> implemented. The current opt-in `--video-qa` path sends three extracted still
+> frames per block (25%, 50%, 75%) through `sampled_video_audit.py`. A passing
+> result applies only to those sampled images; it does not establish motion,
+> audio, A/V synchronization, or unseen-frame quality. The command defaults
+> to off. When enabled, an uncertain or failed audit blocks final assembly.
+> One selective patch pass is the supported maximum; a patched candidate must
+> pass a subsequent audit before it replaces the original input. The boundary
+> inspector and local media checks supply separate, limited evidence. Provider
+> capacity, native full-video submission and the cost or savings estimates in
+> the historical proposal remain unverified. Live operation must not be
+> inferred from fixture tests. See the current master implementation plan for
+> outstanding acceptance criteria.
+> Final assembled A/V stream timing is checked separately when QA is enabled;
+> this checks timestamps and duration, not semantic audio synchronization.
+> Local media validation requires `ffprobe` or PyAV; if neither is available,
+> the validation gate fails closed. Provider image batch capacity remains unverified.
+> The still-frame adapter groups complete blocks into requests capped locally
+> by `--video-qa-batch-size` (default 12 images, at least 3). This is an
+> operator-configurable local ceiling, not a verified provider limit. At most
+> 100 requests are permitted per audit. Missing or invalid batches fail closed;
+> batch coverage and sample timestamps are recorded in the audit report.
 ## "Full-Video Native Multimodal Post-Audit & Selective Patching Engine"
 
 **Version:** 4.5.0-ARCH  

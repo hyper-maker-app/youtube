@@ -21,7 +21,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -32,7 +34,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-TRANSITION_SCORE_THRESHOLD: float = 0.80
+TRANSITION_SCORE_THRESHOLD: float = 0.85
 
 
 @dataclass
@@ -40,7 +42,7 @@ class BoundaryQAReport:
     """Evaluation result of cross-block visual transition."""
 
     continuity_score: float  # 0.0 to 1.0
-    passed: bool  # True if score >= TRANSITION_SCORE_THRESHOLD (0.80)
+    passed: bool  # True only if the score meets the transition threshold.
     violations: list[str] = field(default_factory=list)
     corrective_prompt: str = ""
     triplet_bytes: bytes | None = None
@@ -295,8 +297,10 @@ async def inspect_transition_boundary(
                 if cleaned.startswith("```"):
                     cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.MULTILINE).strip()
                 data = json.loads(cleaned)
-                score = float(data.get("continuity_score", 0.90))
-                passed = bool(data.get("passed", score >= TRANSITION_SCORE_THRESHOLD))
+                score = float(data["continuity_score"])
+                if not math.isfinite(score) or not 0 <= score <= 1:
+                    raise ValueError("Invalid continuity score")
+                passed = data.get("passed") is True and score >= TRANSITION_SCORE_THRESHOLD
                 rep = BoundaryQAReport(
                     continuity_score=score,
                     passed=passed,
@@ -373,8 +377,10 @@ async def _inspect_with_gemini_flash(
         return json.loads(response.text)
 
     res = await asyncio.to_thread(_sync_call)
-    score = float(res.get("continuity_score", 0.90))
-    passed = bool(res.get("passed", score >= TRANSITION_SCORE_THRESHOLD))
+    score = float(res["continuity_score"])
+    if not math.isfinite(score) or not 0 <= score <= 1:
+        raise ValueError("Invalid continuity score")
+    passed = res.get("passed") is True and score >= TRANSITION_SCORE_THRESHOLD
     violations = list(res.get("violations", []))
     corrective = str(res.get("corrective_prompt", ""))
 
@@ -412,7 +418,7 @@ def _inspect_with_opencv(
     # Normalized correlation typically ranges from -1 to 1; clamp to [0.0, 1.0]
     normalized_score = max(0.0, min(1.0, (hist_corr + 1.0) / 2.0))
 
-    passed = normalized_score >= 0.65  # CV threshold calibrated for cuts
+    passed = normalized_score >= TRANSITION_SCORE_THRESHOLD
     violations = []
     corrective = ""
     if not passed:

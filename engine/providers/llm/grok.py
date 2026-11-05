@@ -22,7 +22,8 @@ class GrokLLMProvider(BaseLLMProvider):
     ) -> None:
         self.api_key = api_key or os.getenv("XAI_API_KEY")
         self.model = model or os.getenv("XAI_MODEL") or "grok-4.20-0309-non-reasoning"
-        self.base_url = base_url or os.getenv("XAI_API_BASE") or "https://api.x.ai/v1"
+        resolved_base = (base_url or os.getenv("XAI_API_BASE") or "https://api.x.ai/v1").strip().rstrip("/")
+        self.base_url = resolved_base or "https://api.x.ai/v1"
         if not self.api_key:
             raise ConfigurationError(
                 "grok provider requires XAI_API_KEY. Configure it in .env."
@@ -88,17 +89,13 @@ class GrokLLMProvider(BaseLLMProvider):
         if response.choices and response.choices[0].message:
             content = response.choices[0].message.content or ""
         content = content.strip()
-        if content.startswith("```"):
-            lines = content.splitlines()
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            content = "\n".join(lines).strip()
-        try:
-            value = json.loads(content)
-        except json.JSONDecodeError as exc:
-            raise ProviderError(f"grok returned invalid JSON for the requested schema: {content[:200]}") from exc
-        if not isinstance(value, dict):
-            raise ProviderError("grok returned JSON that is not an object.")
+
+        from engine.services.screenplay_reviewer import extract_json_payload
+
+        value = extract_json_payload(content)
+        if not value or not isinstance(value, dict):
+            try:
+                value = json.loads(content)
+            except Exception as exc:
+                raise ProviderError(f"grok returned invalid JSON for the requested schema: {content[:300]}") from exc
         return value

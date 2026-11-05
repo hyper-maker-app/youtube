@@ -12,6 +12,7 @@ import logging
 import math
 import os
 import sys
+import uuid
 from pathlib import Path
 from typing import Any, Optional
 
@@ -90,6 +91,34 @@ console = Console()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("produce_commands")
 
+
+def _load_short_test_draft(directory: Path, slug: str, *, title: str, genre: str, duration: int, aspect: str) -> list[dict[str, Any]]:
+    """Load a matching unreviewed test draft; it must still pass all review gates."""
+    for path in sorted(directory.glob(f"{slug}_draft_*.json"), key=lambda p: p.stat().st_mtime_ns, reverse=True):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            scenes = data.get("scenes")
+            if (data.get("kind") == "unreviewed_short_test_draft" and data.get("short_test") is True
+                    and data.get("production_certified") is False and data.get("title") == title
+                    and data.get("genre") == genre and data.get("duration") == duration
+                    and data.get("aspect") == aspect and isinstance(scenes, list) and len(scenes) >= 4
+                    and all(isinstance(s, dict) and not s.get("simulation_only") for s in scenes)):
+                return scenes
+        except (OSError, ValueError, TypeError, AttributeError):
+            continue
+    return []
+
+
+def _save_short_test_draft(directory: Path, slug: str, *, title: str, genre: str, duration: int, aspect: str, scenes: list[dict[str, Any]]) -> Path:
+    """Preserve an unreviewed live authoring result without overwriting earlier drafts."""
+    path = directory / f"{slug}_draft_{uuid.uuid4().hex}.json"
+    payload = {"kind": "unreviewed_short_test_draft", "short_test": True,
+               "production_certified": False, "review_status": "not_reviewed",
+               "title": title, "genre": genre, "duration": duration, "aspect": aspect, "scenes": scenes}
+    with path.open("x", encoding="utf-8") as file:
+        json.dump(payload, file, indent=2, ensure_ascii=False)
+    return path
+
 SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -163,35 +192,73 @@ def generate_local_3act_scenes(title: str, genre: str = "catastrophe", duration:
     return generate_universal_scenes(title=title, genre=genre, duration=duration, aspect=aspect, simulation=simulation)
 
 
+def _mark_partial_review(scorecard: Any, *, mode: str, short_test: bool, simulation: bool) -> None:
+    """Do not promote a checklist-only or simulated score to production certification."""
+    if simulation:
+        scorecard.passed = False
+        scorecard.grade = "SIMULATION (UNCERTIFIED)"
+        if "Simulation fixtures cannot receive production certification" not in scorecard.defects:
+            scorecard.defects.append("Simulation fixtures cannot receive production certification")
+    elif mode == "strict-checklist" and not short_test:
+        scorecard.passed = False
+        scorecard.grade = "PARTIAL REVIEW (UNCERTIFIED)"
+        scorecard.defects.append("Checklist-only review cannot certify production; use holistic review.")
+
+
+def _review_allows_render(scorecard: Any, *, dry_run: bool) -> bool:
+    """Only a passed review authorizes live rendering; dry runs are simulations."""
+    return dry_run or (scorecard.passed and scorecard.total_score >= 90)
+
+
 def produce_film(
     title: str = typer.Argument(..., help="Title or central premise of the film"),
     genre: str = typer.Option("catastrophe", "--genre", "-g", help="Film genre (e.g. catastrophe, Survival Horror, Sci-Fi, Cyberpunk)"),
     engine: str = typer.Option("flow", "--engine", "-e", help="Physical render engine: 'flow' (Google Veo / Imagen 3 CDP) or 'xai'"),
     duration: int = typer.Option(300, "--duration", "-d", help="Target film duration in seconds"),
     aspect: str = typer.Option("16:9", "--aspect", "-a", help="Aspect ratio: '16:9' or '9:16'"),
+    screenplay_mode: str = typer.Option("strict-checklist", "--screenplay-mode", help="Screenplay review: strict-checklist or holistic (experimental)."),
     voice_provider: str = typer.Option("deepgram", "--voice-provider", "-v", help="Narration provider: 'deepgram', 'voyslity', 'elevenlabs', or 'azure'"),
     plan_only: bool = typer.Option(False, "--plan-only", "-p", help="Generate production bible, character DNA, and handoff scenes without rendering"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Run local offline simulation without remote provider calls"),
     no_music: bool = typer.Option(False, "--no-music", help="Disable background audio bed"),
     no_captions: bool = typer.Option(False, "--no-captions", help="Disable burned Libass karaoke subtitles"),
     hero_plate: Optional[str] = typer.Option(None, "--hero-plate", help="Path to character hero plate image for continuity QA"),
+    allow_flow_text_fallback: bool = typer.Option(False, "--allow-flow-text-fallback", help="Explicitly allow text-only Flow generation when native reference conditioning is unavailable."),
     rebuild: bool = typer.Option(False, "--rebuild", "-r", help="Bypass cached handoff and re-generate canonical 3-act UDSE screenplay"),
     director_mode: bool = typer.Option(True, "--director-mode/--no-director-mode", help="Enable Grok 4.6 Autonomous Director Engine with UDSE v4.2"),
     episode: int = typer.Option(1, "--episode", help="Episode number in series (default: 1)"),
     continue_from: Optional[str] = typer.Option(None, "--continue-from", help="Directory or path to previous episode continuity handoff to thaw state"),
     simulate_defect_block: Optional[int] = typer.Option(None, "--simulate-defect-block", help="Simulate a visual continuity breach on block N to test Director Agent HEAL re-generation loop"),
-    video_qa: bool = typer.Option(False, "--video-qa/--no-video-qa", help="Run provider-neutral full-video QA before final assembly"),
+    video_qa: bool = typer.Option(False, "--video-qa/--no-video-qa", help="Audit sampled video frames before final assembly; motion and audio are not covered"),
     video_qa_model: str = typer.Option("gemini-3.1-pro", "--video-qa-model", help="Model identifier used by the configured video QA adapter"),
-    max_patch_passes: int = typer.Option(1, "--max-patch-passes", help="Maximum selective video QA patch passes (0-2)"),
+    video_qa_batch_size: int = typer.Option(12, "--video-qa-batch-size", min=3, help="Local maximum sampled images per request; provider limits may differ."),
+    max_patch_passes: int = typer.Option(1, "--max-patch-passes", help="--max-patch-passes sets the maximum selective video QA patch passes (0-1)"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Automatically confirm physical video rendering without prompting"),
     allow_deepmind_fallback: bool = typer.Option(False, "--allow-deepmind-fallback", help="Allow fallback to DeepMind heuristic if gemini_webapi is unavailable"),
-    force_render: bool = typer.Option(False, "--force-render", help="Bypass adversarial reviewer fail-closed gate for testing or override."),
+    force_render: bool = typer.Option(False, "--force-render", help="Compatibility option; does not bypass the live review gate."),
     export_shorts: bool = typer.Option(False, "--export-shorts", help="Automatically multiplex 9:16 vertical YouTube Shorts cut alongside 16:9 master."),
     gemini_judge_model: str = typer.Option("gemini-3.1-pro", "--gemini-judge-model", help="Gemini judge model identifier (default: gemini-3.1-pro via Chrome CDP)"),
     grok_judge_model: str = typer.Option("grok-4.20-non-reasoning", "--grok-judge-model", help="xAI Grok judge model identifier (default: grok-4.20-0309-non-reasoning)"),
+    short_test: bool = typer.Option(False, "--short-test", help="Use the explicitly authorized short integration-test contract; output is not production certified."),
 ) -> None:
-    """Produce a complete cinematic film: Grok Studio AI Brain -> Flow CDP Video -> Voice Provider -> FFmpeg Assembly."""
+    """Produce a complete cinematic film through Flow, voice, and FFmpeg.
+
+    Set --max-patch-passes to 0 or 1 to control selective video repairs.
+    """
     slug = sanitize_slug(title)
+    if screenplay_mode not in {"strict-checklist", "holistic"}:
+        raise typer.BadParameter("Choose strict-checklist or holistic", param_hint="--screenplay-mode")
+    if short_test:
+        if force_render:
+            console.print("[red]--short-test cannot bypass the adversarial review gate.[/red]")
+            raise typer.Exit(code=1)
+        if genre.strip().lower() != "catastrophe" or not 1 <= duration <= 40:
+            console.print("[red]--short-test requires catastrophe genre and a duration between 1 and 40 seconds.[/red]")
+            raise typer.Exit(code=1)
+        slug = f"test-only-{slug}"
+        console.print("[yellow]TEST ONLY: short integration contract; output is not production certified.[/yellow]")
+    if os.getenv("XAI_MODEL") and (grok_judge_model in ("grok-4.20-non-reasoning", "grok-4.20-0309-non-reasoning") or not grok_judge_model):
+        grok_judge_model = os.getenv("XAI_MODEL")
     out_dir = _ROOT / "out" / slug
     out_dir.mkdir(parents=True, exist_ok=True)
     sequences_dir = _ROOT / "sequences"
@@ -232,6 +299,7 @@ def produce_film(
             saved_data = json.loads(handoff_path.read_text(encoding="utf-8"))
             if (
                 saved_data.get("scenes")
+                and bool(saved_data.get("short_test", False)) == short_test
                 and (dry_run or not any(scene.get("simulation_only") for scene in saved_data["scenes"]))
                 and len(saved_data["scenes"]) >= 4
                 and saved_data.get("duration") == duration
@@ -243,11 +311,15 @@ def produce_film(
                 scenes = saved_data["scenes"]
                 for s in scenes:
                     s["narration"] = sanitize_spoken_text(s.get("narration", ""))
-                console.print(f"  + Reusing existing verified screenplay ({len(scenes)} scenes) -> [dim]{handoff_path.name}[/dim]")
+                console.print(f"  + Reusing authored screenplay ({len(scenes)} scenes); current rules will be reviewed again -> [dim]{handoff_path.name}[/dim]")
         except Exception:
             pass
 
     archetype = detect_genre_archetype(genre)
+    if not scenes and short_test and xai_key and not dry_run and not rebuild:
+        scenes = _load_short_test_draft(sequences_dir, slug, title=title, genre=genre, duration=duration, aspect=aspect)
+        if scenes:
+            console.print("  + Resuming unreviewed TEST-ONLY draft; full review remains mandatory.")
     if not scenes and xai_key and not dry_run:
         console.print(f"  + Orchestrating Universal 2nd-Person Screenplay ({archetype.display_name}) via xAI Grok API...")
         try:
@@ -255,7 +327,11 @@ def produce_film(
             skill_loader = get_skill_loader()
             console.print(f"  + Injected live directives from {len(skill_loader.list_skills())} disk skills.")
 
-            llm = GrokLLMProvider(api_key=xai_key, model="grok-4.20-0309-non-reasoning")
+            llm = GrokLLMProvider(
+                api_key=xai_key,
+                model=os.getenv("XAI_MODEL") or "grok-4.20-0309-non-reasoning",
+                base_url=os.getenv("XAI_API_BASE"),
+            )
             engine_inst = UniversalNarrativeEngine(skill_loader=skill_loader, llm_provider=llm)
             scenes = engine_inst.generate_screenplay(
                 title=title,
@@ -264,7 +340,11 @@ def produce_film(
                 aspect=aspect,
                 voice_provider=voice_provider,
                 dry_run=dry_run,
+                short_test=short_test,
             )
+            if short_test and not any(s.get("simulation_only") for s in scenes):
+                draft_path = _save_short_test_draft(sequences_dir, slug, title=title, genre=genre, duration=duration, aspect=aspect, scenes=scenes)
+                console.print(f"  + Saved unreviewed TEST-ONLY draft -> [dim]{draft_path.name}[/dim]")
             console.print(f"  + Grok authored {len(scenes)} dynamic 2nd-person scenes across 5 acts.")
         except Exception as exc:
             console.print(f"[red]Screenplay authoring failed: {safe_console_text(exc)}[/red]")
@@ -278,6 +358,10 @@ def produce_film(
 
     if not dry_run and any(scene.get("simulation_only") for scene in scenes):
         console.print("[red]Simulation scenes cannot be rendered as a live production, including with --force-render.[/red]")
+        raise typer.Exit(code=1)
+
+    if not dry_run and not short_test and genre.strip().lower() == "catastrophe" and len(scenes) != 38:
+        console.print("[red]Production catastrophe contract requires 38 scenes; use --short-test only for an explicitly authorized integration test.[/red]")
         raise typer.Exit(code=1)
 
     # Sanitize all narration across scenes to guarantee 100% clean spoken audio
@@ -327,9 +411,12 @@ def produce_film(
         allow_deepmind_fallback=allow_deepmind,
         gemini_model=gemini_judge_model,
         grok_model=grok_judge_model,
+        short_test=short_test,
+        screenplay_mode=screenplay_mode,
+        aspect=aspect,
     )
     initial_scenes_snapshot = copy.deepcopy(scenes)
-    consult_ai_active = bool(xai_key and not dry_run)
+    consult_ai_active = bool(xai_key and not dry_run and screenplay_mode == "holistic")
 
     try:
         scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=consult_ai_active)
@@ -345,6 +432,9 @@ def produce_film(
             allow_deepmind_fallback=True,
             gemini_model=gemini_judge_model,
             grok_model=grok_judge_model,
+            short_test=short_test,
+            screenplay_mode=screenplay_mode,
+            aspect=aspect,
         )
         scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=consult_ai_active)
 
@@ -369,7 +459,7 @@ def produce_film(
             border_style="yellow",
         ))
 
-    if (not scorecard.passed or scorecard.total_score < 90) and not dry_run:
+    if (not scorecard.passed or scorecard.total_score < 90) and not dry_run and (screenplay_mode == "holistic" or short_test):
         console.print(f"  [yellow]Initial audit score: {scorecard.total_score}/100 ({scorecard.grade}) with {len(scorecard.defects)} defect(s). Initiating Multi-Round Auto-Healer (up to 3 passes, target >= 90)...[/yellow]")
         healer = ScreenplayHealer(
             reviewer=reviewer,
@@ -443,13 +533,15 @@ def produce_film(
             )
         console.print(table)
     elif not simulation_only:
-        console.print(f"  [green]Initial audit passed directly: {scorecard.total_score}/100 ({scorecard.grade})[/green]")
+        console.print(f"  [green]Initial review completed: {scorecard.total_score}/100 ({scorecard.grade})[/green]")
+
+    _mark_partial_review(scorecard, mode=screenplay_mode, short_test=short_test, simulation=simulation_only)
 
     # Generate Comprehensive Transparent Raw Audit Report
     artifacts_dir = _ROOT / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     project_report_file = artifacts_dir / f"{slug}_adversarial_report.md"
-    latest_report_file = artifacts_dir / "ADVERSARIAL_SCREENPLAY_PIPELINE_COMPLETE_REPORT.md"
+    latest_report_file = artifacts_dir / ("TEST_ONLY_ADVERSARIAL_SCREENPLAY_PIPELINE_REPORT.md" if short_test else "ADVERSARIAL_SCREENPLAY_PIPELINE_COMPLETE_REPORT.md")
 
     # Build Before/After Diff Table
     diff_lines = []
@@ -500,8 +592,9 @@ def produce_film(
         f"# Complete Adversarial Screenplay Audit & Closed-Loop Healing Report\n\n"
         f"- **Project Title:** {title}\n"
         f"- **Genre:** {genre}\n"
+        f"- **Contract:** {'TEST ONLY (not production certified)' if short_test else 'production'}\n"
         f"- **Total Scenes:** {len(scenes)} ({duration}s)\n"
-        f"- **Final Certification:** {scorecard.grade} ({scorecard.total_score}/100) — {'PASSED' if scorecard.passed else 'FAILED'}\n"
+        f"- **Final {'Test Review' if short_test else 'Certification'}:** {scorecard.grade} ({scorecard.total_score}/100) — {'PASSED' if scorecard.passed else 'FAILED'}\n"
         f"- **Dual-Judge Final Scores:** Grok = {scorecard.grok_score or 'N/A'}, Gemini = {scorecard.gemini_score or 'N/A'}\n\n"
         + "\n".join(round_md_sections)
         + f"\n## 3. Final Dual-Judge Evaluation Verdict\n\n"
@@ -525,17 +618,12 @@ def produce_film(
 
     if scorecard.passed and scorecard.total_score >= 90:
         console.print(Panel(
-            f"[bold green][CERTIFIED] Screenplay Certified Grade A+ ({scorecard.total_score}/100)![/bold green]\n\n"
+            f"[bold green]{'[TEST REVIEW PASSED]' if short_test else '[CERTIFIED] Screenplay Certified Grade A+'} ({scorecard.total_score}/100)![/bold green]\n\n"
             f"[b]Project Title:[/b] {safe_console_text(title)}\n"
             f"[b]Scenes / Duration:[/b] {len(scenes)} scenes / {duration}s ({aspect})\n"
             f"[b]Audit Scores:[/b]\n"
-            f"  - CTA Isolation: {scorecard.category_scores.get('cta_isolation', 0)}/15 pts\n"
-            f"  - Veo Negative Guards: {scorecard.category_scores.get('veo_guardrails', 0)}/25 pts\n"
-            f"  - Thermodynamics: {scorecard.category_scores.get('thermodynamic_sanity', 0)}/20 pts\n"
-            f"  - Chronological Scale: {scorecard.category_scores.get('narrative_time_scale', 0)}/15 pts\n"
-            f"  - Causality Integrity: {scorecard.category_scores.get('causality_integrity', 0)}/15 pts\n"
-            f"  - 2nd-Person Invariant: {scorecard.category_scores.get('pov_invariants', 0)}/10 pts",
-            title="[CERTIFIED] Adversarial Screenplay Gate",
+            + "\n".join(f"  - {safe_console_text(key)}: {value} pts" for key, value in scorecard.category_scores.items()),
+            title="[TEST REVIEW] Adversarial Screenplay Gate" if short_test else "[CERTIFIED] Adversarial Screenplay Gate",
             border_style="green"
         ))
     else:
@@ -550,6 +638,10 @@ def produce_film(
 
     # Save handoff packet
     handoff_packet = {
+        "short_test": short_test,
+        "production_certified": False,
+        "screenplay_review_passed": bool(scorecard.passed and scorecard.total_score >= 90),
+        "screenplay_review": scorecard.to_dict(),
         "title": title,
         "genre": genre,
         "episode": episode,
@@ -577,21 +669,26 @@ def produce_film(
             f"[HANDOFF] [b]Handoff Scenes:[/b] {handoff_path}\n"
             f"[SCENES] [b]Scene Count:[/b] {len(scenes)} scenes\n\n"
             f"[TIP] To physically produce video, run without --plan-only:\n"
-            f"python tools/cinematic_studio_cli.py produce-film \"{title}\" --genre \"{genre}\" --duration {duration}",
+            f"python tools/cinematic_studio_cli.py produce-film \"{title}\" --genre \"{genre}\" --duration {duration}{' --short-test' if short_test else ''}",
             title="[HALT] Ready for Production Review",
             border_style="yellow"
         ))
         return
 
     # Fail-Closed Quality Gate: Enforce that only Certified screenplays proceed to physical execution
-    if (not scorecard.passed or scorecard.total_score < 90) and not force_render:
-        if not dry_run:
-            console.print("\n[bold red][QUALITY GATE BLOCKED] Screenplay failed adversarial review (Score < 90 / Defects present).[/bold red]")
-            console.print("[yellow]Physical video rendering halted to protect Google Flow and API credits.[/yellow]")
-            console.print("[dim]Tip: Inspect defect critique above and re-run with --plan-only to review before rendering.[/dim]\n")
-            raise typer.Exit(code=1)
-    elif not scorecard.passed and force_render:
-        console.print("\n[bold yellow][QUALITY GATE OVERRIDE] --force-render active: Bypassing fail-closed gate despite audit score/defects.[/bold yellow]")
+    _, final_lint_diagnostics = lint_scenes(scenes)
+    final_lint_errors = [item for item in final_lint_diagnostics if "ERROR" in item]
+    if final_lint_errors and not dry_run:
+        console.print("[red]Physical rendering blocked: unresolved screenplay linter errors.[/red]")
+        for item in final_lint_errors:
+            console.print(f"  - {safe_console_text(item)}")
+        raise typer.Exit(code=1)
+    if not _review_allows_render(scorecard, dry_run=dry_run):
+        console.print("\n[bold red][QUALITY GATE BLOCKED] Screenplay failed adversarial review (Score < 90 / Defects present).[/bold red]")
+        if force_render:
+            console.print("[yellow]--force-render cannot bypass the live review gate.[/yellow]")
+        console.print("[dim]Inspect the review report and re-run with --plan-only.[/dim]\n")
+        raise typer.Exit(code=1)
 
     if simulation_only and not dry_run:
         console.print("[red]Simulation handoffs cannot be rendered as live productions.[/red]")
@@ -634,12 +731,15 @@ def produce_film(
             block_duration=8.0 if aspect == "16:9" else 4.0,
             voice_provider=voice_provider,
             hero_plate_path=resolved_hero_plate,
+            allow_flow_text_fallback=allow_flow_text_fallback,
             director_mode=director_mode,
             episode_num=episode,
             simulate_defect_block=simulate_defect_block,
             video_qa=video_qa,
             video_qa_model=video_qa_model,
+            video_qa_batch_size=video_qa_batch_size,
             max_patch_passes=max_patch_passes,
+            target_duration=duration,
         ))
         thumbnail_path = out_dir / "thumbnail.jpg"
         if not thumbnail_path.is_file():
@@ -696,5 +796,5 @@ def register(app: typer.Typer) -> None:
     """Register 'produce-film' command to the root Typer CLI."""
     app.command(
         name="produce-film",
-        help="Produce a complete film: Grok Studio AI Brain -> Flow CDP Video -> Deepgram -> FFmpeg Assembly.",
+        help="Produce a complete film through Flow, voice and FFmpeg. Set --max-patch-passes to 0 or 1 for selective video repairs.",
     )(produce_film)

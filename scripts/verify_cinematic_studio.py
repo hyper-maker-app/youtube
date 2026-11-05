@@ -12,7 +12,7 @@ Verifies:
    - Model Layer (Grok 4.6) block exists
    - Agent-only (zero README.md / CHANGELOG.md in skill folders)
 3. Model registry verification (tools/models.py)
-4. Boundary inspector threshold is 0.80
+4. Boundary inspector threshold is 0.85
 """
 
 from __future__ import annotations
@@ -155,12 +155,12 @@ def verify_skills() -> tuple[int, int, list[str]]:
 
 
 def verify_boundary_inspector() -> tuple[bool, str]:
-    """Verify boundary_inspector.py threshold is 0.80."""
+    """Verify boundary_inspector.py threshold is 0.85."""
     try:
         from engine.services.boundary_inspector import TRANSITION_SCORE_THRESHOLD
-        if abs(TRANSITION_SCORE_THRESHOLD - 0.80) < 1e-4:
+        if abs(TRANSITION_SCORE_THRESHOLD - 0.85) < 1e-4:
             return True, f"Boundary inspector threshold is {TRANSITION_SCORE_THRESHOLD:.2f}"
-        return False, f"Boundary inspector threshold is {TRANSITION_SCORE_THRESHOLD}, expected 0.80"
+        return False, f"Boundary inspector threshold is {TRANSITION_SCORE_THRESHOLD}, expected 0.85"
     except Exception as exc:
         return False, f"Failed to import or inspect boundary_inspector: {exc}"
 

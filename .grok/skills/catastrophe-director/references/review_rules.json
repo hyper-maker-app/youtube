@@ -1,0 +1,25 @@
+{
+  "version": "catastrophe-rules-v1",
+  "rules": [
+    {
+      "id": "atmospheric-nitrogen-phase",
+      "category": "thermodynamic_sanity",
+      "scope": "scene",
+      "all_patterns": ["\\b(?:nitrogen[^.;,]*(?:liquef\\w*|rain|snow|ice|slush|frost)|liquid\\s+nitrogen)\\b"],
+      "quantity_pattern": "(-\\d+(?:\\.\\d+)?)\\s*(?:°|deg|degrees)?\\s*C\\b",
+      "violation_if_greater_than": -196,
+      "deduction": 10,
+      "description": "Review the nitrogen phase against the atmospheric-pressure boundary and stated conditions."
+    },
+    {
+      "id": "atmospheric-oxygen-phase",
+      "category": "thermodynamic_sanity",
+      "scope": "scene",
+      "all_patterns": ["\\b(?:oxygen[^.;,]*(?:liquef\\w*|rain|droplets|frost)|liquid\\s+oxygen)\\b"],
+      "quantity_pattern": "(-\\d+(?:\\.\\d+)?)\\s*(?:°|deg|degrees)?\\s*C\\b",
+      "violation_if_greater_than": -183,
+      "deduction": 10,
+      "description": "Review the oxygen phase against the atmospheric-pressure boundary and stated conditions."
+    }
+  ]
+}

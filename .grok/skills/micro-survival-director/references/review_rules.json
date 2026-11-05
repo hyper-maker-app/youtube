@@ -1,0 +1,25 @@
+{
+  "version": "micro-survival-director-review-rules-v1",
+  "rules": [
+    {
+      "id": "micro-survival-director-battery-state-of-charge",
+      "category": "resource_sanity",
+      "scope": "scene",
+      "all_patterns": [
+        "\\bbattery\\s+state\\s+of\\s+charge\\b"
+      ],
+      "quantity_pattern": "\\bbattery\\s+state\\s+of\\s+charge\\s*(?:is\\s+at|is|at|:|=)\\s*(\\d+(?:\\.\\d+)?)\\s*%(?!\\s+of\\s+(?!full\\b))",
+      "violation_if_greater_than": 100,
+      "deduction": 10,
+      "description": "An explicitly stated battery state of charge as a percentage of full charge cannot exceed 100%."
+    },
+    {
+      "id": "smoke-visibility-breathing",
+      "kind": "semantic",
+      "category": "world_law",
+      "scope": "scene",
+      "description": "In an enclosed fire, smoke can rapidly impair visibility and breathing; evaluate escape actions in their specific conditions, including whether an exit remains accessible, rather than treating smoke as harmless.",
+      "source_url": "https://www.ready.gov/sites/default/files/2025-04/step_fires_instructor-guide.pdf"
+    }
+  ]
+}

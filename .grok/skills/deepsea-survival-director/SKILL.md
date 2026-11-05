@@ -109,3 +109,9 @@ Generative AI video models fail when rendering underwater scenes by introducing 
 2. **Strictly 2nd-Person Singular POV ("You / Your"):** Every scene opens with "You " or "Your ". The viewer is the lone operator inside the failing pressure vessel.
 3. **In-Media-Res Crisis Hook (First 3 Seconds):** Immediate physical peril in Scene 1 (a loud metallic ping as titanium rivets strain, cold water misting from an overhead fitting, the depth gauge ticking deeper).
 4. **Clean Narration Gateway:** Spoken prose must be stripped of all bracketed sound directions (`[metal groaning]`, `(breathing heavily)`) and scene headers prior to voice generation.
+
+## Structured Reviewer Rules
+
+The machine-readable resource bounds for review are in `references/review_rules.json`. An explicitly stated battery state of charge expressed as a percentage of full charge cannot exceed 100 percent. These checks cover only explicit stated quantities; evaluate domain-specific physics and conditions using the full directing instructions above.
+
+For seawater under approximately normal terrestrial conditions, external hydrostatic pressure increases with depth; it increases by roughly one atmosphere per 10 metres. Consider fluid density, atmospheric pressure, pressure units, and whether a reading is gauge or absolute before deciding a contradiction. Source: https://oceanservice.noaa.gov/facts/pressure.html

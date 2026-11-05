@@ -107,8 +107,13 @@ def test_install_wrappers_and_version_pin(tmp_path: Path) -> None:
 
     wrapper = home / ".grok" / "bin" / "cinematic-studio"
     assert wrapper.is_file()
-    assert wrapper.stat().st_mode & stat.S_IXUSR
-    assert (home / ".local" / "bin" / "cinematic-studio").is_symlink()
+    local_wrapper = home / ".local" / "bin" / "cinematic-studio"
+    if os.name == 'nt':
+        # Git for Windows may materialize links as copies without Developer Mode.
+        assert local_wrapper.read_bytes() == wrapper.read_bytes()
+    else:
+        assert wrapper.stat().st_mode & stat.S_IXUSR
+        assert local_wrapper.is_symlink()
     # back-compat alias points at same dispatcher
     alias = home / ".grok" / "bin" / "cinematic-studio-install"
     assert alias.is_symlink() or alias.is_file()
@@ -245,7 +250,11 @@ def test_ensure_grok_cli_ok_when_binary_present(tmp_path: Path) -> None:
     result = _run_bash(script, env)
     assert result.returncode == 0, result.stderr + result.stdout
     assert "Grok Build CLI OK" in result.stdout
-    assert (home / ".local" / "bin" / "grok").is_symlink()
+    local_grok = home / ".local" / "bin" / "grok"
+    if os.name == 'nt':
+        assert local_grok.read_bytes() == fake.read_bytes()
+    else:
+        assert local_grok.is_symlink()
 
 
 def _write(path: Path, text: str = "x\n") -> None:
@@ -370,7 +379,7 @@ def test_resolve_python_prefers_project_venv(tmp_path: Path) -> None:
         PROJECT_DIR="{project}"
         unset CINEMATIC_PYTHON || true
         py="$(cinematic_studio_resolve_python)"
-        [[ "$py" == "{venv_py}" ]]
+        [[ "$py" -ef "{venv_py}" ]]
         """
     )
     result = _run_bash(script, env)

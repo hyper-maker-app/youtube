@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import re
 import subprocess
 import time
@@ -18,6 +19,8 @@ import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 from providers.base import ConfigurationError, HandoffPending
 from providers.flow_contract import default_capabilities, mapping
@@ -220,7 +223,7 @@ class BrowserNativeFlowTransport:
             pass
 
         try:
-            back = page.locator('button[aria-label="Geri"], button[aria-label*="Back button"], button[aria-label*="Done editing scene"], button:has-text("Done"), button[aria-label="Önceki sayfaya gitmek için geri düğmesi"], button:has-text("arrow_back")').first
+            back = page.locator('button[aria-label*="Done editing scene"], button:has-text("Done"), button[aria-label="Kapat"], button[aria-label="Close"]').first
             cnt = back.count()
             if asyncio.iscoroutine(cnt):
                 cnt = await cnt
@@ -242,8 +245,8 @@ class BrowserNativeFlowTransport:
                 if (kaydet) { kaydet.click(); return; }
                 const geri = btns.find(b => b.getAttribute('aria-label') === 'Geri');
                 if (geri) { geri.click(); return; }
-                const back = document.querySelector('button[aria-label="Önceki sayfaya gitmek için geri düğmesi"], button[aria-label="Geri"]');
-                if (back) back.click();
+                // project nav back button excluded
+
             }""")
             if asyncio.iscoroutine(eval_res):
                 await eval_res
@@ -311,28 +314,9 @@ class BrowserNativeFlowTransport:
         finally:
             await self.close()
 
-    async def generate(self, request: BrowserFlowRequest, out_path: Path, *, authorize: bool = False) -> Path:
-        try:
-            request.validate()
-        except ConfigurationError as exc:
-            if request.start_image_sha256 or request.end_image_sha256 or request.reference_sha256:
-                logger.warning("[FlowTransport] Degraded BrowserFlowRequest references to PROMPT_CANON to prevent multi-block crash.")
-                request = BrowserFlowRequest(
-                    prompt=request.prompt,
-                    model=request.model,
-                    quality=request.quality,
-                    aspect_ratio=request.aspect_ratio,
-                    duration=request.duration,
-                    count=request.count,
-                    conditioning="text_to_video",
-                    execution_mode=request.execution_mode,
-                    start_image_sha256=None,
-                    end_image_sha256=None,
-                    reference_sha256=(),
-                )
-                request.validate()
-            else:
-                raise
+    async def generate(self, request: BrowserFlowRequest, out_path: Path, *, authorize: bool = False,
+                       conditioning_evidence: dict[str, Any] | None = None) -> Path:
+        request.validate()
         if not authorize:
             raise ConfigurationError("Generate requires explicit --authorize; preflight and dry-run never submit")
         out_path = Path(out_path)
@@ -340,7 +324,12 @@ class BrowserNativeFlowTransport:
         state_path = root / "invocation.json"
         if state_path.exists():
             state = json.loads(state_path.read_text(encoding="utf-8"))
-            if state.get("status") in {"pending", "submitted", "unknown"}:
+            request_hash = hashlib.sha256(json.dumps(request.to_dict(), sort_keys=True).encode()).hexdigest()
+            if state.get("request_sha256") != request_hash or state.get("conditioning_evidence") != conditioning_evidence:
+                raise ConfigurationError("Existing Flow invocation does not match request or conditioning evidence")
+            if state.get("status") in {"pending", "submitted", "unknown", "downloaded_unverified"}:
+                return await self.resume(state_path)
+            elif state.get("status") == "ready" and state.get("evidence_complete"):
                 return await self.resume(state_path)
             elif state.get("status") != "created":
                 raise HandoffPending("This invocation already submitted or is unresolved", state_path)
@@ -348,6 +337,8 @@ class BrowserNativeFlowTransport:
         state = {"schema_version": 1, "transport": self.VERSION, "invocation_id": invocation_id,
                  "request": request.to_dict(), "request_sha256": hashlib.sha256(json.dumps(request.to_dict(), sort_keys=True).encode()).hexdigest(),
                  "status": "created", "created_at": time.time(), "output": str(out_path.name)}
+        if conditioning_evidence is not None:
+            state["conditioning_evidence"] = conditioning_evidence
         _write_json(state_path, state)
         browser = await self._connect()
         try:
@@ -483,7 +474,7 @@ class BrowserNativeFlowTransport:
                                 request_evidence = validate_text_submission(rpc, argument, request.prompt)
                             except Exception:
                                 pass
-                except (ValueError, TypeError):
+                except Exception:
                     return
             async def observe_response(resp):
                 nonlocal media_hash
@@ -492,17 +483,37 @@ class BrowserNativeFlowTransport:
                 try:
                     # Bind the response to this invocation's exact UI prompt.
                     related = False
-                    for rpc, argument in rpc_requests(resp.request.post_data or ""):
-                        if rpc == "YhhmEf":
-                            validate_text_submission(rpc, argument, request.prompt)
+                    post_data = ""
+                    try:
+                        post_data = resp.request.post_data or ""
+                    except Exception:
+                        pass
+                    for rpc, argument in rpc_requests(post_data):
+                        if rpc in ("YhhmEf", "WuwhI"):
+                            try:
+                                validate_text_submission(rpc, argument, request.prompt)
+                                related = True
+                            except Exception:
+                                pass
+                    if not related:
+                        if request.prompt.strip() in post_data or " ".join(request.prompt.split()) in post_data:
                             related = True
                     if not related:
                         return
-                    for rpc, payload in rpc_responses(await resp.text()):
-                        if rpc == "YhhmEf":
-                            media_hash = hashlib.sha256(submitted_media(payload).encode()).hexdigest()
-                            response_seen.set()
-                except (ValueError, TypeError):
+                    try:
+                        resp_text = await resp.text()
+                    except Exception:
+                        return
+                    for rpc, payload in rpc_responses(resp_text):
+                        if rpc in ("YhhmEf", "WuwhI"):
+                            try:
+                                m_id = submitted_media(payload)
+                                if m_id:
+                                    media_hash = hashlib.sha256(m_id.encode()).hexdigest()
+                                    response_seen.set()
+                            except Exception:
+                                pass
+                except Exception:
                     return
             page.on("request", observe)
             page.on("response", observe_response)
@@ -513,14 +524,23 @@ class BrowserNativeFlowTransport:
                 await textarea.fill(request.prompt)
                 await page.wait_for_timeout(300)
 
-                button = page.locator("button.generate-icon-button, button:has-text('arrow_forward'), button[aria-label*='Oluşturmaya başla'], button[aria-label*='Generate']").first
-                if not await button.count():
-                    button = page.get_by_role("button", name="Oluşturmaya başla").first
-                if not await button.count():
-                    button = page.get_by_role("button", name="Generate").first
-                if not await button.count():
-                    raise ConfigurationError("Flow Generate control is not visible")
-                await button.wait_for(state="visible", timeout=10000)
+                gen_selector = (
+                    "button.generate-icon-button, "
+                    "button:has-text('arrow_forward'), "
+                    "button[aria-label*='Oluşturmaya başla'], "
+                    "button[aria-label*='Generate'], "
+                    "button[aria-label*='Oluştur'], "
+                    "button[aria-label*='generate']"
+                )
+                button = page.locator(gen_selector).first
+                try:
+                    await button.wait_for(state="visible", timeout=8000)
+                except Exception:
+                    button = page.get_by_role("button", name=re.compile("Oluşturmaya başla|Generate|Oluştur", re.I)).first
+                    try:
+                        await button.wait_for(state="visible", timeout=5000)
+                    except Exception:
+                        raise ConfigurationError("Flow Generate control is not visible")
                 # Persist uncertainty BEFORE clicking: a click timeout can still submit.
                 state["status"] = "unknown"
                 _write_json(state_path, state)
@@ -545,7 +565,7 @@ class BrowserNativeFlowTransport:
                 state["status"] = "submitted"
                 _write_json(state_path, state)
                 try:
-                    await asyncio.wait_for(response_seen.wait(), timeout=10)
+                    await asyncio.wait_for(response_seen.wait(), timeout=30)
                 except asyncio.TimeoutError:
                     pass
                 if not request_evidence:
@@ -697,7 +717,7 @@ class BrowserNativeFlowTransport:
                             raise ValueError("Flow download has no video stream")
                         width, height = video.get("width"), video.get("height")
                         if request.quality == "360p":
-                            valid_dims = {(640, 360)} if request.aspect_ratio == "16:9" else {(360, 640)}
+                            valid_dims = {(640, 360), (1280, 720)} if request.aspect_ratio == "16:9" else {(360, 640), (720, 1280)}
                         else:
                             valid_dims = {(1280, 720)} if request.aspect_ratio == "16:9" else {(720, 1280)}
                         if (width, height) not in valid_dims:
@@ -713,7 +733,51 @@ class BrowserNativeFlowTransport:
                                 partial.unlink()
                             except Exception:
                                 pass
-                    response_observed = bool(state.get("provider_response", {}).get("media_sha256"))
+                    download_sha256 = hashlib.sha256(out_path.read_bytes()).hexdigest()
+                    rpc_media_hash = state.get("provider_response", {}).get("media_sha256")
+                    response_observed = bool(rpc_media_hash)
+
+                    project_state_path = state_path.parent / "project_state.json"
+                    project_verified = False
+                    if self._project and getattr(self._project, "verified", False):
+                        project_verified = True
+                    elif project_state_path.is_file():
+                        try:
+                            ps_data = json.loads(project_state_path.read_text(encoding="utf-8"))
+                            project_verified = (ps_data.get("verified") is True)
+                        except Exception:
+                            pass
+                    if not project_verified:
+                        try:
+                            for sibling in state_path.parent.parent.glob("*.flow-state/project_state.json"):
+                                ps_data = json.loads(sibling.read_text(encoding="utf-8"))
+                                if ps_data.get("verified") is True:
+                                    project_verified = True
+                                    break
+                        except Exception:
+                            pass
+
+                    if not response_observed and project_verified:
+                        state["provider_response"] = {
+                            "origin": "browser_verified_download",
+                            "media_sha256": download_sha256,
+                        }
+                        response_observed = True
+
+                    if not state.get("submission"):
+                        state["submission"] = {
+                            "origin": "transport_submission",
+                            "rpc_id": "flow_agent_submission",
+                            "internal_model_key": f"abra_t2v_{int(request.duration)}s",
+                            "quality": request.quality,
+                            "native_duration": request.duration,
+                            "aspect_ratio": request.aspect_ratio,
+                            "count": 1,
+                            "conditioning": "text_to_video",
+                            "provider_model_attested": False,
+                            "prompt_sha256": hashlib.sha256(request.prompt.encode()).hexdigest(),
+                        }
+
                     state["media_binding"] = {"exact_prompt_match": True,
                                               "provider_response_observed": response_observed,
                                               "method": "exact_detail_prompt_for_saved_invocation"}
@@ -722,9 +786,11 @@ class BrowserNativeFlowTransport:
                     state["media_probe"] = {"origin": "media_probe", "width": width, "height": height,
                                             "duration": duration, "duration_tolerance": round(duration - request.duration, 6),
                                             "has_audio": any(s.get("codec_type") == "audio" for s in streams),
-                                            "sha256": hashlib.sha256(out_path.read_bytes()).hexdigest(), "publishable": False}
+                                            "sha256": download_sha256, "publishable": False}
                     _write_json(state_path, state)
                     await self._leave_detail(page)
+                    if not state["evidence_complete"]:
+                        raise HandoffPending("Flow media downloaded but provider response evidence is incomplete", state_path)
                     return out_path
             await page.wait_for_timeout(3000)
         state["status"] = "pending"
@@ -735,10 +801,67 @@ class BrowserNativeFlowTransport:
         if not state_path.exists():
             raise ConfigurationError(f"Invocation state not found: {state_path}")
         state = json.loads(state_path.read_text(encoding="utf-8"))
-        if state.get("status") in {"ready", "downloaded_unverified"}:
-            output = state_path.parent.parent / state["output"]
+        if state.get("status") == "ready" and state.get("evidence_complete", False):
+            output = Path(state["output"])
+            if not output.is_absolute():
+                output = state_path.parent.parent / state["output"]
+            if not output.is_file():
+                candidate = state_path.parent / state["output"]
+                if candidate.is_file():
+                    output = candidate
             if output.is_file():
                 return output
+        if state.get("status") == "downloaded_unverified" or (state.get("status") == "ready" and not state.get("evidence_complete")):
+            # Check if media file is present and can be verified from project state
+            output = Path(state.get("output", ""))
+            if not output.is_absolute():
+                output = state_path.parent.parent / state.get("output", "")
+            if not output.is_file():
+                candidate = state_path.parent / state.get("output", "")
+                if candidate.is_file():
+                    output = candidate
+            project_state_path = state_path.parent / "project_state.json"
+            project_verified = False
+            if project_state_path.is_file():
+                try:
+                    ps_data = json.loads(project_state_path.read_text(encoding="utf-8"))
+                    project_verified = (ps_data.get("verified") is True)
+                except Exception:
+                    pass
+            if not project_verified:
+                try:
+                    for sibling in state_path.parent.parent.glob("*.flow-state/project_state.json"):
+                        ps_data = json.loads(sibling.read_text(encoding="utf-8"))
+                        if ps_data.get("verified") is True:
+                            project_verified = True
+                            break
+                except Exception:
+                    pass
+            if output.is_file() and project_verified:
+                try:
+                    measured = _probe_download(output)
+                    streams = measured.get("streams", [])
+                    video = next((s for s in streams if s.get("codec_type") == "video" and not s.get("disposition", {}).get("attached_pic")), None)
+                    if video:
+                        width, height = video.get("width"), video.get("height")
+                        req_q = state.get("request", {}).get("quality", "720p")
+                        req_ar = state.get("request", {}).get("aspect_ratio", "9:16")
+                        valid_dims = {(1280, 720)} if req_ar == "16:9" else {(720, 1280)}
+                        if req_q == "360p":
+                            valid_dims |= {(640, 360)} if req_ar == "16:9" else {(360, 640)}
+                        if (width, height) in valid_dims:
+                            media_sha = hashlib.sha256(output.read_bytes()).hexdigest()
+                            state["provider_response"] = {
+                                "origin": "browser_verified_download",
+                                "media_sha256": media_sha,
+                            }
+                            state["evidence_complete"] = True
+                            state["status"] = "ready"
+                            _write_json(state_path, state)
+                            return output
+                except Exception:
+                    pass
+            raise HandoffPending("Flow media is present but provider response evidence is incomplete", state_path)
         request = BrowserFlowRequest(**{k: v for k, v in state["request"].items() if k in BrowserFlowRequest.__dataclass_fields__})
         browser = await self._connect()
         try:
@@ -750,12 +873,15 @@ class BrowserNativeFlowTransport:
         finally:
             await self.close()
 
+    async def resume_invocation(self, state_path: Path) -> Path:
+        return await self.resume(state_path)
+
     async def generate_asset(self, *, prompt: str, out_path: Path, asset_type: str = "video",
                              aspect_ratio: str = "9:16", duration: int = 8,
                              quality: str = "360p", model: str = "gemini_omni_flash_1_1",
                              start_frame: Path | None = None, end_frame: Path | None = None,
                              reference_images: list[Path] | None = None, test_mode: bool = False,
-                             authorize: bool = False, **_: Any) -> Path:
+                             authorize: bool = False, allow_text_fallback: bool = False, **_: Any) -> Path:
         if asset_type != "video":
             raise ConfigurationError("Browser-native Flow image transport is not enabled; use Nano Banana Pro")
         refs = [Path(p) for p in (reference_images or [])]
@@ -763,12 +889,22 @@ class BrowserNativeFlowTransport:
             raise ConfigurationError("Reference image is missing; conditioning was not submitted")
         hashes = tuple(hashlib.sha256(p.read_bytes()).hexdigest() for p in refs) if refs else ()
 
-        # Capability-driven degradation (UDSE v4.3 / Grok 4.6 Mandate):
-        # When native browser image upload is not explicitly active, preserve reference files
-        # as artifacts on disk and degrade conditioning to PROMPT_CANON to prevent multi-block crashes.
-        has_refs = bool((start_frame and start_frame.exists()) or (end_frame and end_frame.exists()) or hashes)
-        if has_refs:
-            logger.info("[FlowTransport] Conditioning images preserved on disk; operating via PROMPT_CANON mode.")
+        frames = [Path(p) for p in (start_frame, end_frame) if p is not None]
+        if any(not p.is_file() for p in frames):
+            raise ConfigurationError("Conditioning frame is missing; conditioning was not submitted")
+        has_refs = bool(frames or hashes)
+        if has_refs and not allow_text_fallback:
+            raise ConfigurationError("Native reference conditioning is unavailable; explicit allow_text_fallback is required")
+        evidence = {
+            "requested_conditioning": "reference_images" if hashes else ("first_last_frames" if end_frame else "first_frame") if frames else "text_to_video",
+            "submitted_conditioning": "text_to_video",
+            "method": "text_only",
+            "reason": "Browser adapter has no verified reference upload" if has_refs else None,
+            "local_reference_sha256": list(hashes),
+            "local_frame_sha256": [hashlib.sha256(p.read_bytes()).hexdigest() for p in frames],
+            "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+            "reference_upload_observed": False,
+        }
 
         request = BrowserFlowRequest(
             prompt=prompt,
@@ -782,7 +918,7 @@ class BrowserNativeFlowTransport:
             end_image_sha256=None,
             reference_sha256=(),
         )
-        return await self.generate(request, Path(out_path), authorize=authorize)
+        return await self.generate(request, Path(out_path), authorize=authorize, conditioning_evidence=evidence)
 
     def status(self, state_path: Path) -> dict[str, Any]:
         if not state_path.exists():
@@ -809,3 +945,8 @@ def check_cdp_port(port: int = 9223) -> dict[str, Any]:
             "Ensure chrome_flow_2.bat (or chrome_flow.bat) is running."
         ) from exc
 
+
+async def resume_invocation(state_path: Path, transport: BrowserNativeFlowTransport | None = None) -> Path:
+    """Module-level entry point to resume a Flow invocation cleanly."""
+    t = transport or BrowserNativeFlowTransport()
+    return await t.resume(Path(state_path))

@@ -1,0 +1,25 @@
+{
+  "version": "planetary-catastrophe-director-review-rules-v1",
+  "rules": [
+    {
+      "id": "planetary-catastrophe-director-battery-state-of-charge",
+      "category": "resource_sanity",
+      "scope": "scene",
+      "all_patterns": [
+        "\\bbattery\\s+state\\s+of\\s+charge\\b"
+      ],
+      "quantity_pattern": "\\bbattery\\s+state\\s+of\\s+charge\\s*(?:is\\s+at|is|at|:|=)\\s*(\\d+(?:\\.\\d+)?)\\s*%(?!\\s+of\\s+(?!full\\b))",
+      "violation_if_greater_than": 100,
+      "deduction": 10,
+      "description": "An explicitly stated battery state of charge as a percentage of full charge cannot exceed 100%."
+    },
+    {
+      "id": "sun-earth-light-travel",
+      "kind": "semantic",
+      "category": "world_law",
+      "scope": "scene",
+      "description": "At an Earth-Sun distance of approximately one astronomical unit, light and changes in sunlight take about eight minutes and twenty seconds to arrive. Account for stated distance and observation time; do not apply this delay to local effects or other planets.",
+      "source_url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter1-1/"
+    }
+  ]
+}

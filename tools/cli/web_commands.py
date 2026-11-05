@@ -38,29 +38,6 @@ def register(app: typer.Typer) -> None:
             help="Open a browser tab on start",
         ),
     ) -> None:
-        """Launch the NiceGUI web shell (dashboard, production, DNA, sequences, imagine, quota).
-
-        Requires: pip install -r requirements-nicegui.txt
-
-        Streamlit remains available via: streamlit run web_ui/app.py
-        """
-        root = Path(__file__).resolve().parents[2]
-        if str(root) not in sys.path:
-            sys.path.insert(0, str(root))
-
-        try:
-            import nicegui  # noqa: F401
-            from web_nicegui.app import run_web
-        except ImportError:
-            typer.secho(
-                "Web surfaces have been safely archived to archive/legacy_web/. Use CLI produce-film engine.",
-                fg="yellow",
-            )
-            return
-
-        console.print(
-            f"[cyan]NiceGUI dashboard[/cyan] → http://{host}:{port}/\n"
-            "[dim]Dashboard · Production · DNA · Sequences · Imagine · Quota via execute_action · modes compact/ops/full · "
-            "core: studio_core.services.dashboard[/dim]"
-        )
-        run_web(host=host, port=port, reload=reload, show=open_browser)
+        """Retired surface; use the CLI or TUI."""
+        typer.secho("This surface has been retired. Use cinematic-studio ui or the CLI.", fg="yellow")
+        raise typer.Exit(code=1)

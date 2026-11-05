@@ -230,7 +230,7 @@ python scripts/run_live_critique.py
 ```
 GROK_CINEMATIC_STUDIO/
 ├── .gemini/rules/          # Multi-agent execution & Zero-Hardcode invariant rules
-├── .grok/skills/           # 25-Agent Core + 5 Catastrophe/Survival Director skills
+├── .grok/skills/           # Available director and specialist skills
 │   ├── catastrophe-director/
 │   ├── deepsea-survival-director/
 │   ├── micro-survival-director/
