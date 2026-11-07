@@ -8,7 +8,7 @@ import config
 from providers.base import BaseVideoProvider
 from providers.base import ConfigurationError
 from providers.flow_contract import settings, default_capabilities
-from providers.flow_browser.native_transport import BrowserNativeFlowTransport
+from providers.flow_browser.native_transport import BrowserNativeFlowTransport, FlowQuotaExhaustedError
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class PlaywrightFlowVideoProvider(BaseVideoProvider):
         duration: float = 4.0,
         reference_images: list[Path] | None = None,
     ) -> Path:
-        # Flow has its own prompt budget and is not subject to Vertex's 900-char cap.
+        # Flow has its own prompt budget and is not subject to external 900-char caps.
         # Keep the full authored camera/action/lighting contract intact.
         if self.test_mode:
             raise ConfigurationError("Test mode uses a fixture transport; live Playwright generation is forbidden")

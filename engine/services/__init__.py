@@ -32,10 +32,20 @@ from services.remotion_bridge import (
     render_remotion_broll,
     resolve_template_name,
 )
+from services.flow_accounts import (
+    FlowAccount,
+    FlowAccountManager,
+    get_flow_account_manager,
+    send_windows_notification,
+)
 
 __all__ = [
     "render_remotion_broll",
     "resolve_template_name",
+    "FlowAccount",
+    "FlowAccountManager",
+    "get_flow_account_manager",
+    "send_windows_notification",
     "BoundaryQAReport",
     "TRANSITION_SCORE_THRESHOLD",
     "inspect_transition_boundary",

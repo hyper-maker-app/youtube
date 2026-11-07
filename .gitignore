@@ -253,3 +253,12 @@ engine/motion_graphics/.remotion/
 
 gateways/
 data/
+
+# Security, local credentials, and runtime databases
+data/gemini.db*
+data/api_key
+config/flow_accounts.json
+config/flow_accounts*.tmp
+gateways/museai/data/api_key
+gateways/museai/data/accounts.json
+gateways/museai/data/browser-profile/

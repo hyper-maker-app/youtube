@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grok Imagine Cinematic Studio CLI — Grok 4.6 stack (wiring only)."""
+"""Grok Imagine Cinematic Studio CLI — Primary Engine: Google Flow CDP + Remotion + Deepgram + FFmpeg."""
 
 from __future__ import annotations
 
@@ -16,16 +16,22 @@ if _ARCHIVE_TOOLS.is_dir() and str(_ARCHIVE_TOOLS) not in sys.path:
     sys.path.append(str(_ARCHIVE_TOOLS))
 
 from cli.animatic_commands import register as register_animatic_commands  # noqa: E402
+from cli.api_commands import register as register_api_commands  # noqa: E402
 from cli.bible_commands import register as register_bible_commands  # noqa: E402
 from cli.dna_commands import register as register_dna_commands  # noqa: E402
 from cli.files_commands import register as register_files_commands  # noqa: E402
+from cli.flow_account_commands import register as register_flow_commands  # noqa: E402
 from cli.generation_commands import register as register_generation_commands  # noqa: E402
+from cli.ghost_aliases import register_ghost_aliases  # noqa: E402
 from cli.grok_cli_commands import register as register_grok_cli_commands  # noqa: E402
 from cli.handoff_commands import register as register_handoff_commands  # noqa: E402
+from cli.help_ia import ROOT_EPILOG, ROOT_HELP, StudioGroup, apply_help_ia  # noqa: E402
 from cli.imagine_commands import register as register_imagine_commands  # noqa: E402
 from cli.models_commands import models_app  # noqa: E402
+from cli.motion_commands import register as register_motion_commands  # noqa: E402
 from cli.nsfw_commands import register as register_nsfw_commands  # noqa: E402
 from cli.plugin_commands import register as register_plugin_commands  # noqa: E402
+from cli.produce_commands import register as register_produce_commands  # noqa: E402
 from cli.quota_commands import register as register_quota_commands  # noqa: E402
 from cli.report_commands import register as register_report_commands  # noqa: E402
 from cli.sequence_commands import register as register_sequence_commands  # noqa: E402
@@ -35,46 +41,35 @@ from cli.tui_commands import register as register_tui_commands  # noqa: E402
 from cli.wave_a_commands import register as register_wave_a_commands  # noqa: E402
 from cli.web_commands import register as register_web_commands  # noqa: E402
 from cli.web_react_commands import register as register_web_react_commands  # noqa: E402
-from cli.api_commands import register as register_api_commands  # noqa: E402
-from cli.produce_commands import register as register_produce_commands  # noqa: E402
-from cli.motion_commands import register as register_motion_commands  # noqa: E402
-from cli.ghost_aliases import register_ghost_aliases  # noqa: E402
-from cli.help_ia import ROOT_EPILOG, ROOT_HELP, StudioGroup, apply_help_ia  # noqa: E402
 
 app = typer.Typer(
-    name="cinematic-studio",
-    help=ROOT_HELP,
-    epilog=ROOT_EPILOG,
-    cls=StudioGroup,
-    add_completion=False,
-    rich_markup_mode="rich",
-    no_args_is_help=True,
+    name="cinematic-studio", help=ROOT_HELP, epilog=ROOT_EPILOG, cls=StudioGroup,
+    add_completion=False, rich_markup_mode="rich", no_args_is_help=True,
 )
 
 dna_app = typer.Typer(help="Character DNA, Identity Lock handoff, prompt injection")
 seq_app = typer.Typer(help="Long-form extend/stitch, chain QA, health (1.0 cost · 1.5 audio)")
 quota_app = typer.Typer(help="Quota estimation, budgeting, optimization")
-nsfw_app = typer.Typer(help="NSFW batch planning, extension, daily reports")
-extend_app = typer.Typer(help="Sensual sequence extension 30–120s+")
-sfw_app = typer.Typer(help="SFW hero-first batches + Reference Curator routing")
-imagine_app = typer.Typer(help="Imagine jobs, bridge, agent-handoff")
-files_app = typer.Typer(help="xAI Files API — upload plates, list, get, delete")
+nsfw_app = typer.Typer(help="[Legacy Grok Imagine] NSFW batch planning, extension, daily reports")
+extend_app = typer.Typer(help="[Legacy Grok Imagine] Sensual sequence extension 30–120s+")
+sfw_app = typer.Typer(help="[Legacy Grok Imagine] SFW hero-first batches + Reference Curator routing")
+imagine_app = typer.Typer(help="[Legacy Grok Imagine] xAI Imagine jobs, bridge, agent-handoff")
+files_app = typer.Typer(help="[Legacy Grok Imagine] xAI Files API — upload plates, list, get, delete")
 handoff_app = typer.Typer(help="Handoff packet validate (identity / sequence / agent-mode)")
 animatic_app = typer.Typer(help="Animatic pre-vis and hero promotion")
-motion_app = typer.Typer(help="Remotion motion graphics B-Roll render commands (60 FPS)")
+motion_app = typer.Typer(help="[Primary Engine] Remotion parametric motion graphics B-Roll render commands (60 FPS)")
+flow_app = typer.Typer(help="[Primary Engine] Google Flow CDP physical factory & multi-account control")
+flow_accounts_app = typer.Typer(help="[Primary Engine] Multi-account pool management and rotation (4 accounts)")
 
-app.add_typer(dna_app, name="dna")
-app.add_typer(seq_app, name="sequence")
-app.add_typer(quota_app, name="quota")
-app.add_typer(models_app, name="models")
-app.add_typer(nsfw_app, name="nsfw")
-app.add_typer(sfw_app, name="sfw")
-app.add_typer(imagine_app, name="imagine")
-app.add_typer(files_app, name="files")
-app.add_typer(handoff_app, name="handoff")
-app.add_typer(animatic_app, name="animatic")
-app.add_typer(motion_app, name="motion-graphics")
+for sub, name in (
+    (dna_app, "dna"), (seq_app, "sequence"), (quota_app, "quota"), (models_app, "models"),
+    (nsfw_app, "nsfw"), (sfw_app, "sfw"), (imagine_app, "imagine"), (files_app, "files"),
+    (handoff_app, "handoff"), (animatic_app, "animatic"), (motion_app, "motion-graphics"),
+    (flow_app, "flow"),
+):
+    app.add_typer(sub, name=name)
 nsfw_app.add_typer(extend_app, name="extend")
+flow_app.add_typer(flow_accounts_app, name="accounts")
 
 for fn in (
     register_studio_commands, register_bible_commands, register_report_commands,
@@ -94,6 +89,7 @@ register_files_commands(files_app)
 register_handoff_commands(handoff_app)
 register_animatic_commands(animatic_app)
 register_motion_commands(motion_app)
+register_flow_commands(flow_accounts_app, flow_app)
 apply_help_ia(app)
 
 if __name__ == "__main__":

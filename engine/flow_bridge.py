@@ -1,10 +1,9 @@
 """Flow & Deepgram & FFmpeg Factory Bridge for Grok Imagine Cinematic Studio.
 
-Connects Grok Studio's 25-agent narrative planning (Character DNA, Wardrobe Lock,
-3-act structure, MOMENTUM_VECTOR handoffs) to the local physical execution engine:
-- Deepgram Aura-2 (voiceover + word timestamps)
-- Google Flow CDP Port 9223 (Veo / Imagen 3 video blocks)
-- FFmpeg Broadcast Editor (-14 LUFS, sidechain ducking, Libass karaoke subtitles)
+Modern v4.6 Flow physical production factory integrating:
+- Voiceover & Forced Alignment: Deepgram Aura-2 / Voyslity / ElevenLabs (100% English invariant)
+- Visual B-Roll & Generative Blocks: Google Flow CDP Port 9223 (Veo 3.1 / Imagen 3) + Remotion 60 FPS motion graphics
+- FFmpeg Broadcast Master Editor: -14 LUFS loudness, sidechain ducking, Libass karaoke subtitles
 """
 
 from __future__ import annotations
@@ -33,6 +32,14 @@ import captions
 import config
 import editor
 from providers.base import HandoffPending
+from providers.flow_browser.native_transport import FlowQuotaExhaustedError
+try:
+    from services.flow_accounts import FlowAccountManager
+except ImportError:
+    try:
+        from engine.services.flow_accounts import FlowAccountManager
+    except ImportError:
+        FlowAccountManager = None
 from providers.factory import (
     get_image_provider,
     get_llm_provider,
@@ -550,6 +557,110 @@ async def _render_block_by_index(
         )
     return output_path
 
+async def _render_block_with_failover(
+    *,
+    index: int,
+    scene: dict[str, Any],
+    output_path: Path,
+    duration: float,
+    aspect_ratio: str,
+    dry_run: bool,
+    video_prov_box: list[Any],
+    full_prompt: str,
+    start_frame_path: Path | None = None,
+    is_defect_attempt: bool = False,
+    total_blocks: int = 1,
+    attempt: int = 1,
+    max_retries: int = 1,
+    allow_flow_text_fallback: bool = False,
+) -> Path:
+    account_mgr = FlowAccountManager.get_instance() if FlowAccountManager is not None else None
+    while True:
+        active_acc = account_mgr.get_active_account() if account_mgr else None
+        if account_mgr and active_acc and not active_acc.is_eligible and not dry_run:
+            logger.info(
+                "[ACCOUNT ROTATION] Active Account #%s is not eligible (status=%s, live_credits=%s). "
+                "Rotating before Block %02d...",
+                active_acc.id, active_acc.status, active_acc.live_credits, index,
+            )
+            next_acc = account_mgr.rotate_to_next_account()
+            if not next_acc:
+                total_pool = len(account_mgr.list_accounts())
+                raise RuntimeError(
+                    f"All configured Google Flow accounts (1..{total_pool}) have exhausted their generation credits! "
+                    f"Production halted at Block {index:02d}/{total_blocks}. Reset cooldowns or wait for daily reset."
+                )
+            logger.info(
+                "[ACCOUNT ROTATION] Successfully switched to Account #%s (%s). "
+                "Restarting Chrome on Port 9223 and starting Block %02d...",
+                next_acc.id, next_acc.profile_dir_name, index,
+            )
+            account_mgr.launch_flow_chrome(next_acc.id, automation=True)
+            if video_prov_box and video_prov_box[0] is not None:
+                try:
+                    await video_prov_box[0].close()
+                except Exception:
+                    pass
+                video_prov_box[0] = get_video_provider("playwright_flow")
+                video_prov_box[0].allow_text_fallback = allow_flow_text_fallback
+            active_acc = next_acc
+            continue
+        try:
+            await _render_block_by_index(
+                index=index,
+                scene=scene,
+                output_path=output_path,
+                duration=duration,
+                aspect_ratio=aspect_ratio,
+                dry_run=dry_run,
+                video_provider=video_prov_box[0] if video_prov_box else None,
+                full_prompt=full_prompt,
+                start_frame_path=start_frame_path,
+                is_defect_attempt=is_defect_attempt,
+                total_blocks=total_blocks,
+                attempt=attempt,
+                max_retries=max_retries,
+            )
+            if account_mgr and active_acc and not dry_run and not is_scene_data_broll(scene):
+                account_mgr.record_block_rendered(active_acc.id, count=1)
+            return output_path
+        except FlowQuotaExhaustedError as quota_err:
+            if not account_mgr or dry_run:
+                raise
+            acc_id = quota_err.account_id or (active_acc.id if active_acc else 1)
+            logger.warning(
+                "[ACCOUNT ROTATION] Active Account #%s exhausted credits during Block %02d (%s): %s",
+                acc_id, index, getattr(quota_err, 'trigger', 'ui_detection'), quota_err,
+            )
+            account_mgr.mark_exhausted(acc_id, reason=str(quota_err))
+            next_acc = account_mgr.rotate_to_next_account()
+            if not next_acc:
+                total_pool = len(account_mgr.list_accounts())
+                raise RuntimeError(
+                    f"All configured Google Flow accounts (1..{total_pool}) have exhausted their generation credits! "
+                    f"Production halted at Block {index:02d}/{total_blocks}. Reset cooldowns or wait for daily reset."
+                ) from quota_err
+
+            logger.info(
+                "[ACCOUNT ROTATION] Successfully switched to Account #%s (%s). "
+                "Restarting Chrome on Port 9223 and retrying Block %02d...",
+                next_acc.id, next_acc.profile_dir_name, index,
+            )
+            account_mgr.launch_flow_chrome(next_acc.id, automation=True)
+            if video_prov_box and video_prov_box[0] is not None:
+                try:
+                    await video_prov_box[0].close()
+                except Exception:
+                    pass
+                video_prov_box[0] = get_video_provider("playwright_flow")
+                video_prov_box[0].allow_text_fallback = allow_flow_text_fallback
+
+            if output_path.is_file():
+                output_path.unlink(missing_ok=True)
+            partial = output_path.with_suffix(output_path.suffix + ".partial")
+            if partial.is_file():
+                partial.unlink(missing_ok=True)
+
 
 async def execute_grok_flow_production(
     *,
@@ -669,6 +780,7 @@ async def execute_grok_flow_production(
     video_prov = None if dry_run else get_video_provider("playwright_flow")
     if video_prov is not None:
         video_prov.allow_text_fallback = allow_flow_text_fallback
+    video_prov_box = [video_prov]
     slug = sanitize_slug(project_title)
     if slug == "project-rigor-mortis-episode-01":
         world_state = build_canonical_rigor_mortis_world_state()
@@ -779,12 +891,13 @@ async def execute_grok_flow_production(
                     and (not video_qa or dry_run)
                 )
 
-                await _render_block_by_index(
+                await _render_block_with_failover(
                     index=i, scene=sc, output_path=block_file, duration=dur,
-                    aspect_ratio=aspect_ratio, dry_run=dry_run, video_provider=video_prov,
+                    aspect_ratio=aspect_ratio, dry_run=dry_run, video_prov_box=video_prov_box,
                     full_prompt=full_prompt, start_frame_path=start_frame_path,
                     is_defect_attempt=is_defect_attempt, total_blocks=len(aligned_scenes),
                     attempt=attempt, max_retries=max_retries,
+                    allow_flow_text_fallback=allow_flow_text_fallback,
                 )
 
                 if not block_file.is_file() or block_file.stat().st_size <= 1000:
@@ -855,6 +968,8 @@ async def execute_grok_flow_production(
                                 after_desc=sc.get("visual_prompt", ""),
                                 continuity_score=qa_rep.continuity_score,
                                 violations=qa_rep.violations,
+                                entity=world_state.entities.get(target_entity_id) if world_state else None,
+                                world_state=world_state,
                             )
                             action = arbitrate_decision(delta, world_state, current_attempt=attempt)
                             if action.decision == DirectorDecision.HEAL and attempt <= action.max_heal_attempts:
@@ -933,11 +1048,12 @@ async def execute_grok_flow_production(
                     start_frame_path = out_dir / "keyframes" / f"patch_exit_frame_b{index:02d}.jpg"
                     cv2.imwrite(str(start_frame_path), exit_img)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            await _render_block_by_index(
+            await _render_block_with_failover(
                 index=index + 1, scene=sc, output_path=output_path,
                 duration=float(sc.get("duration", block_duration)), aspect_ratio=aspect_ratio,
-                dry_run=dry_run, video_provider=video_prov, full_prompt=full_prompt,
+                dry_run=dry_run, video_prov_box=video_prov_box, full_prompt=full_prompt,
                 start_frame_path=start_frame_path, total_blocks=len(aligned_scenes),
+                allow_flow_text_fallback=allow_flow_text_fallback,
             )
             validate_video_source(output_path, is_broll=broll_flags[index],
                                   width=config.WIDTH, height=config.HEIGHT)

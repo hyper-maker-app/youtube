@@ -29,6 +29,126 @@ from services.flow_native_evidence import rpc_requests, rpc_responses, submitted
 from services.flow_session import FlowBootstrapConfig, FlowSessionError, connect_flow_browser, ensure_flow_project
 
 
+class FlowQuotaExhaustedError(RuntimeError):
+    def __init__(self, message: str, *, account_id: int | None = None, trigger: str = "ui_detection") -> None:
+        super().__init__(message)
+        self.account_id = account_id
+        self.trigger = trigger
+
+
+QUOTA_EXHAUSTED_TERMS = (
+    # English
+    "run out of credits", "out of credits", "not enough credits", "insufficient credits",
+    "no credits remaining", "0 credits", "credit limit reached", "generation limit reached",
+    "daily generation limit", "you've reached your limit", "upgrade your plan", "upgrade to continue",
+    "quota exceeded", "rate limit exceeded",
+    # Turkish
+    "krediniz bitti", "krediniz tükendi", "kredi bitti", "yetersiz kredi", "yeterli krediniz yok",
+    "kredi bakiyeniz tükendi", "kredi sınırına ulaşıldı", "günlük oluşturma limitine ulaştınız",
+    "günlük limitinize ulaştınız", "limitinize ulaştınız", "planınızı yükseltin", "daha fazla video oluşturmak için",
+)
+
+
+def check_quota_exhausted_text(text: str | None) -> str | None:
+    """Return the matched quota exhaustion term if present, otherwise None."""
+    if not text:
+        return None
+    lower = text.casefold()
+    for term in QUOTA_EXHAUSTED_TERMS:
+        if term in lower:
+            return term
+    return None
+
+
+async def fetch_live_credits_from_page(page: Any, account_id: int | None = None) -> int | None:
+    r"""Accurately parse live credit balances from Google Flow DOM elements.
+
+    Inspects credit balance elements (.credits-badge, .credit-balance,
+    [aria-label*='credit' i], [aria-label*='kredi' i], etc.) and page text,
+    matching numeric credit expressions ((\d+)\s*(?:credits?|kredi)).
+    If a valid balance is parsed, synchronizes it with FlowAccountManager.
+    Returns the parsed integer credit count, or None if not detectable.
+    """
+    import inspect
+    credit_selectors = (
+        ".credit-balance, .credits-badge, .credits-pill, [data-testid*='credit'], "
+        "[aria-label*='credit' i], [aria-label*='kredi' i], .user-credits, "
+        "flow-credit-balance, .quota-indicator, .credits-count, "
+        "[title*='credit' i], [title*='kredi' i]"
+    )
+    parsed_credits: int | None = None
+
+    async def _safe_await(val: Any) -> Any:
+        if inspect.isawaitable(val):
+            return await val
+        return val
+
+    try:
+        elements = page.locator(credit_selectors)
+        count_raw = elements.count() if hasattr(elements, "count") else 0
+        count = await _safe_await(count_raw)
+
+        for idx in range(min(int(count), 10)):
+            el = elements.nth(idx)
+            is_vis = await _safe_await(el.is_visible()) if hasattr(el, "is_visible") else True
+            if not is_vis:
+                continue
+
+            txt = ""
+            if hasattr(el, "inner_text"):
+                res = el.inner_text(timeout=1000)
+                txt = await _safe_await(res) or ""
+            aria = ""
+            if hasattr(el, "get_attribute"):
+                res = el.get_attribute("aria-label")
+                aria = await _safe_await(res) or ""
+            title = ""
+            if hasattr(el, "get_attribute"):
+                res = el.get_attribute("title")
+                title = await _safe_await(res) or ""
+
+            comb = f"{txt} {aria} {title}".strip()
+            m = re.search(r"\b(\d+)\s*(?:credits?|kredi)\b", comb.casefold())
+            if not m:
+                m = re.search(r"\b(?:credits?|kredi)[:\s]+(\d+)\b", comb.casefold())
+            if m:
+                parsed_credits = int(m.group(1))
+                break
+    except Exception:
+        pass
+
+    if parsed_credits is None:
+        try:
+            body_txt = ""
+            if hasattr(page, "locator"):
+                b_el = page.locator("body")
+                if hasattr(b_el, "inner_text"):
+                    res = b_el.inner_text(timeout=2000)
+                    body_txt = await _safe_await(res) or ""
+            m = re.search(r"\b(\d+)\s*(?:credits?|kredi)\b", body_txt.casefold())
+            if not m:
+                m = re.search(r"\b(?:credits?|kredi)[:\s]+(\d+)\b", body_txt.casefold())
+            if m:
+                parsed_credits = int(m.group(1))
+            elif check_quota_exhausted_text(body_txt):
+                parsed_credits = 0
+        except Exception:
+            pass
+
+    if parsed_credits is not None and account_id is not None:
+        try:
+            try:
+                from services.flow_accounts import FlowAccountManager
+            except ImportError:
+                from engine.services.flow_accounts import FlowAccountManager
+            mgr = FlowAccountManager.get_instance()
+            mgr.update_live_credits(account_id, parsed_credits)
+        except Exception:
+            pass
+
+    return parsed_credits
+
+
 @dataclass(frozen=True)
 class BrowserFlowRequest:
     prompt: str
@@ -167,8 +287,9 @@ class BrowserNativeFlowTransport:
 
     VERSION = "browser_native_v1"
 
-    def __init__(self, *, cdp_port: int = 9223, playwright_factory: Callable | None = None) -> None:
+    def __init__(self, *, cdp_port: int = 9223, playwright_factory: Callable | None = None, account_id: int | None = None) -> None:
         self.cdp_port = int(cdp_port)
+        self.account_id = account_id
         self._playwright_factory = playwright_factory
         self._playwright = None
         self._browser = None
@@ -315,7 +436,15 @@ class BrowserNativeFlowTransport:
             await self.close()
 
     async def generate(self, request: BrowserFlowRequest, out_path: Path, *, authorize: bool = False,
-                       conditioning_evidence: dict[str, Any] | None = None) -> Path:
+                       conditioning_evidence: dict[str, Any] | None = None,
+                       account_id: int | None = None) -> Path:
+        eff_account_id = account_id if account_id is not None else self.account_id
+        if eff_account_id is None:
+            try:
+                from services.flow_accounts import FlowAccountManager
+                eff_account_id = FlowAccountManager.get_instance().active_account_id
+            except Exception:
+                pass
         request.validate()
         if not authorize:
             raise ConfigurationError("Generate requires explicit --authorize; preflight and dry-run never submit")
@@ -328,9 +457,9 @@ class BrowserNativeFlowTransport:
             if state.get("request_sha256") != request_hash or state.get("conditioning_evidence") != conditioning_evidence:
                 raise ConfigurationError("Existing Flow invocation does not match request or conditioning evidence")
             if state.get("status") in {"pending", "submitted", "unknown", "downloaded_unverified"}:
-                return await self.resume(state_path)
+                return await self.resume(state_path, account_id=eff_account_id)
             elif state.get("status") == "ready" and state.get("evidence_complete"):
-                return await self.resume(state_path)
+                return await self.resume(state_path, account_id=eff_account_id)
             elif state.get("status") != "created":
                 raise HandoffPending("This invocation already submitted or is unresolved", state_path)
         invocation_id = uuid.uuid4().hex
@@ -372,6 +501,13 @@ class BrowserNativeFlowTransport:
                 except Exception:
                     pass
             text = (await page.locator("body").inner_text(timeout=5000)).casefold()
+            matched_early_quota = check_quota_exhausted_text(text)
+            if matched_early_quota:
+                raise FlowQuotaExhaustedError(
+                    f"Flow credit/quota limit detected in page body before submission: '{matched_early_quota}'",
+                    account_id=eff_account_id,
+                    trigger="pre_submit",
+                )
             # Inspect Ayarlar tetikleyicisi button to see if requested settings are already active
             settings_button = page.locator('button[aria-label*="Ayarlar tetikleyicisi"], button[aria-label*="Settings trigger"], button[aria-label*="settings trigger"]').first
             if not await settings_button.count():
@@ -518,6 +654,58 @@ class BrowserNativeFlowTransport:
             page.on("request", observe)
             page.on("response", observe_response)
             try:
+                # Pre-submit body & credit pill inspection
+                body_text = ""
+                try:
+                    body_text = await page.locator("body").inner_text(timeout=5000)
+                except Exception:
+                    pass
+                matched_body_quota = check_quota_exhausted_text(body_text)
+                if matched_body_quota:
+                    raise FlowQuotaExhaustedError(
+                        f"Flow credit/quota limit detected in page body before submission: '{matched_body_quota}'",
+                        account_id=eff_account_id,
+                        trigger="pre_submit",
+                    )
+                try:
+                    credit_pills = page.locator(
+                        ".credit-balance, .credits-badge, .credits-pill, [data-testid*='credit'], "
+                        "[aria-label*='credit' i], [aria-label*='kredi' i], .user-credits, "
+                        "flow-credit-balance, .quota-indicator, .credits-count"
+                    )
+                    pill_count = await credit_pills.count()
+                    for idx in range(min(pill_count, 5)):
+                        pill = credit_pills.nth(idx)
+                        if await pill.is_visible():
+                            pill_txt = (await pill.inner_text(timeout=1000) or "").strip()
+                            pill_aria = (await pill.get_attribute("aria-label") or "").strip()
+                            pill_title = (await pill.get_attribute("title") or "").strip()
+                            combined_pill = f"{pill_txt} {pill_aria} {pill_title}".strip()
+                            m_cred = re.search(r"\b(\d+)\s*(?:credits?|kredi)\b", combined_pill.casefold())
+                            if not m_cred:
+                                m_cred = re.search(r"\b(?:credits?|kredi)[:\s]+(\d+)\b", combined_pill.casefold())
+                            if m_cred:
+                                try:
+                                    parsed_live = int(m_cred.group(1))
+                                    try:
+                                        from services.flow_accounts import FlowAccountManager
+                                    except ImportError:
+                                        from engine.services.flow_accounts import FlowAccountManager
+                                    if FlowAccountManager is not None and eff_account_id is not None:
+                                        FlowAccountManager.get_instance().update_live_credits(eff_account_id, parsed_live)
+                                except Exception:
+                                    pass
+                            if check_quota_exhausted_text(combined_pill) or re.search(r"\b0\s*(credits?|kredi)\b", combined_pill.casefold()):
+                                raise FlowQuotaExhaustedError(
+                                    f"Flow credit pill indicates zero credits or quota limit: '{combined_pill}'",
+                                    account_id=eff_account_id,
+                                    trigger="pre_submit",
+                                )
+                except FlowQuotaExhaustedError:
+                    raise
+                except Exception:
+                    pass
+
                 await self._leave_detail(page)
                 textarea = page.locator('.ProseMirror, [contenteditable="true"]').first
                 await textarea.wait_for(state="visible", timeout=10000)
@@ -541,6 +729,29 @@ class BrowserNativeFlowTransport:
                         await button.wait_for(state="visible", timeout=5000)
                     except Exception:
                         raise ConfigurationError("Flow Generate control is not visible")
+                btn_disabled = False
+                try:
+                    if hasattr(button, "is_disabled"):
+                        btn_disabled = await button.is_disabled()
+                    elif hasattr(button, "is_enabled"):
+                        btn_disabled = not await button.is_enabled()
+                except Exception:
+                    pass
+                btn_meta_parts = []
+                for attr in ("aria-label", "title", "data-tooltip", "mattooltip"):
+                    try:
+                        val = await button.get_attribute(attr)
+                        if val:
+                            btn_meta_parts.append(val)
+                    except Exception:
+                        pass
+                btn_meta = " ".join(btn_meta_parts)
+                if btn_disabled or check_quota_exhausted_text(btn_meta):
+                    raise FlowQuotaExhaustedError(
+                        "Generate button disabled or credit exhausted before submission",
+                        account_id=eff_account_id,
+                        trigger="pre_submit",
+                    )
                 # Persist uncertainty BEFORE clicking: a click timeout can still submit.
                 state["status"] = "unknown"
                 _write_json(state_path, state)
@@ -551,6 +762,31 @@ class BrowserNativeFlowTransport:
                         const b = document.querySelector('button.generate-icon-button, button[aria-label*="Oluşturmaya başla"]');
                         if (b) b.click();
                     }""")
+                dialog_selector = (
+                    "mat-dialog-container, [role='dialog'], .toast, mat-snack-bar-container, "
+                    ".notification, [role='alert'], .mat-mdc-dialog-container, .mat-mdc-snack-bar-container, "
+                    ".banner, .alert-banner"
+                )
+                post_click_deadline = time.monotonic() + 4.0
+                while time.monotonic() < post_click_deadline:
+                    try:
+                        dialogs = page.locator(dialog_selector)
+                        dlg_count = await dialogs.count()
+                        for i in range(dlg_count):
+                            dlg = dialogs.nth(i)
+                            if await dlg.is_visible():
+                                dlg_text = await dlg.inner_text()
+                                if check_quota_exhausted_text(dlg_text):
+                                    clean_text = " ".join((dlg_text or "").split())
+                                    raise FlowQuotaExhaustedError(
+                                        f"Flow credit limit dialog/toast observed: {clean_text[:200]}",
+                                        account_id=eff_account_id,
+                                        trigger="post_click_dialog",
+                                    )
+                    except FlowQuotaExhaustedError:
+                        raise
+                    except Exception:
+                        pass
                 # Auto-confirm if an Agent confirmation card appears
                 for _ in range(6):
                     await page.wait_for_timeout(500)
@@ -584,7 +820,7 @@ class BrowserNativeFlowTransport:
                 state["submission"] = request_evidence
                 state["provider_response"] = {"origin": "provider_response", "media_sha256": media_hash}
                 _write_json(state_path, state)
-                return await self._download_completed(page, state, state_path, out_path, request)
+                return await self._download_completed(page, state, state_path, out_path, request, account_id=eff_account_id)
             finally:
                 page.remove_listener("request", observe)
                 page.remove_listener("response", observe_response)
@@ -592,7 +828,15 @@ class BrowserNativeFlowTransport:
             await self.close()
 
     async def _download_completed(self, page, state: dict[str, Any], state_path: Path,
-                                  out_path: Path, request: BrowserFlowRequest) -> Path:
+                                  out_path: Path, request: BrowserFlowRequest,
+                                  account_id: int | None = None) -> Path:
+        eff_account_id = account_id if account_id is not None else getattr(self, "account_id", None)
+        if eff_account_id is None:
+            try:
+                from services.flow_accounts import FlowAccountManager
+                eff_account_id = FlowAccountManager.get_instance().active_account_id
+            except Exception:
+                pass
         """Download only after a fresh response; leave pending when Flow is still rendering."""
         deadline = time.monotonic() + 600
         prompt_terms = {w.casefold() for w in re.findall(r"[a-zA-Z]{5,}", request.prompt)
@@ -606,7 +850,27 @@ class BrowserNativeFlowTransport:
                     dl_btn = page.locator("button[aria-label*='Download media'], button:has-text('Download media')").first
                     if await dl_btn.count() and not await dl_btn.is_enabled():
                         raise ConfigurationError(f"Flow generation failed on server: {body_check[:300]}")
-            except ConfigurationError:
+                is_failed_term = any(t in body_check.lower() for t in ["failed", "hata", "başarısız", "rejected", "error"])
+                matched_quota = check_quota_exhausted_text(body_check)
+                if matched_quota and is_failed_term:
+                    dl_btn = page.locator(
+                        "button:has-text('Medyayı indir'), button:has-text('Download media'), "
+                        "button[aria-label*='Medyayı indir'], button[aria-label*='Download media'], "
+                        "button[aria-label*='Download'], button:has-text('Download')"
+                    ).first
+                    download_ready = False
+                    if await dl_btn.count():
+                        try:
+                            download_ready = await dl_btn.is_visible() and await dl_btn.is_enabled()
+                        except Exception:
+                            download_ready = False
+                    if not download_ready:
+                        raise FlowQuotaExhaustedError(
+                            f"Flow generation rejected due to quota: {body_check[:200]}",
+                            account_id=eff_account_id,
+                            trigger="render_poll",
+                        )
+            except (ConfigurationError, FlowQuotaExhaustedError):
                 raise
             except Exception:
                 pass
@@ -791,13 +1055,18 @@ class BrowserNativeFlowTransport:
                     await self._leave_detail(page)
                     if not state["evidence_complete"]:
                         raise HandoffPending("Flow media downloaded but provider response evidence is incomplete", state_path)
+                    try:
+                        await fetch_live_credits_from_page(page, account_id=eff_account_id)
+                    except Exception:
+                        pass
                     return out_path
             await page.wait_for_timeout(3000)
         state["status"] = "pending"
         _write_json(state_path, state)
         raise HandoffPending("Flow is still rendering; run resume without submitting again", state_path)
 
-    async def resume(self, state_path: Path) -> Path:
+    async def resume(self, state_path: Path, *, account_id: int | None = None) -> Path:
+        eff_account_id = account_id if account_id is not None else self.account_id
         if not state_path.exists():
             raise ConfigurationError(f"Invocation state not found: {state_path}")
         state = json.loads(state_path.read_text(encoding="utf-8"))
@@ -869,7 +1138,7 @@ class BrowserNativeFlowTransport:
             if len(pages) != 1:
                 raise ConfigurationError("Exactly one open Flow project tab is required")
             output = state_path.parent.parent / state["output"]
-            return await self._download_completed(pages[0], state, state_path, output, request)
+            return await self._download_completed(pages[0], state, state_path, output, request, account_id=eff_account_id)
         finally:
             await self.close()
 
@@ -881,9 +1150,9 @@ class BrowserNativeFlowTransport:
                              quality: str = "360p", model: str = "gemini_omni_flash_1_1",
                              start_frame: Path | None = None, end_frame: Path | None = None,
                              reference_images: list[Path] | None = None, test_mode: bool = False,
-                             authorize: bool = False, allow_text_fallback: bool = False, **_: Any) -> Path:
+                             authorize: bool = False, allow_text_fallback: bool = False, account_id: int | None = None, **kwargs: Any) -> Path:
         if asset_type != "video":
-            raise ConfigurationError("Browser-native Flow image transport is not enabled; use Nano Banana Pro")
+            raise ConfigurationError("Browser-native Flow image transport is not enabled; only video generation is supported via Flow CDP")
         refs = [Path(p) for p in (reference_images or [])]
         if any(not path.is_file() for path in refs):
             raise ConfigurationError("Reference image is missing; conditioning was not submitted")
@@ -918,7 +1187,8 @@ class BrowserNativeFlowTransport:
             end_image_sha256=None,
             reference_sha256=(),
         )
-        return await self.generate(request, Path(out_path), authorize=authorize, conditioning_evidence=evidence)
+        eff_acc = account_id if account_id is not None else kwargs.get("account_id")
+        return await self.generate(request, Path(out_path), authorize=authorize, conditioning_evidence=evidence, account_id=eff_acc)
 
     def status(self, state_path: Path) -> dict[str, Any]:
         if not state_path.exists():
@@ -946,7 +1216,20 @@ def check_cdp_port(port: int = 9223) -> dict[str, Any]:
         ) from exc
 
 
-async def resume_invocation(state_path: Path, transport: BrowserNativeFlowTransport | None = None) -> Path:
+async def resume_invocation(state_path: Path, transport: BrowserNativeFlowTransport | None = None, *, account_id: int | None = None) -> Path:
     """Module-level entry point to resume a Flow invocation cleanly."""
-    t = transport or BrowserNativeFlowTransport()
-    return await t.resume(Path(state_path))
+    t = transport or BrowserNativeFlowTransport(account_id=account_id)
+    return await t.resume(Path(state_path), account_id=account_id)
+
+
+__all__ = [
+    "BrowserFlowPreflight",
+    "BrowserFlowRequest",
+    "BrowserNativeFlowTransport",
+    "FlowQuotaExhaustedError",
+    "QUOTA_EXHAUSTED_TERMS",
+    "check_cdp_port",
+    "check_quota_exhausted_text",
+    "fetch_live_credits_from_page",
+    "resume_invocation",
+]

@@ -15,7 +15,15 @@ import subprocess
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Optional
+
+try:
+    from services.flow_accounts import FlowAccountManager
+except ImportError:
+    try:
+        from engine.services.flow_accounts import FlowAccountManager
+    except ImportError:
+        FlowAccountManager = None  # type: ignore[assignment]
 
 
 DEFAULT_CDP_PORT = 9223
@@ -140,6 +148,7 @@ class FlowSessionResult:
     launched_batch: bool
     blocker: str | None = None
     lease: BrowserLease | None = None
+    account_id: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -183,14 +192,25 @@ async def connect_flow_browser(
     connect: Callable[[], Awaitable[Any]],
     *,
     config: FlowBootstrapConfig | None = None,
-    launch: Callable[[Path], Any] | None = None,
+    launch: Callable[..., Any] | None = None,
+    account_id: int | None = None,
 ) -> tuple[Any, FlowSessionResult]:
     """Attach to CDP, starting the repository batch only when CDP is absent."""
     config = config or FlowBootstrapConfig.from_environment()
     lease_mgr = BrowserLeaseManager.get_instance()
+    if account_id is None and FlowAccountManager is not None:
+        try:
+            active_acc = FlowAccountManager.get_instance().get_active_account()
+            if active_acc:
+                account_id = active_acc.id
+        except Exception:
+            pass
+
     try:
         lease = await lease_mgr.acquire_lease(config.cdp_port)
-        return await _connect_once(connect), FlowSessionResult("cdp_connected", config.cdp_port, False, lease=lease)
+        return await _connect_once(connect), FlowSessionResult(
+            "cdp_connected", config.cdp_port, False, lease=lease, account_id=account_id
+        )
     except Exception as first_error:
         if config.dry_run or not config.allow_autostart:
             raise FlowSessionError(
@@ -207,17 +227,24 @@ async def connect_flow_browser(
         async with _LAUNCH_LOCK:
             try:
                 lease = await lease_mgr.acquire_lease(config.cdp_port)
-                return await _connect_once(connect), FlowSessionResult("cdp_connected", config.cdp_port, False, lease=lease)
+                return await _connect_once(connect), FlowSessionResult(
+                    "cdp_connected", config.cdp_port, False, lease=lease, account_id=account_id
+                )
             except Exception:
                 if launch is None:
                     launch = _launch_batch
-                launch(batch_path)
+                try:
+                    launch(batch_path, account_id=account_id)
+                except TypeError:
+                    launch(batch_path)
             deadline = time.monotonic() + config.startup_timeout
             while time.monotonic() < deadline:
                 try:
                     browser = await _connect_once(connect)
                     lease = await lease_mgr.acquire_lease(config.cdp_port)
-                    return browser, FlowSessionResult("batch_launched", config.cdp_port, True, lease=lease)
+                    return browser, FlowSessionResult(
+                        "batch_launched", config.cdp_port, True, lease=lease, account_id=account_id
+                    )
                 except Exception:
                     await asyncio.sleep(config.poll_interval)
         raise FlowSessionError(
@@ -226,13 +253,25 @@ async def connect_flow_browser(
         ) from first_error
 
 
-def _launch_batch(batch_path: Path) -> None:
+def _launch_batch(batch_path: Path, account_id: int | None = None) -> None:
+    if account_id is None and FlowAccountManager is not None:
+        try:
+            active_acc = FlowAccountManager.get_instance().get_active_account()
+            if active_acc:
+                account_id = active_acc.id
+        except Exception:
+            pass
+
     flags = (
         getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
         | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
     )
+    cmd = ["cmd.exe", "/d", "/c", "call", str(batch_path), "--automation"]
+    if account_id is not None:
+        cmd.extend(["--account", str(account_id)])
+
     subprocess.Popen(
-        ["cmd.exe", "/d", "/c", "call", str(batch_path), "--automation"],
+        cmd,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -241,9 +280,9 @@ def _launch_batch(batch_path: Path) -> None:
     )
 
 
-def launch_flow_batch(batch_path: Path) -> None:
+def launch_flow_batch(batch_path: Path, account_id: int | None = None) -> None:
     """Public sync launcher used by legacy clients after CDP connection fails."""
-    _launch_batch(Path(batch_path))
+    _launch_batch(Path(batch_path), account_id=account_id)
 
 
 async def _body_text(page: Any) -> str:
