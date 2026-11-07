@@ -1502,7 +1502,7 @@ def conform_audio_duration(path: Path, target: float, ffmpeg: str | None = None)
     factor = duration / target
     # A generated voice can differ materially from its word-budget estimate.  Up to a
     # 40% pitch-preserving conform remains preferable to a new paid TTS + LLM rewrite,
-    # especially after a Vertex storyboard has already frozen its visual plan.  Larger
+    # especially after an aligned production storyboard has already frozen its visual plan.  Larger
     # deviations remain an explicit timing-review condition.
     if abs(duration - target) <= 0.10 or not (0.60 <= factor <= 1.40):
         return duration
@@ -1815,8 +1815,9 @@ def render_ken_burns_block(
 ) -> Path:
     """Render a high-resolution 2.5D Ken Burns Pan/Zoom video block from an image plate.
 
-    Used for 16:9 longform documentary Model A hybrid compilation (ancient structures,
-    maps, archaeological plates) while reserving generative AI video for key A-roll moments.
+    Auxiliary/fallback still-motion helper for static reference plates or offline stills.
+    Primary production B-roll and visual sequences are handled dynamically by
+    Remotion 60 FPS parametric motion graphics and Veo 3.1 Flow CDP.
     """
     ffmpeg_exe = ffmpeg or config.resolve_ffmpeg()
     w = width or getattr(config, "WIDTH", 1920)

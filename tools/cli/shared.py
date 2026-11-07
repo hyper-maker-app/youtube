@@ -30,7 +30,6 @@ DIRECTOR_SIGNATURES = {
     "nolan": "Christopher Nolan style — IMAX, practical effects, non-linear storytelling, Hans Zimmer sound",
     "villeneuve": "Denis Villeneuve — Epic scale, slow-burn tension, breathtaking visuals, Blade Runner 2047 aesthetic",
     "fincher": "David Fincher — Dark, precise, psychological, Se7en / Gone Girl tension",
-    "snyder": "Zack Snyder — Hyper-stylized, slow-motion, mythic, 300 / Watchmen energy",
     "deakins": "Roger Deakins — God-tier cinematography, natural light, emotional realism",
     "default": "Cinematic excellence — emotionally powerful, technically perfect, audience-resonant",
 }

@@ -131,19 +131,8 @@ Fully compatible with Grok Build CLI, `cinematic_studio_cli.py` prompt workflows
 
 *Enhanced for Grok 4.6 + dual Imagine Video 1.0 & 1.5 Native support — Cinematic Studio v4.5*
 
-## Learned Production Invariants (Adversarial Feedback)
+## Universal Prompt Compilation Standards
 
-- **[Scene 1]**: Maintain continuous strict adherence to production schema and guardrails.
-
-- **[Scene 1]**: Visual prompts must contain zero baked-in text, aspect ratios, or UI numbers that could render as overlays.
-
-- **[Scene 12]**: Ban on-screen temperature/pressure readouts, dials, gauges, and needles of any kind; convey environmental state exclusively through macroscopic physical damage (cracking concrete, frosting metal, structural deformation), routing any telemetry or readings to [DATA_BROLL].
-- **[Veo Video Prompt Standard]**: Strictly forbid dials, gauges, needles, counters, digital clocks, legible text, or maps in Veo visual prompts; delegate all telemetry and maps to [DATA_BROLL] code-based graphics engine.
-- **[Scene 32]**: Limit complex thermal glow effects and heavy heat distortion in close-up prompts to maintain Veo rendering stability.
-- **[Scene 13]**: Never describe gloves, hands, or body parts in any visual_prompt even if negated; keep every shot 100% object/mechanism-only.
-- **[Scene 31]**: Never embed production instructions or repeated framing descriptors inside visual_prompts; they bake in as unwanted text overlays.
-- **[Scene 9]**: Avoid explicit temporal countdowns in narration when rendering strict visual prompts.
-- **[Scene 2]**: Avoid any negative-face instructions; instead specify heavy blur, distance, or occlusion to safely suppress Veo facial glitches.
-- **[Scene 35]**: Avoid highly repetitive, technical, or UI-adjacent phrasing across contiguous scenes to prevent AI models from hallucinating text or UI overlays.
-- **[Scene 28]**: Never abandon an established 2nd-person physical POV for disembodied, centuries-later exterior B-roll shots.
-- **[Scene 9]**: Zero baked-in text overlays or unreadable digital UI numbers may appear in any visual_prompt.
+1. **Zero Baked-In Typography & UI:** Visual prompts must never describe on-screen alphanumeric overlays, gauges, or UI meters; all tactical telemetry is routed to dynamic motion graphics.
+2. **Facial Defect Suppression:** Suppress facial artifacts via atmospheric occlusion, silhouette, angle, distance, or macro environmental framing rather than negative face tokens.
+3. **Continuous POV Anchoring:** Maintain consistent physical vantage point; never abandon an established 2nd-person camera anchor across contiguous narrative beats.

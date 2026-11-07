@@ -28,6 +28,65 @@ class SfxCategoryMatch:
         return self.audiogen_prompt
 
 
+class DynamicSfxPrompt(str):
+    """Dynamic SFX prompt string that can also be called as a factory with scene parameters."""
+
+    category: str
+    default_prompt: str
+
+    def __new__(cls, default_prompt: str, category: str = "") -> DynamicSfxPrompt:
+        obj = super().__new__(cls, default_prompt)
+        obj.category = category
+        obj.default_prompt = default_prompt
+        return obj
+
+    def synthesize(
+        self,
+        *,
+        action: str = "",
+        physical_context: str = "",
+        parameters: dict[str, Any] | None = None,
+        matched_keywords: list[str] | None = None,
+    ) -> str:
+        """Dynamically build an Audiogen/TangoFlux prompt from action, physical context, and parameters."""
+        if not action and not physical_context and not parameters:
+            return self.default_prompt
+
+        parts: list[str] = []
+        if physical_context:
+            parts.append(physical_context.strip().rstrip(". "))
+        if action:
+            parts.append(action.strip().rstrip(". "))
+
+        if parameters:
+            for k, v in parameters.items():
+                if v and isinstance(v, str):
+                    parts.append(f"{k}: {v.strip()}")
+
+        if not parts:
+            return self.default_prompt
+
+        synthesized = " ".join(parts)
+        if self.default_prompt and not any(k in synthesized.lower() for k in self.default_prompt.lower().split()[:2]):
+            return f"{synthesized} {self.default_prompt}".strip()
+        return synthesized
+
+    def __call__(
+        self,
+        *,
+        action: str = "",
+        physical_context: str = "",
+        parameters: dict[str, Any] | None = None,
+        matched_keywords: list[str] | None = None,
+    ) -> str:
+        return self.synthesize(
+            action=action,
+            physical_context=physical_context,
+            parameters=parameters,
+            matched_keywords=matched_keywords,
+        )
+
+
 # Ordered priority: High-impact crisis events precede ambient background drones
 _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
     {
@@ -37,7 +96,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "burst", "blow up", "dynamite", "shockwave", "magma blast", "caldera",
             "supervolcano", "volcano", "pyroclastic blast",
         ),
-        "audiogen_prompt": "large explosion with shockwave",
+        "audiogen_prompt": DynamicSfxPrompt("large explosion with shockwave", "explosion"),
         "duration": 2.5,
         "tags": ["explosion", "shockwave", "blast", "foley"],
     },
@@ -48,7 +107,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "deluge", "splash", "cascade", "submerge", "cataclysmic wave",
             "wave", "torrent",
         ),
-        "audiogen_prompt": "massive tidal wave roaring impact",
+        "audiogen_prompt": DynamicSfxPrompt("massive tidal wave roaring impact", "tsunami_water"),
         "duration": 3.0,
         "tags": ["tsunami", "water", "wave", "impact", "foley"],
     },
@@ -58,7 +117,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "alarm", "siren", "klaxon", "warning", "alert", "evacuate",
             "emergency", "beacon", "countdown",
         ),
-        "audiogen_prompt": "emergency klaxon siren",
+        "audiogen_prompt": DynamicSfxPrompt("emergency klaxon siren", "alarm_siren"),
         "duration": 2.0,
         "tags": ["alarm", "siren", "klaxon", "emergency", "foley"],
     },
@@ -69,7 +128,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "ground shaking", "fissure", "crust", "fault line", "collapse",
             "aftershock", "quaking",
         ),
-        "audiogen_prompt": "deep seismic tectonic rumble",
+        "audiogen_prompt": DynamicSfxPrompt("deep seismic tectonic rumble", "earthquake_rumble"),
         "duration": 3.0,
         "tags": ["earthquake", "rumble", "seismic", "tectonic", "foley"],
     },
@@ -79,7 +138,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "fire", "inferno", "blaze", "lava", "magma", "flame",
             "conflagration", "molten", "burn", "embers",
         ),
-        "audiogen_prompt": "roaring volcanic lava inferno crackle",
+        "audiogen_prompt": DynamicSfxPrompt("roaring volcanic lava inferno crackle", "fire_lava"),
         "duration": 2.5,
         "tags": ["fire", "lava", "inferno", "crackle", "foley"],
     },
@@ -88,7 +147,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
         "keywords": (
             "sonar", "ping", "submarine", "depth", "ocean", "trench", "abyssal",
         ),
-        "audiogen_prompt": "abyssal submarine sonar ping",
+        "audiogen_prompt": DynamicSfxPrompt("abyssal submarine sonar ping", "sonar_ping"),
         "duration": 2.0,
         "tags": ["sonar", "ping", "submarine", "depth", "foley"],
     },
@@ -98,7 +157,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "glitch", "spark", "circuit", "cyber", "terminal", "hack",
             "retinal", "electric", "short circuit",
         ),
-        "audiogen_prompt": "cybernetic electric glitch burst",
+        "audiogen_prompt": DynamicSfxPrompt("cybernetic electric glitch burst", "cyber_glitch"),
         "duration": 1.2,
         "tags": ["glitch", "electric", "cyber", "spark", "foley"],
     },
@@ -108,7 +167,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "airlock", "vent", "steam", "hiss", "pressure", "depressuriz",
             "decompression", "vacuum", "pneumatic",
         ),
-        "audiogen_prompt": "pressurized valve airlock hiss",
+        "audiogen_prompt": DynamicSfxPrompt("pressurized valve airlock hiss", "airlock_pneumatic"),
         "duration": 1.8,
         "tags": ["airlock", "valve", "steam", "hiss", "pressure", "foley"],
     },
@@ -118,7 +177,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "metal", "blade", "sword", "clash", "portcullis", "shield",
             "arrow", "rampart", "iron", "steel",
         ),
-        "audiogen_prompt": "iron metal clash impact",
+        "audiogen_prompt": DynamicSfxPrompt("iron metal clash impact", "metal_impact"),
         "duration": 1.5,
         "tags": ["metal", "clash", "impact", "iron", "foley"],
     },
@@ -128,7 +187,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "slam", "door", "lock", "deadbolt", "impact", "crash",
             "collision", "barrier breach",
         ),
-        "audiogen_prompt": "sub-bass impact door slam",
+        "audiogen_prompt": DynamicSfxPrompt("sub-bass impact door slam", "door_impact"),
         "duration": 1.8,
         "tags": ["slam", "door", "impact", "sub_bass", "foley"],
     },
@@ -138,7 +197,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "whoosh", "sprint", "whip", "leap", "burst", "hatch",
             "swoosh", "swipe", "dash",
         ),
-        "audiogen_prompt": "cinematic camera whip whoosh transition",
+        "audiogen_prompt": DynamicSfxPrompt("cinematic camera whip whoosh transition", "whoosh_transition"),
         "duration": 1.5,
         "tags": ["whoosh", "transition", "whip", "motion", "foley"],
     },
@@ -148,7 +207,7 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "heartbeat", "pulse", "decibel", "breath", "whisper",
             "creeping", "dread", "suspense",
         ),
-        "audiogen_prompt": "deep tension heartbeat pulse",
+        "audiogen_prompt": DynamicSfxPrompt("deep tension heartbeat pulse", "tension_heartbeat"),
         "duration": 2.2,
         "tags": ["heartbeat", "pulse", "tension", "dread", "foley"],
     },
@@ -158,23 +217,32 @@ _SFX_CATEGORY_TAXONOMY: list[dict[str, Any]] = [
             "rain", "wind", "storm", "fog", "corridor", "drone",
             "radiation", "ash", "pyroclastic", "dust", "haze", "ambient",
         ),
-        "audiogen_prompt": "atmospheric wind drone",
+        "audiogen_prompt": DynamicSfxPrompt("atmospheric wind drone", "atmospheric_wind"),
         "duration": 2.5,
         "tags": ["wind", "storm", "drone", "atmosphere", "foley"],
     },
 ]
 
 
-def extract_sfx_category(scene_or_text: dict[str, Any] | str) -> SfxCategoryMatch | None:
+def extract_sfx_category(
+    scene_or_text: dict[str, Any] | str,
+    action: str = "",
+    physical_context: str = "",
+) -> SfxCategoryMatch | None:
     """Analyze a scene description or narration and extract the matching SFX category.
     
     Args:
         scene_or_text: A scene dictionary containing 'narration', 'visual_prompt',
                        'sfx_cue', or a raw text string.
+        action: Optional specific action verb or description for dynamic prompt synthesis.
+        physical_context: Optional physical material/environment context (e.g. "concrete bunker").
 
     Returns:
         SfxCategoryMatch if keywords match an SFX category, else None.
     """
+    scene_action = action
+    scene_phys = physical_context
+
     if isinstance(scene_or_text, dict):
         text_parts = [
             str(scene_or_text.get("sfx_cue", "")),
@@ -184,6 +252,10 @@ def extract_sfx_category(scene_or_text: dict[str, Any] | str) -> SfxCategoryMatc
             str(scene_or_text.get("motion_prompt", "")),
         ]
         combined = " ".join(text_parts).lower()
+        if not scene_action:
+            scene_action = str(scene_or_text.get("action", "") or scene_or_text.get("sfx_action", "")).strip()
+        if not scene_phys:
+            scene_phys = str(scene_or_text.get("physical_context", "") or scene_or_text.get("sfx_context", "")).strip()
     else:
         combined = str(scene_or_text).lower()
 
@@ -197,9 +269,28 @@ def extract_sfx_category(scene_or_text: dict[str, Any] | str) -> SfxCategoryMatc
             if re.search(r"\b" + re.escape(kw) + r"\b", combined) or kw in combined
         ]
         if matched:
+            prompt_obj = spec["audiogen_prompt"]
+            if isinstance(prompt_obj, DynamicSfxPrompt):
+                if scene_action or scene_phys:
+                    prompt_str = prompt_obj.synthesize(
+                        action=scene_action,
+                        physical_context=scene_phys,
+                        matched_keywords=matched,
+                    )
+                else:
+                    prompt_str = prompt_obj.default_prompt
+            elif callable(prompt_obj):
+                prompt_str = prompt_obj(
+                    action=scene_action,
+                    physical_context=scene_phys,
+                    matched_keywords=matched,
+                )
+            else:
+                prompt_str = str(prompt_obj)
+
             return SfxCategoryMatch(
                 category=spec["category"],
-                audiogen_prompt=spec["audiogen_prompt"],
+                audiogen_prompt=prompt_str,
                 duration=float(spec["duration"]),
                 tags=list(spec["tags"]),
                 matched_keywords=matched,

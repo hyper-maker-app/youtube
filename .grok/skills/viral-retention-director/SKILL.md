@@ -74,13 +74,13 @@ Video ending structure is strictly determined by platform delivery aspect ratio:
 
 ## 3. Micro-Mathematics of Survival
 
-Replace vague adjectives ("very cold", "huge explosion") with concrete physical units:
+Quantitative Micro-Survival Metrics: Replace vague adjectives with concrete physical units and explicit survival metrics:
 
-- **Thermal:** "At minus 73 degrees Celsius — 93 degrees colder than your home freezer."
-- **Pressure:** "Atmospheric pressure drops to 8.4 PSI as the primary seal ruptures."
-- **Acoustic:** "The sensor flashes amber at 64 decibels. Sixty-five brings the swarm."
-- **Kinetic:** "A shockwave travelling at 1,230 km/h, pulverizing reinforced concrete in 0.04 seconds."
-- **Resources:** "Seven hundred milliliters of water left in your canteen; battery pack at 14%."
+- **Thermal:** Metric temperatures calibrated against physical baselines (e.g. degrees below ambient freezing).
+- **Pressure:** Atmospheric pressure, PSI, or barometric gradients tracking structural decompression.
+- **Acoustic:** Decibel thresholds tracking detection risk or shockwave impact.
+- **Kinetic:** Calibrated physical velocities (km/h, m/s) and blast arrival times.
+- **Resources:** Concrete resource accounting (explicit milliliters of water, calorie expenditure, battery percentage).
 
 ## 4. Scene Metadata Requirements
 
@@ -101,7 +101,7 @@ To prevent AI video model deformities:
 
 For maximum algorithmic click-through:
 - Disaster / Crisis: `'What if [large number] [threat] hit [specific location]?'`
-- Survival / Sci-Fi: `'You are trapped in [extreme environment] with only [micro-resource]'`
+- Survival / Sci-Fi: Structural framing placing the 2nd-person protagonist in an extreme environment with limited micro-resources (e.g. concrete resource constraints).
 
 ## 7. Closed-Loop Adversarial Quality Gate
 
@@ -115,38 +115,9 @@ Before physical video rendering, every screenplay must achieve Grade A+ certific
 
 Failing screenplays are autonomously repaired by `ScreenplayHealer` before user rendering confirmation.
 
-## Learned Production Invariants (Adversarial Feedback)
+## Universal Retention & Narrative Directing Constraints
 
-For an explicitly marked short integration test only, use the requested scene count. Landscape retains the terminal CTA; vertical retains the CTA-free loop. This exception does not certify a production screenplay.
-
-CTA rules apply strictly to the terminal final scene across any production duration.
-
-- **[Terminal Final Scene]**: The final scene must always conclude with an explicit, engaging Call-to-Action directed at the viewer to drive algorithmic engagement.
-
-- **[Scene 27]**: Do not break character POV to describe exterior macro-events; tether macro-events to the protagonist's senses.
-
-- **[Scene 7]**: Every narration sentence must strictly begin with 'You' or 'Your' to lock the viewer into the 2nd-person perspective.
-
-- **[Terminal Final Scene]**: CTA must be strictly isolated to the final sentence of the terminal scene and nowhere else.
-
-- **[Scene 27]**: POV invariant is absolute: no scene may begin with 'The', 'Outside,', or any non-You/Your phrasing.
-
-- **[Scene 14]**: All scenes must maintain strict 'You/Your' opening to sustain 2nd-person immersion and viral retention.
-
-- **[Terminal Final Scene]**: The final scene narration must always conclude with an isolated, single-sentence Call to Action to drive algorithmic engagement.
-
-- **[Scene 4]**: Never drop the 'You/Your' prefix, especially during high-action sequences where POV anchoring is most critical for retention.
-
-- **[Scene 3]**: Every scene narration must strictly begin with 'You' or 'Your' to maintain unbreakable 2nd-person immersion.
-
-- **[Scene 1]**: Maintain continuous strict adherence to production schema and guardrails.
-
-- **[Scene 25]**: Never repeat identical narration or dead-protagonist beats across multiple trailing scenes; maintain progressive information density.
-- **[Terminal Final Scene]**: CTA lives only in the last spoken sentence of the final scene; visuals must contain zero subscribe/notification/countdown text.
-- **[Terminal Final Scene]**: CTA lives in the last sentence of the final scene's narration only—never in visuals.
-- **[Scene s026]**: Maintain strict 2nd-person bodily containment; never cut to external or orbital viewpoints when the viewer is explicitly framed inside an enclosed space.
-- **[Scene s026]**: 2nd-person narration may only describe photons that could reach the protagonist’s eyes unless an explicit cutaway label is used.
-- **[Penultimate Scene]**: Never exit the viewer's perspective prior to the call-to-action conclusion.
-- **[Penultimate Scene]**: Penultimate scenes must keep 2nd-person lock so the final CTA still lands inside the viewer's body.
-- **[Scene 19]**: Every scene narration must strictly maintain 2nd-person POV starting with 'You' or 'Your'.
-- **[Scene 4]**: Maintain strict 2nd-person sensory attachment to the protagonist's immediate physical vicinity.
+1. **Strict 2nd-Person Singular POV ("You / Your"):** Every scene narration opening invariant requires strictly beginning with "You " or "Your " to sustain unbreakable 2nd-person immersion.
+2. **Quantitative Micro-Survival Metrics:** Replace vague adjectives with explicit volume (milliliters), calories, decibel thresholds, and battery percentages.
+3. **Structural CTA Placement Rule:** The Call-to-Action is isolated strictly to the terminal sentence of the final scene only, model-generated per scenario, with zero CTA presence in preceding scenes or visual prompts.
+4. **Physical Sensory Containment:** Maintain continuous bodily perspective in 2nd-person narratives; avoid unmotivated cuts or disembodied perspectives that break immersion.

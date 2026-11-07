@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import importlib.util
 import subprocess
 import zlib
 from pathlib import Path
@@ -62,10 +61,13 @@ VOICE_PROVIDER = env("VOICE_PROVIDER")
 PRODUCTION_FORMAT = (env("PRODUCTION_FORMAT") or "standard").casefold()
 IS_EXPLORER_FORMAT = PRODUCTION_FORMAT == "explorer"
 LONGFORM_MODE = env_bool("LONGFORM_MODE", True if IS_EXPLORER_FORMAT else False)
-LONGFORM_HYBRID_MODE = env_bool("LONGFORM_HYBRID_MODE", False)
-EXPLORER_LIPSYNC_PROVIDER = env("EXPLORER_LIPSYNC_PROVIDER") or "gradio_client"
-EXPLORER_LIPSYNC_ENABLED = env_bool("EXPLORER_LIPSYNC_ENABLED", True if (IS_EXPLORER_FORMAT or LONGFORM_MODE) else False)
-GEMINI_API_KEY = env("GEMINI_API_KEY")
+
+# Google Flow CDP Engine (Port 9223)
+PLAYWRIGHT_CDP_PORT = int(env("PLAYWRIGHT_CDP_PORT") or "9223")
+FLOW_CHROME_BATCH_PATH = env("FLOW_CHROME_BATCH_PATH")
+FLOW_CDP_START_TIMEOUT_SECONDS = float(env("FLOW_CDP_START_TIMEOUT_SECONDS") or "45.0")
+FLOW_CDP_POLL_INTERVAL_SECONDS = float(env("FLOW_CDP_POLL_INTERVAL_SECONDS") or "0.5")
+FLOW_AUTOSTART = env_bool("FLOW_AUTOSTART", True)
 FLOW_AGENT_SESSION_TOKEN = env("FLOW_AGENT_SESSION_TOKEN")
 FLOW_AGENT_CLI_PATH = env("FLOW_AGENT_CLI_PATH")
 FLOW_VIDEO_MODEL = env("FLOW_VIDEO_MODEL")
@@ -76,68 +78,25 @@ FLOW_IMAGE_FALLBACK_MODEL = env("FLOW_IMAGE_FALLBACK_MODEL") or ""
 FLOW_ALLOWED_DURATIONS = tuple(int(v.strip()) for v in (env("FLOW_ALLOWED_DURATIONS") or "").split(",") if v.strip())
 FLOW_DURATION_POLICY = env("FLOW_DURATION_POLICY")
 
-ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY")
-OPENAI_API_KEY = env("OPENAI_API_KEY")
-FAL_KEY = env("FAL_KEY")
-VERTEX_PROJECT = env("GOOGLE_CLOUD_PROJECT") or env("VERTEX_PROJECT")
-VERTEX_LOCATION = env("VERTEX_LOCATION") or env("GOOGLE_CLOUD_LOCATION")
-VERTEX_OPERATION_TIMEOUT_SECONDS = int(env("VERTEX_OPERATION_TIMEOUT_SECONDS") or "1200")
-VERTEX_OPERATION_POLL_SECONDS = float(env("VERTEX_OPERATION_POLL_SECONDS") or "10")
-# Calibration is deliberately process/config scoped: it is for development runs where
-# quality exploration is worth additional provider spend.  Normal production retains
-# the historical one-request, fail-closed Vertex policy.
+# xAI Grok (Grok 4.6 Registry & Scenario Direction)
+XAI_API_KEY = env("XAI_API_KEY")
+XAI_MODEL = env("XAI_MODEL") or "grok-4.6"
+XAI_API_BASE = env("XAI_API_BASE") or "https://api.x.ai/v1"
+XAI_JUDGE_TIMEOUT = int(env("XAI_JUDGE_TIMEOUT") or "180")
+
+# Google Gemini API
+GEMINI_API_KEY = env("GEMINI_API_KEY")
+GEMINI_MODEL = env("GEMINI_MODEL") or "gemini-2.5-flash"
+
 CALIBRATION_MODE = env_bool("CALIBRATION_MODE", False)
 CALIBRATION_MAX_ATTEMPTS = max(1, int(env("CALIBRATION_MAX_ATTEMPTS") or "3"))
-# Nano Banana Pro is the sole image/keyframe model. Veo remains a separate video
-# provider and is never selected for still-image generation.
-NANO_BANANA_PRO_MODEL = env("NANO_BANANA_PRO_MODEL") or "gemini-3-pro-image"
-VERTEX_HERO_VIDEO_MODEL = env("VERTEX_HERO_VIDEO_MODEL") or "vertex_veo_fast"
-# Text/planning is deliberately separate from the Image/Veo model choices. The supplied
-# Vertex console reference documents Gemini 3.8 Flash as a GA text model with Vertex ADC.
-VERTEX_TEXT_MODEL = env("VERTEX_TEXT_MODEL") or "gemini-3.8-flash"
-VERTEX_TEXT_LOCATION = env("VERTEX_TEXT_LOCATION") or "global"
-VERTEX_TEXT_MAX_OUTPUT_TOKENS = max(1024, int(env("VERTEX_TEXT_MAX_OUTPUT_TOKENS") or "16000"))
-# A text plan must either arrive promptly or fail into the configured Anthropic
-# recovery path.  Leaving the SDK default unbounded can stall a whole production
-# before it has even persisted script.json or submitted any media request.
-VERTEX_TEXT_TIMEOUT_SECONDS = max(10, int(env("VERTEX_TEXT_TIMEOUT_SECONDS") or "90"))
-# New Lighthouse V2 runs inspect their already-generated keyframes with Gemini Vision
-# before any Veo clip is submitted.  Keep this independent from Anthropic review settings
-# and freeze the selected values into vertex_plan for deterministic resumes.
-VERTEX_KEYFRAME_PREFLIGHT_MODEL = env("VERTEX_KEYFRAME_PREFLIGHT_MODEL") or VERTEX_TEXT_MODEL
-VERTEX_KEYFRAME_PREFLIGHT_LOCATION = env("VERTEX_KEYFRAME_PREFLIGHT_LOCATION") or VERTEX_TEXT_LOCATION
-VERTEX_KEYFRAME_PREFLIGHT_MAX_OUTPUT_TOKENS = max(
-    512, int(env("VERTEX_KEYFRAME_PREFLIGHT_MAX_OUTPUT_TOKENS") or "8192")
-)
-# A 429 RESOURCE_EXHAUSTED response from Gemini Vision is a transient capacity result,
-# not a visual verdict.  Retry only that narrow case before the fail-closed preflight is
-# persisted.  These limits deliberately apply to the no-video-review request only; they
-# never cause keyframes or Veo clips to be regenerated.
-VERTEX_KEYFRAME_PREFLIGHT_429_RETRIES = min(
-    5, max(0, int(env("VERTEX_KEYFRAME_PREFLIGHT_429_RETRIES") or "3"))
-)
-VERTEX_KEYFRAME_PREFLIGHT_429_BACKOFF_SECONDS = min(
-    60.0, max(1.0, float(env("VERTEX_KEYFRAME_PREFLIGHT_429_BACKOFF_SECONDS") or "5"))
-)
-# A completed V2 Lighthouse clip is reviewed with the same Vertex Gemini Vision route
-# before the next Veo request.  These are frozen into vertex_plan alongside the keyframe
-# preflight settings; no V2 Vertex production should fall back to Anthropic for either
-# semantic decision.
-VERTEX_CLIP_REVIEW_MODEL = env("VERTEX_CLIP_REVIEW_MODEL") or VERTEX_KEYFRAME_PREFLIGHT_MODEL
-VERTEX_CLIP_REVIEW_LOCATION = env("VERTEX_CLIP_REVIEW_LOCATION") or VERTEX_KEYFRAME_PREFLIGHT_LOCATION
-VERTEX_CLIP_REVIEW_MAX_OUTPUT_TOKENS = max(
-    512, int(env("VERTEX_CLIP_REVIEW_MAX_OUTPUT_TOKENS") or "4096")
-)
-# The opening image is always the hero asset. A short needs at most one additional
-# premium mechanism/reveal keyframe; unlimited keyword matches can quietly promote every
-# scene to Pro Image without producing a more coherent video.
-VERTEX_MAX_HERO_KEYFRAMES = max(1, int(env("VERTEX_MAX_HERO_KEYFRAMES") or "2"))
-ELEVENLABS_API_KEY = env("ELEVENLABS_API_KEY")
+
+# Deepgram Aura-2 & Nova-3 STT
 DEEPGRAM_API_KEY = env("DEEPGRAM_API_KEY")
 DEEPGRAM_BASE_URL = env("DEEPGRAM_BASE_URL")
 DEEPGRAM_MODEL = env("DEEPGRAM_VOICE_MODEL") or env("DEEPGRAM_MODEL")
 DEEPGRAM_LONGFORM_VOICE_MODEL = env("DEEPGRAM_LONGFORM_VOICE_MODEL") or "aura-2-hera-en"
-DEEPGRAM_WITNESS_VOICE_MODEL = env("DEEPGRAM_WITNESS_VOICE_MODEL") or "aura-2-hermes-en"
+DEEPGRAM_TRANSCRIBE_MODEL = env("DEEPGRAM_TRANSCRIBE_MODEL") or "nova-3"
 DEEPGRAM_TTS_SPEED = float(env("DEEPGRAM_TTS_SPEED") or "1.0")
 DEEPGRAM_TTS_EXPRESSIVITY = int(env("DEEPGRAM_TTS_EXPRESSIVITY") or "0")
 DEEPGRAM_TTS_ENCODING = env("DEEPGRAM_TTS_ENCODING") or "linear16"
@@ -145,25 +104,37 @@ DEEPGRAM_TTS_CONTAINER = env("DEEPGRAM_TTS_CONTAINER") or "wav"
 DEEPGRAM_TTS_SAMPLE_RATE = int(env("DEEPGRAM_TTS_SAMPLE_RATE") or "48000")
 DEEPGRAM_FLUX_ROSTER = env_bool("DEEPGRAM_FLUX_ROSTER", False)
 DEEPGRAM_FLUX_SPEAK_VERSION = env("DEEPGRAM_FLUX_SPEAK_VERSION") or "v2"
+
+# ElevenLabs
+ELEVENLABS_API_KEY = env("ELEVENLABS_API_KEY")
+ELEVEN_BASE = env("ELEVENLABS_BASE_URL")
+ELEVEN_MODEL = env("ELEVEN_MODEL") or "eleven_flash_v2_5"
+ELEVEN_OUTPUT_FORMAT = "mp3_44100_128"
+
+# Azure Neural TTS
+AZURE_TTS_KEY = env("AZURE_TTS_KEY") or env("AZURE_SPEECH_KEY")
+AZURE_TTS_REGION = env("AZURE_TTS_REGION") or env("AZURE_SPEECH_REGION") or "eastus"
+AZURE_TTS_VOICE = env("AZURE_TTS_VOICE") or env("AZURE_VOICE_NAME") or "en-US-GuyNeural"
+AZURE_TTS_SPEED = env("AZURE_TTS_SPEED") or env("AZURE_TTS_RATE")
+AZURE_TTS_PITCH = env("AZURE_TTS_PITCH")
+
+# Voyslity Voice Provider
 VOYSLITY_API_KEY = env("VOYSLITY_API_KEY")
 VOYSLITY_BASE_URL = env("VOYSLITY_BASE_URL")
 VOYSLITY_VOICE_ID = env("VOYSLITY_VOICE_ID") or "21m00Tcm4TlvDq8ikWAM"
 VOYSLITY_MODEL_ID = env("VOYSLITY_MODEL_ID") or "eleven_multilingual_v2"
 
-# Seslab returns synchronous JSON {audio_url} for short texts.
-SESLAB_API_KEY = env("SESLAB_API_KEY")
-SESLAB_BASE_URL = env("SESLAB_BASE_URL")
-SESLAB_VOICE_ID = env("SESLAB_VOICE_ID") or "1Ui4bRFeTBgvTVC1eVFz"
-SESLAB_VOICE_PACKAGE = env("SESLAB_VOICE_PACKAGE") or "voice-natural"
+# Remotion Motion Graphics
+REMOTION_BROWSER_EXECUTABLE = env("REMOTION_BROWSER_EXECUTABLE")
+REMOTION_TILE_CACHE_DIR = env("REMOTION_TILE_CACHE_DIR")
 
-# Voice generation is independent from the visual source.  In particular, a manual Flow
-# handoff still ships a real voiceover and must not silently fall back to Edge merely
-# because its visual tier is free.  Daniel is the channel's canonical ElevenLabs voice;
-# the local MP3 is an audit/reference sample, not a cloning input.
-TTS_PROVIDERS = ("deepgram", "elevenlabs", "seslab", "voyslity", "edge", "edge_tts")
+# Voice generation provider selection
+TTS_PROVIDERS = ("deepgram", "elevenlabs", "azure", "azure_neural", "voyslity", "edge", "edge_tts")
 TTS_PROVIDER = (VOICE_PROVIDER or env("TTS_PROVIDER") or "").lower()
 if TTS_PROVIDER == "edge_tts":
     TTS_PROVIDER = "edge"
+elif TTS_PROVIDER in {"azure_neural", "azure_speech", "azure_tts"}:
+    TTS_PROVIDER = "azure"
 DANIEL_VOICE_ID = "onwK4e9ZLuTAKqWW03F9"
 DANIEL_SAMPLE_PATH = ROOT / "_voice_samples" / "Daniel_onwK4e.mp3"
 
@@ -173,10 +144,12 @@ def commercial_tts_available() -> bool:
     return {
         "deepgram": bool(DEEPGRAM_API_KEY),
         "elevenlabs": bool(ELEVENLABS_API_KEY),
-        "seslab": bool(SESLAB_API_KEY),
+        "azure": bool(AZURE_TTS_KEY),
+        "azure_neural": bool(AZURE_TTS_KEY),
         "voyslity": bool(VOYSLITY_API_KEY),
         "edge": False,
     }.get(TTS_PROVIDER, False)
+
 
 CODEFAST_BASE_URL = env("CODEFAST_BASE_URL")
 CODEFAST_API_KEY = env("CODEFAST_API_KEY")
@@ -188,13 +161,7 @@ SEEKAI_MODEL = os.environ.get("SEEKAI_MODEL", "claude-opus-4-8")
 
 ANTHROPIC_WORKSPACE_ID = env("ANTHROPIC_WORKSPACE_ID")
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
-# A validation failure from Haiku is retried once with Sonnet before any paid visual or
-# voice work begins.  This is deliberately separate from the transport/gateway fallback.
 ANTHROPIC_QUALITY_FALLBACK_MODEL = env("ANTHROPIC_QUALITY_FALLBACK_MODEL") or "claude-sonnet-5"
-# A structured five-beat / five-shot script normally completes well below this cap.  The
-# old 16k ceiling made a malformed tool response needlessly expensive and increased the
-# time a streaming request could remain open before Vertex preflight had any script to
-# validate.  This is an output ceiling only; it does not affect media generation.
 ANTHROPIC_SCRIPT_MAX_TOKENS = max(1024, int(env("ANTHROPIC_SCRIPT_MAX_TOKENS") or "8000"))
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-2024-11-20")
 
@@ -221,7 +188,6 @@ CONTENT_MODES = ("mixed", "factual", "folklore", "fiction")
 CONTENT_MIX_TARGETS = {"factual": 0.60, "folklore": 0.25, "fiction": 0.15}
 
 
-
 # --------------------------------------------------------------------------------------
 # Tiers
 # --------------------------------------------------------------------------------------
@@ -232,97 +198,8 @@ TIERS = (TIER_FREE, TIER_PAID)
 
 
 def paid_tier_available() -> list[str]:
-    """Return credentials that are indispensable to the paid visual path.
-
-    A paid Fal run can still use the local edge-tts voice fallback, so treating an optional
-    commercial TTS key as mandatory made a valid video run incorrectly downgrade to free.
-    """
-    missing = []
-    if not FAL_KEY:
-        missing.append("FAL_KEY")
-    return missing
-
-
-def vertex_ai_available() -> list[str]:
-    """Return missing local requirements for direct Vertex AI generation.
-
-    ADC is deliberately used instead of a JSON service-account key.  It is created by
-    ``gcloud auth application-default login`` and is never copied into this repository.
-    """
-    missing: list[str] = []
-    if importlib.util.find_spec("google.genai") is None:
-        missing.append("google-genai (run: python -m pip install google-genai)")
-    try:
-        import google.auth
-        google.auth.default()
-    except Exception:
-        missing.append("Application Default Credentials (run: gcloud auth application-default login)")
-    try:
-        project = vertex_project_id()
-    except RuntimeError as exc:
-        missing.append(str(exc))
-    else:
-        command = gcloud_command()
-        if command:
-            try:
-                result = subprocess.run(
-                    [command, "services", "list", "--enabled", "--project", project,
-                     "--filter", "config.name:aiplatform.googleapis.com", "--format=value(config.name)"],
-                    check=True, capture_output=True, text=True, timeout=20,
-                )
-                if "aiplatform.googleapis.com" not in result.stdout:
-                    missing.append("Vertex AI API is not enabled (enable aiplatform.googleapis.com)")
-            except (OSError, subprocess.SubprocessError):
-                missing.append("Vertex AI API access could not be verified with local gcloud")
-    return missing
-
-
-def gcloud_command() -> str | None:
-    """Return a local gcloud executable without relying only on the parent PATH.
-
-    Windows desktop installs commonly place Cloud SDK under LOCALAPPDATA but do not
-    propagate that directory into every GUI-launched Python process.  This helper
-    performs local executable discovery only; it never reads credentials or calls a
-    Cloud API by itself.
-    """
-    names = ("gcloud.cmd", "gcloud") if os.name == "nt" else ("gcloud", "gcloud.cmd")
-    for name in names:
-        if found := shutil.which(name):
-            return found
-    if os.name == "nt":
-        candidates = (
-            Path(os.environ.get("LOCALAPPDATA") or "") / "Google" / "Cloud SDK" / "google-cloud-sdk" / "bin" / "gcloud.cmd",
-            Path(os.environ.get("ProgramFiles") or "") / "Google" / "Cloud SDK" / "google-cloud-sdk" / "bin" / "gcloud.cmd",
-            Path(os.environ.get("ProgramFiles(x86)") or "") / "Google" / "Cloud SDK" / "google-cloud-sdk" / "bin" / "gcloud.cmd",
-        )
-        for candidate in candidates:
-            if candidate.is_file():
-                return str(candidate)
-    return None
-
-
-def vertex_project_id() -> str:
-    """Resolve the Vertex project from explicit config or the active local gcloud config."""
-    if VERTEX_PROJECT:
-        return VERTEX_PROJECT
-    command = gcloud_command()
-    if not command:
-        raise RuntimeError(
-            "Google Cloud project is unset and gcloud was not found. Set GOOGLE_CLOUD_PROJECT "
-            "or install Google Cloud CLI / add it to PATH."
-        )
-    try:
-        result = subprocess.run(
-            [command, "config", "get-value", "project"],
-            check=True, capture_output=True, text=True,
-        )
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise RuntimeError("Could not read the active gcloud project; set GOOGLE_CLOUD_PROJECT explicitly.") from exc
-    project = result.stdout.strip()
-    if not project or project == "(unset)":
-        raise RuntimeError("No Google Cloud project is configured; set GOOGLE_CLOUD_PROJECT or run gcloud config set project.")
-    return project
-
+    """Return credentials that are indispensable to the paid visual path."""
+    return []
 
 
 def resolve_tier(requested: str | None) -> str:
@@ -337,7 +214,7 @@ def resolve_tier(requested: str | None) -> str:
 
 
 # --------------------------------------------------------------------------------------
-# FFmpeg
+# FFmpeg & FFprobe
 # --------------------------------------------------------------------------------------
 
 def resolve_ffmpeg() -> str:
@@ -361,12 +238,30 @@ def resolve_ffmpeg() -> str:
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 
+def resolve_ffprobe() -> str:
+    """Prefer a PATH ffprobe, else fall back to the binary bundled with imageio-ffmpeg or ffmpeg sibling."""
+    override = env("FFPROBE_BINARY")
+    if override and Path(override).exists():
+        return override
+
+    found = shutil.which("ffprobe")
+    if found:
+        return found
+
+    try:
+        ffmpeg_path = Path(resolve_ffmpeg())
+        sibling = ffmpeg_path.parent / ("ffprobe.exe" if os.name == "nt" else "ffprobe")
+        if sibling.exists():
+            return str(sibling)
+    except Exception:
+        pass
+
+    return "ffprobe"
+
+
 # --------------------------------------------------------------------------------------
 # Video geometry / timing
 # --------------------------------------------------------------------------------------
-
-LONGFORM_MODE = env_bool("LONGFORM_MODE", True if IS_EXPLORER_FORMAT else False)
-LONGFORM_HYBRID_MODE = env_bool("LONGFORM_HYBRID_MODE", False)
 
 WIDTH = 1920 if LONGFORM_MODE else 1080
 HEIGHT = 1080 if LONGFORM_MODE else 1920
@@ -495,19 +390,6 @@ FREEZE_MAX_DURATION = 0.65
 MAX_QUALITY_RETRIES_PER_BLOCK = 2
 VISUAL_QUALITY_MIN_SCORE = 7
 VISUAL_QUALITY_MAX_RETRIES_PER_BLOCK = 2
-# Keyframe admission is a visual quality decision before Veo is charged.  Keep
-# the retry budget small and explicit: a rejected endpoint is rerolled with its
-# reviewer evidence, while accepted neighbours are never regenerated.
-KEYFRAME_ADMISSION_ATTEMPTS = min(3, max(1, int(env("KEYFRAME_ADMISSION_ATTEMPTS") or "3")))
-# When all normal admission attempts are exhausted for a scale_transition or
-# subject_change shot, attempt one final generation with relaxed same_subject
-# semantics.  Disable this to enforce strict rejection on misclassified transitions.
-KEYFRAME_FALLBACK_RELABEL = str(env("KEYFRAME_FALLBACK_RELABEL") or "true").casefold() in {"1", "true", "yes"}
-# When true, explicitly permits image providers without review_keyframe to bypass visual review.
-ALLOW_UNREVIEWED_KEYFRAMES = str(env("ALLOW_UNREVIEWED_KEYFRAMES") or "false").casefold() in {"1", "true", "yes"}
-# Maximum concurrent video block generation requests to Vertex AI Veo.
-# Must strictly remain 1: Vertex AI Veo quota drops concurrent video generation requests (ADR-008).
-VERTEX_VEO_MAX_CONCURRENT_BLOCKS = max(1, min(4, int(env("VERTEX_VEO_MAX_CONCURRENT_BLOCKS") or "1")))
 # Visual review is deliberately limited to physical-effect shots and to live Anthropic
 # production credentials.  Dry-runs, Flow handoffs and local fallback stay cost-free.
 VISUAL_QUALITY_ENABLED = True
@@ -591,61 +473,10 @@ LONGFORM_RACK_FOCUS_DURATION = 2.40
 
 
 # --------------------------------------------------------------------------------------
-# Fal.ai (Balanced Profile: Seedream/Flux + Hailuo/Kling Pro/Veo Fast/Wan)
+# Image Generation Defaults
 # --------------------------------------------------------------------------------------
 
-FAL_QUEUE_BASE = env("FAL_QUEUE_BASE_URL")
-
-FAL_SEEDREAM_MODEL = "fal-ai/bytedance/seedream/v4/text-to-image"
-FAL_FLUX_MODEL = "fal-ai/flux/dev"
-FAL_HAILUO_MODEL = "fal-ai/minimax/hailuo-02/standard/image-to-video"
-FAL_KLING_PRO_MODEL = "fal-ai/kling-video/v2.5-turbo/pro/image-to-video"
-FAL_VEO_FAST_MODEL = "fal-ai/veo3.1/fast/image-to-video"
-FAL_VEO_FLF_MODEL = "fal-ai/veo3.1/fast/first-last-frame-to-video"
-FAL_WAN_MODEL = "fal-ai/wan/v2.2-a14b/image-to-video"
-FAL_H3_MAX_MODEL = "fal-ai/minimax/h3-max/image-to-video"
-
-DEFAULT_IMAGE_MODEL = FAL_SEEDREAM_MODEL
-
-# Seedream V4 settings (native 9:16 high-fidelity renders). Aspect comes from image_size
-# alone — the seedream v4 text-to-image schema has no aspect_ratio field.
-SEEDREAM_WIDTH = 1080
-SEEDREAM_HEIGHT = 1920
-
-# Flux dev settings (fallback image generator)
-FLUX_WIDTH = 768
-FLUX_HEIGHT = 1344
-FLUX_STEPS = 32
-FLUX_GUIDANCE = 3.5
-FLUX_OUTPUT_FORMAT = "png"
-FLUX_ACCELERATION = "regular"
-FLUX_SAFETY_CHECKER = False
-
-KLING_CFG_PRIMARY = 0.5
-KLING_CFG_RETRY = 0.35
-
-# Provider-native duration payload values.  The active run passes its TimelinePlan's
-# native duration to MotionForge, so no output is generated merely to be trimmed away.
-KLING_DURATION = "5"
-VEO_FAST_DURATION = "8s"
-HAILUO_DURATION = "6"
-HAILUO_RESOLUTION = "768P"
-# Wan: 4 seconds at 16 fps = 65 frames; the provider-native profile owns that duration.
-WAN_RESOLUTION = "720p"
-WAN_FPS = 16
-WAN_NUM_FRAMES = int(4.0 * WAN_FPS) + 1  # 65
-
-# MiniMax H3 Max: integer duration 5-15s, 768P resolution
-H3_MAX_DURATION = 5
-H3_MAX_RESOLUTION = "768P"
-
-POLL_INTERVAL_FAST = 3.0
-POLL_INTERVAL_SLOW = 10.0
-POLL_BACKOFF_AFTER = 30.0
-ATTEMPT_TIMEOUT = 420.0
-NETWORK_RETRIES = 3
-
-MAX_PAID_ATTEMPTS = 12
+DEFAULT_IMAGE_MODEL = env("FLOW_IMAGE_MODEL") or "nano_banana_pro"
 
 
 # --------------------------------------------------------------------------------------

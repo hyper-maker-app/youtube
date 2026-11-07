@@ -159,5 +159,7 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 
 *Color Grading Supervisor v3.8.6 — Grok 4.6 / v9-4p5 · emotion + skin + stitch-safe unity*
 
-## Learned Production Invariants (Adversarial Feedback)
-- **[Scene s005]**: Avoid generating explicit UI text or computer screens in video diffusion prompts to prevent warping artifacts.
+## Universal Luminance & Display Grading Standards
+
+1. **UI Text & Display Artifact Prevention:** Prohibit generating explicit UI text, digital readouts, or computer screens in video diffusion prompts to prevent warping artifacts.
+2. **Luminance & Dynamic Range Standards:** Maintain strict scene-to-scene luminance coherence, protecting shadow detail and highlight rolloff across stitch boundaries.

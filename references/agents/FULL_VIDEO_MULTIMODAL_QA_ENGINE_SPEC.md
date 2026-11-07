@@ -493,7 +493,7 @@ To eliminate the risk of runaway API billing or recursive re-rendering loops:
 - **`MAX_PATCH_PASSES = 2` (Default: 1):** The engine permits a maximum of 2 patch iterations per production.
 - **Circuit Breaker Fallback:** If a clip is re-rendered once and still fails the post-audit with `critical` severity:
   1. The engine logs a `CIRCUIT_BREAKER_ENGAGED` warning.
-  2. Fallback Option A: Fallback to procedural Ken Burns pan/zoom on the corresponding high-resolution Hero Plate (`render_ken_burns_block`).
+  2. Fallback Option A (Active Dynamic Recovery): Fallback to a synchronized Remotion 60 FPS parametric motion graphics B-roll sequence (e.g. `GeospatialStormMap`, `TelemetryCurve` HUD, or tactical radar composition via `engine/services/remotion_bridge.py`) or trigger a targeted Veo 3.1 Flow CDP alternate camera angle slice, guaranteeing 60 FPS broadcast visual continuity instead of static image panning.
   3. Fallback Option B: Seal production with a `CONDITIONAL_PASS` warning flag and notify the human director.
 
 ---

@@ -2,57 +2,7 @@
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
-import sys
-from pathlib import Path
-
 import typer
-
-from cli.shared import console
-
-
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
-def _web_react_dir() -> Path:
-    return _repo_root() / "web_react"
-
-
-def _require_npm() -> str:
-    npm = shutil.which("npm")
-    if not npm:
-        console.print(
-            "[red]npm not found on PATH.[/red]\n"
-            "Install Node.js 20+ (includes npm), then retry.\n"
-            "  https://nodejs.org/  ·  or  [bold]sudo apt install npm[/bold]"
-        )
-        raise typer.Exit(1)
-    node = shutil.which("node")
-    if not node:
-        console.print("[red]node not found on PATH (npm alone is not enough).[/red]")
-        raise typer.Exit(1)
-    return npm
-
-
-def _ensure_deps(npm: str, app_dir: Path, *, force_install: bool) -> None:
-    modules = app_dir / "node_modules"
-    if modules.is_dir() and not force_install:
-        return
-    console.print(
-        f"[cyan]npm install[/cyan] in {app_dir}"
-        + (" (--install)" if force_install else " (node_modules missing)")
-    )
-    result = subprocess.run(
-        [npm, "install"],
-        cwd=str(app_dir),
-        check=False,
-    )
-    if result.returncode != 0:
-        console.print("[red]npm install failed.[/red]")
-        raise typer.Exit(result.returncode or 1)
 
 
 def register(app: typer.Typer) -> None:

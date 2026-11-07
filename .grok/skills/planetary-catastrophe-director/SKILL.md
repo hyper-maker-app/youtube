@@ -130,8 +130,10 @@ Generative AI video models fail when forced to render micro-detailed human faces
 3. **In-Media-Res Crisis Hook (First 3 Seconds):** Immediate sensory shock in Scene 1 (ground shuddering at Mach 3, sky turning sulfurous orange, pressure wave rattling reinforced bunker walls).
 4. **Clean Narration Gateway:** Spoken prose must be sanitized of all bracketed effects (`[rumble]`, `(screaming)`) and production headers before neural TTS ingestion.
 
-## Universal Physics & Causality Invariants
-- **[Scene 20]**: Seismic energy release scaling must obey physical limits; do not stack high-magnitude earthquakes at impossible high-frequency intervals.
+## Universal Physics & Planetary Scaling Laws
+
+1. **Seismic Energy Release Scaling:** Seismic energy release scaling must obey physical limits without stacking impossible high-magnitude earthquakes at high-frequency intervals.
+2. **Planetary Conservation & Propagation:** Energy conservation governs shockwave propagation, thermal radiation, and atmospheric displacement across planetary scales.
 
 ## Structured Reviewer Rules
 

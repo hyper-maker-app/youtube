@@ -27,7 +27,7 @@ class FluxVoice:
     primary_use: str
 
 
-# ── Erkek Yardımcı Ses Havuzu (Sıralı / Round-Robin) ──
+# ── Male Auxiliary Voice Pool (Round-Robin) ──
 MALE_FLUX_ROSTER: tuple[FluxVoice, ...] = (
     FluxVoice(
         model_id="flux-cliff-en",
@@ -63,7 +63,7 @@ MALE_FLUX_ROSTER: tuple[FluxVoice, ...] = (
     ),
 )
 
-# ── Kadın Yardımcı Ses Havuzu (Sıralı / Round-Robin) ──
+# ── Female Auxiliary Voice Pool (Round-Robin) ──
 FEMALE_FLUX_ROSTER: tuple[FluxVoice, ...] = (
     FluxVoice(
         model_id="flux-hannah-en",

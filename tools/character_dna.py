@@ -4,7 +4,6 @@ Character DNA pipeline — extraction scaffold, Identity Lock handoff, prompt in
 
 Used by:
   - cinematic_studio_cli.py (dna commands)
-  - .grok/skills/character-dna-extractor/scripts/
 """
 
 from __future__ import annotations

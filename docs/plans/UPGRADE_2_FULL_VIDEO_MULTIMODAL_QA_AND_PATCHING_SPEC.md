@@ -501,7 +501,7 @@ To prevent infinite rendering loops and runaway API costs:
 - **`MAX_PATCH_PASSES = 1` (Configurable to 2 max):**
   If a re-rendered clip still fails post-audit on Pass 2, the circuit breaker engages:
   1. The engine logs `[CIRCUIT_BREAKER] Scene {id} failed 2 corrective passes.`
-  2. Fallback Option A (Automated): Replaces the failing block with a dynamic Ken Burns pan/zoom on the corresponding high-resolution Hero Plate (`render_ken_burns_block`).
+  2. Fallback Option A (Automated Dynamic Recovery): Replaces the failing block with a synchronized Remotion 60 FPS parametric motion graphics HUD/telemetry composition (`engine/services/remotion_bridge.py`) or a prompt-healed Veo 3.1 Flow CDP slice (`engine/flow_bridge.py`), ensuring broadcast visual continuity without static image pans.
   3. Fallback Option B (Human Waiver): Issues an alert and passes the film with `audit_status="CONDITIONAL_PASS"`.
 
 ---

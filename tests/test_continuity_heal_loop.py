@@ -84,7 +84,8 @@ def test_director_agent_severity_arbitration():
     )
     action_geom = arbitrate_decision(delta_geom, world_state, current_attempt=1)
     assert action_geom.decision == DirectorDecision.HEAL
-    assert "Lock door hinges strictly to right jamb" in action_geom.corrective_prompt
+    assert "right jamb" in action_geom.corrective_prompt
+    assert delta_geom.entity_id in action_geom.corrective_prompt
 
     # 4. Fatal Ontology breach (oak -> glass) -> HEAL with scoped negatives
     delta_fatal = VisualDelta(
@@ -100,7 +101,8 @@ def test_director_agent_severity_arbitration():
     assert action_fatal.decision == DirectorDecision.HEAL
     assert "glass door" in action_fatal.scoped_negatives
     assert "French door" in action_fatal.scoped_negatives
-    assert "100% opaque solid white-oak slab" in action_fatal.corrective_prompt
+    assert "solid_white_oak" in action_fatal.corrective_prompt
+    assert delta_fatal.entity_id in action_fatal.corrective_prompt
 
 
 def test_continuity_heal_loop_execution():

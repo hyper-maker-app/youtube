@@ -571,8 +571,8 @@ def draw_bottom_strip_layer(
 
 
 def generate_thumbnail(
+    title_text: str,
     base_image: Union[str, Path, Image.Image, Any, None] = None,
-    title_text: str = "WHAT IF 1000 VOLCANOES ERUPTED AT ONCE?",
     output_path: Union[str, Path, None] = None,
     channel_name: str = "GROK STUDIO",
     channel_logo: Union[str, Path, Image.Image, None] = None,
@@ -588,8 +588,8 @@ def generate_thumbnail(
     """Generate a YouTube-ready 1280×720 JPEG thumbnail composed of 4 strict PIL layers.
 
     Args:
+        title_text: Video title text to render in bold White font in the upper 1/3 (Required).
         base_image: Video climax frame path, PIL Image, numpy array, or None for procedural synthesis.
-        title_text: Video title text to render in bold White font in the upper 1/3.
         output_path: Destination path for the JPEG thumbnail. Defaults to 'out/thumbnail.jpg'.
         channel_name: Channel name rendered in the bottom strip placeholder.
         channel_logo: Optional path or PIL Image for channel logo.
@@ -605,6 +605,8 @@ def generate_thumbnail(
     Returns:
         Path: Resolved absolute path to the generated 1280×720 JPEG file.
     """
+    if not title_text or not str(title_text).strip():
+        raise ValueError("title_text is a required non-empty string for generate_thumbnail.")
     if output_path is None:
         output_path = Path("out") / "thumbnail.jpg"
     out_file = Path(output_path).resolve()
@@ -660,11 +662,14 @@ def generate_thumbnail(
     return out_file
 
 
-def generate_test_thumbnail(output_path: Union[str, Path] = "out/thumbnail_test.jpg") -> Path:
+def generate_test_thumbnail(
+    output_path: Union[str, Path] = "out/thumbnail_test.jpg",
+    title_text: str = "PRODUCTION TEST PROTOCOL",
+) -> Path:
     """Generate a test thumbnail for verification purposes."""
     return generate_thumbnail(
+        title_text=title_text,
         base_image=None,
-        title_text="WHAT IF 1000 VOLCANOES ERUPTED AT ONCE?",
         output_path=output_path,
     )
 
@@ -682,7 +687,7 @@ def _cli_entrypoint() -> None:
     parser.add_argument(
         "--title", "-t",
         help="Thumbnail title text (upper 1/3)",
-        default="WHAT IF 1000 VOLCANOES ERUPTED AT ONCE?",
+        required=True,
     )
     parser.add_argument(
         "--output", "-o",

@@ -57,6 +57,7 @@ ROOT_MAP: dict[str, str] = {
     "create-bible": "Produce",
     "produce-film": "Produce",
     "generate-prompt": "Produce",
+    "flow": "Produce",
     "dna": "Produce",
     "sequence": "Produce",
     "animatic": "Produce",
@@ -208,11 +209,14 @@ NESTED_MAPS: dict[str, dict[str, str]] = {
 
 ROOT_HELP = (
     f"🎥 Grok Imagine Cinematic Studio v{STUDIO_VERSION} — "
-    "Grok 4.6 cinematic+Build · optional 4.3 1M · Imagine 1.0/1.5 · 25-agent core CLI\n\n"
+    "Primary Engine: Google Flow CDP (Veo 3.1) + Remotion + Deepgram + FFmpeg\n"
+    "Full cinematic pipelines, 25-agent core direction, and parametric motion graphics\n\n"
     "Orient    cinematic-studio dashboard\n"
     "Health    cinematic-studio doctor --quick\n"
-    "Produce   cinematic-studio create-bible --wizard\n"
-    "Spend     cinematic-studio quota estimate -d 30\n"
+    "Produce   cinematic-studio produce-film \"Title\" --genre catastrophe --duration 300\n"
+    "          cinematic-studio motion-graphics render storm-map --payload DATA.json\n"
+    "          cinematic-studio create-bible --wizard\n"
+    "Spend     cinematic-studio quota estimate -d 30  # Legacy Grok Imagine spend\n"
     "Gate      cinematic-studio handoff validate PACKET.json --strict-handoff\n"
     "Deliver   cinematic-studio sequence polish NAME --dry-run\n"
     "Surfaces  cinematic-studio ui"

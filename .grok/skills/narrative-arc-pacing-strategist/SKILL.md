@@ -177,15 +177,7 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 
 *Narrative Arc Strategist v3.8.6 — Grok 4.6 / v9-4p5 · emotion drives pacing · every shot earns its place*
 
-## Learned Production Invariants (Adversarial Feedback)
+## Universal Pacing Constraints
 
-- **[Scene 25]**: Eliminate redundant narration loops to preserve viewer retention and pacing.
-- **[Scene 25]**: After the 2nd-person survivor dies, do not repeat their corpse description; one death beat, then a short visual coda.
-- **[Scene 24]**: After the end-state is stated once, do not restage the same sterile surface; additional scenes must add a new irreversible loss or be cut.
-- **[Scene 26]**: Diversify physical actions to avoid repetitive framing in consecutive scenes.
-- **[Scene 5]**: Eliminate redundant narrative loops to maintain optimal second-person immersion and viral retention pacing.
-- **[Scene 38]**: Keep narrative immersion pristine by quarantining subscription CTAs strictly to the concluding sentence of the final scene.
-- **[Scene 38]**: Keep viral CTAs cleanly separated from core narrative science blocks for maximum retention.
-- **[Scene 38]**: Calls to action must remain strictly separated from narrative immersion beats.
-- **[Scene 38]**: Isolate calls to action strictly to the final post-action beat.
-- **[Scene 6]**: Never repeat identical scenes; ensure each scene advances the narrative escalation or aftermath.
+1. **Non-Redundant Progression:** Once an irreversible state is established, eliminate trailing repetition loops; every scene must introduce new information or advance the escalation.
+2. **Algorithmic Call-to-Action Quarantine:** Quarantining subscription CTAs strictly to the final sentence of the terminal scene, fully separated from core narrative science blocks.

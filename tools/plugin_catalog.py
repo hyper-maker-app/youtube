@@ -202,7 +202,6 @@ SKILL_TAXONOMY: dict[str, tuple[str, ...]] = {
         "reference-asset-curator",
     ),
     "Identity & Continuity": (
-        "character-dna-extractor",
         "identity-lock-specialist",
         "multi-character-identity-arbiter",
         "continuity-consistency-guardian",

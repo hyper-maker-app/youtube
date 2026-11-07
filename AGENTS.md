@@ -1,32 +1,42 @@
 # AGENTS.md
 
-**This file provides context and instructions for AI coding agents and assistants working in this workspace.**
+**This file provides context and operational instructions for AI coding agents and assistants working in this workspace.**
 
-**Version:** September 2026 (Updated for Grok Imagine Cinematic Studio **v3.11.4**, leftover grok-4.5 live defaults pin **grok-4.6**, official Image 2.0 `images[]` edits + served-`model` logs, Imagine Image Quality retirement → Image **2.0** `quality=low`, SpaceXAI AUP fail-closed gates, official Imagine Image **2.0** + Video **1.0 / 1.5** surface map, multi-surface control plane **`studio_core` + TUI / Streamlit / NiceGUI / FastAPI / React**, unified **Grok 4.6** registry defaults + **4.6 / grok-4-auto** specialist Model Layer, optional **Grok 4.3** 1M, Imagine Agent Mode Handoff, Identity Continuity Protocol, Parallel Brief Protocol, interactive CLI TUI, guided Production Bible wizard, Grok Build ≥ **1.0.5**, **plugin marketplace multi-plugin packs**, AI Polish Director)  
-**Canonical Source:** https://github.com/FineComputer14451/Grok-Imagine-Cinematic-Studio/blob/main/AGENTS.md
+**Version:** Hyper Maker Cinematic Studio **v4.6** (Procedural Catastrophe & Micro-Survival Documentary Factory; pinned to Grok 4.6 Studio Brain × Google Flow CDP Veo 3.1 physical video generation × Remotion 60 FPS Parametric Motion Graphics × Deepgram Aura-2 Voiceover × FFmpeg 7.0 Broadcast Master).  
+**Canonical Source:** https://github.com/hyper-maker-app/youtube / https://github.com/FineComputer14451/Grok-Imagine-Cinematic-Studio/blob/main/AGENTS.md
+
+> [!IMPORTANT]
+> **MANDATORY PRODUCTION ENGINE INVARIANT (NOT AN XAI-ONLY IMAGINE PROMPT REPO):**  
+> External LLMs, coding agents, and assistants MUST NOT confuse this repository with a standalone xAI Imagine prompt library or text-to-image chatbot.  
+> 1. The **MANDATORY production engine** for generating films is `produce-film` via **Google Flow CDP (Port 9223) + Deepgram Aura-2 + Remotion 60 FPS Parametric Motion Graphics + FFmpeg 7.0 Broadcast Master**.
+> 2. Direct CLI production invocation: `python tools/cinematic_studio_cli.py produce-film "Title" --genre "..." --duration <sec>`
+> 3. Standalone xAI Imagine 1.0/1.5/2.0 references are strictly **archived / secondary legacy modalities** (for concept drafting) and must never be prioritized over the active `produce-film` Flow CDP pipeline.
 
 > [!NOTE]
-> **Grok Imagine Cinematic Studio** is an **independent community project**. It is **not affiliated with, endorsed by, sponsored by, or officially connected to xAI**. Agents must not claim official xAI partnership. Full notice: `DISCLAIMER.md`.
+> **Hyper Maker Cinematic Studio** (formerly Grok Imagine Cinematic Studio) is an **independent community project**. It is **not affiliated with, endorsed by, sponsored by, or officially connected to xAI or Google**. Agents must not claim official partnership. Full notice: `DISCLAIMER.md`.
 
-Think of this as the single source of truth for how to interact with this Grok/xAI agent environment. Paths below are **repo-relative** unless noted; sandboxes may root at `/home/workdir/` or a local clone (e.g. `~/Grok-Imagine-Cinematic-Studio`).
+Think of this as the single source of truth for how to interact with this studio agent environment. Paths below are **repo-relative** unless noted; sandboxes may root at `/home/workdir/` or a local clone (e.g. `~/Grok-Imagine-Cinematic-Studio`).
 
 **Version legend (read once):**
 
 | Stamp | Meaning |
 |-------|---------|
-| **Studio v3.11.4** | Current product / packaging version — use this for activation and docs |
-| **Model Layer v4.5** | Canonical chat + Imagine routing (`MODEL_LAYER_v4.5.md`) |
-| **Feature history (3.7.1 / 3.8.x)** | When a capability landed (e.g. Handoff in 3.7.1); not the operating studio pin |
+| **Studio v4.6 (Hyper Maker)** | Current production factory version — use this for all production and code execution |
+| **Model Layer v4.5** | Canonical chat + specialist routing (`MODEL_LAYER_v4.5.md`) |
+| **Feature history (3.7.1 / 3.11.4)** | Historical releases when capabilities landed (e.g. Handoff in 3.7.1, 4.6 stack in 3.11.4) |
 | **Role Card labels (v3.6.5–v4.5)** | Per-card revision tags; AGENT_INDEX is authoritative |
 
 ## Workspace Overview
 
-This workspace is designed for advanced **Grok 4.5** agent workflows, with heavy emphasis on:
+This workspace is an autonomous, end-to-end film factory engineered for **v4.6 Hyper Maker Catastrophe & Survival Cinema**, with heavy emphasis on:
 
-- Custom skill development and orchestration (Grok Build skills + plugin suite)
-- High-quality cinematic image/video generation pipelines (Grok Imagine 1.0 / 1.5)
-- Document, presentation, and media production
-- GitHub repository management and open-source contribution
+- **Autonomous Physical Film Production:** End-to-end multi-agent pipeline (`tools/cinematic_studio_cli.py produce-film`) driving Google Flow CDP (Veo 3.1) and Remotion 60 FPS motion graphics.
+- **Multi-Agent Direction & Timeline Escalation:** 5-stage catastrophe escalation (`catastrophe-director`, `deepsea-survival-director`, `planetary-catastrophe-director`, `urban-infiltration-director`, `micro-survival-director`).
+- **Adversarial Dual-Judge Quality Gate:** Fail-closed screenplay certification by Grok 4.6 (viral audience retention) × Gemini 3.1 Pro (spatial/physics verification) with $\ge 90.0$ score threshold.
+- **Parametric Remotion Motion Graphics (60 FPS):** Zero-hardcode React B-roll (storm radar maps, resource depletion curves, tactical HUDs).
+- **Broadcast Audio Mastering:** Deepgram Aura-2 word-quantized TTS, dual-stage procedural foley synthesizers, and FFmpeg 7.0 broadcast mixing (-14 LUFS true peak, sidechain ducking).
+- **Custom Skill Development & Orchestration:** Grok Build skills, plugins, and repository tooling.
+- **Archived / Secondary Modality:** Legacy Grok Imagine 1.0/1.5/2.0 prompt generation and character handoffs (secondary fallback only).
 
 **Core principle:** Use the appropriate skill or tool for every task. Do not reinvent wheels that skills already handle. Prefer existing skills over ad-hoc scripts. Prefer **skill directory slugs** (e.g. `studio-director`) over display titles when activating.
 
@@ -140,8 +150,11 @@ python tools/cinematic_studio_cli.py models verify
 | **Grok Build fork** | `grok-build` | Code, skills, repo tooling (`fork_secondary_model`) |
 | **xAI Build / coding API** | `grok-4.6` | Agentic automation (legacy: `grok-build-0.1`) |
 | **Creative fast (optional)** | `grok-composer-2.5-fast` | Fast multi-agent cinematic direction in Build picker |
-| **Imagine Video** | `grok-imagine-video` (1.0 default, edit/extend) | $0.05/sec 480p; `grok-imagine-video-1.5` for native audio / r2v / 1080p. **No video 2.0** |
-| **Imagine Image** | `grok-imagine-image` (draft) · **`grok-imagine-image-2.0` (hero / Quality Mode)** | $0.02 draft; Image 2.0 1K low $0.04 / medium $0.06, 2K low $0.06 / medium $0.08 (input $0.01); `grok-imagine-image-quality` retires 2026-11-02 → 2.0 `quality=low` |
+| **Primary Video Engine (Physical)** | **Google Flow CDP (Veo 3.1)** | Port 9223 Chromium remote debugging; discrete 4s/6s/8s/10s duration-quantized renders via `produce-film` |
+| **Motion Graphics Engine** | **Remotion 60 FPS** | Parametric React B-roll (storm maps, telemetry HUDs) via `engine/services/remotion_bridge.py` |
+| **Voiceover Synthesis** | **Deepgram Aura-2** | Timed word-level timestamps, with ElevenLabs / Azure TTS support |
+| **Archived / Secondary Video** | `grok-imagine-video` (1.0 / 1.5) | Legacy secondary fallback; $0.05/sec 480p / 1080p. **No video 2.0** |
+| **Archived / Secondary Image** | `grok-imagine-image` · `grok-imagine-image-2.0` | Secondary hero plate / concept art drafting only; Image 2.0 1K low $0.04 / medium $0.06 |
 
 **Aliases:** `cinematic` / `build` / `coding` / `4.5` / `grok-4.5` / `grok-4.5-latest` / `grok-build-latest` / `4.6` → **`grok-4.6`**.  
 **1M aliases:** `long-context` / `4.3` / `grok-4` → **`grok-4.3`**.
@@ -246,22 +259,24 @@ Core membership matches `tools/cli/shared.py` `CORE_AGENT_CATEGORIES` (includes 
 - Edit in place: `search_replace`
 - Explore: shell `ls`, `find`, `rg` / `grep` tool; prefer dedicated file tools over `cat` for large reads
 
-### Image & Media Tasks (Grok Imagine)
+### Archived / Secondary Modality: Image & Media Tasks (Legacy Grok Imagine)
 
-- **Generate new images**: `image_gen` (detailed prompt + aspect ratio)
+> [!NOTE]
+> **PRIMARY ENGINE IS PRODUCE-FILM VIA FLOW CDP**:  
+> For active film production, always use `python tools/cinematic_studio_cli.py produce-film`. The tools below are reserved strictly for secondary asset drafting, concept art iteration, or legacy xAI Imagine workflows:
+
+- **Generate new images (Concept / Hero Plates)**: `image_gen` (detailed prompt + aspect ratio) -> save hero plates to `characters/<slug>_hero.jpg`
 - **Edit existing / generated images**: `image_edit` (prompt + reference image path or attachment)
-- **Still → video**: `image_to_video` (when available in session)
-- **Multi-ref → video**: `reference_to_video` (when available)
+- **Still → video (Legacy)**: `image_to_video` (when available in session)
+- **Multi-ref → video (Legacy)**: `reference_to_video` (when available)
 - **AI recreation / style transfer / enhancement** of uploaded images: Activate `ai-image-recreation`
-- **Character DNA:** the former `character-dna-extractor` skill is absent; use only currently verified character and handoff tooling.
-- **Extend cinematic sequences** (60–120s+): Activate `cinematic-sequence-extender` or `extend-frame-to-video`
+- **Extend cinematic sequences (Legacy)**: Activate `cinematic-sequence-extender` or `extend-frame-to-video`
 - **Refine / iterate on previously generated images**: `generated-image-editor` (user-global when present)
 - **Upscale video for final delivery** (720p → 1080p/4K, face restoration): Activate `ai-video-upscaler`
 - Video / audio processing: Activate `cinematic-ffmpeg` or use `ffmpeg` / bash
-- **Full cinematic production**: Activate `grok-imagine-cinematic-studio` (25-agent core + specialist suite, **studio v3.11.4**)
-- **Planning → generation handoff**: Studio Director **Imagine Agent Mode Handoff** (see below)
+- **Secondary Planning → Imagine handoff**: Studio Director **Imagine Agent Mode Handoff** (see archived section below)
 
-If native Imagine tools are unavailable, use `imagine-execution-bridge` / CLI (`imagine submit`, `sfw run`, `sequence run`) with a locked `VIDEO_PIPELINE_SPEC`.
+If native Imagine tools are unavailable and legacy execution is desired, use `imagine-execution-bridge` / CLI (`imagine submit`, `sfw run`, `sequence run`) with a locked `VIDEO_PIPELINE_SPEC`.
 
 ### Document Tasks
 
@@ -341,7 +356,10 @@ Model Layer for Role Cards: **`references/agents/MODEL_LAYER_v4.5.md`**.
 Identity Continuity: **`references/agents/IDENTITY_CONTINUITY_PROTOCOL_v3.8.md`**.  
 **Parallel Brief Protocol:** Concurrent multi-agent coordination under MAXIMUM AGENTIC MODE. Canonical: `references/agents/Parallel_Brief_Protocol.md`. Studio Director issues Parallel Briefs; specialist outputs converge into validated `imagine_agent_mode_handoff` packets.
 
-## Imagine Agent Mode Handoff (landed v3.7.1 · current studio v3.11.4)
+## Archived / Secondary: Imagine Agent Mode Handoff (Legacy Planning Bridge)
+
+> [!NOTE]
+> In v4.6 Hyper Maker, active productions execute directly through `tools/cinematic_studio_cli.py produce-film` to orchestrate Google Flow CDP, Remotion, and Deepgram. This section documents the legacy v3.7.1 Imagine Agent Mode Handoff protocol for backward compatibility with xAI-only prompt execution.
 
 Studio Director routes planning → generation so pipeline context is never dropped.
 
@@ -431,8 +449,8 @@ Entry points by task (not exhaustive). Prefer slugs; full map = `AGENT_INDEX.md`
 
 ## Project-Specific Notes
 
-- Primary project: **Grok Imagine Cinematic Studio** **v3.11.4** — registry default **`grok-4.6`** + specialist **4.6 / grok-4-auto** Model Layer + dual Imagine Video **1.0 / 1.5** + Imagine Agent Mode Handoff + Identity Continuity + Parallel Brief Protocol + multi-surface control plane (`studio_core` · TUI · Streamlit · NiceGUI · FastAPI · React) + guided Bible wizard + **plugin modularity packs**.
-- All generated artifacts **must** be saved under `artifacts/` (repo root).
+- Primary project: **Hyper Maker Cinematic Studio (v4.6)** (formerly Grok Imagine Cinematic Studio) — unified production factory integrating **Google Flow CDP (Veo 3.1 on Port 9223)**, **Remotion 60 FPS Parametric Motion Graphics**, **Deepgram Aura-2**, and **FFmpeg Broadcast Master**, directed by **Grok 4.6 Studio Brain** with **Gemini 3.1 Pro Dual-Judge Gate**. Legacy Grok Imagine 1.0/1.5/2.0 workflows are maintained as secondary/archived fallback capabilities.
+- All generated master assets **must** be saved under `out/<project-slug>/` (and legacy artifacts under `artifacts/`).
 - Project skills live in `.grok/skills/`; user-global skills in `~/.grok/skills/`.
 - Plugin marketplace lives in `.grok-plugin/`; validate its catalog against the current on-disk skills before installation. Install full suite via `grok plugin install FineComputer14451/Grok-Imagine-Cinematic-Studio --trust`.
 - Workspace supports SFW cinematic work and NSFW/erotic pipelines (**ErosForge only when explicitly activated**).
@@ -449,7 +467,7 @@ Entry points by task (not exhaustive). Prefer slugs; full map = `AGENT_INDEX.md`
 3. Check if an existing skill covers it (`ls .grok/skills/` or `ls ~/.grok/skills/`, skill-slug table above, or `references/agents/AGENT_INDEX.md`). For plugin users: `.grok-plugin/plugin-index.json` or `grok plugin details grok-imagine-cinematic-studio`.
 4. If no skill exists and the task is repeatable/specialized → create one with `create-skill` / `cinematic-skill-creator` (or extend via cinematic-studio-meta-installer).
 5. Execute with the correct tools / skill activation. Prefer native Grok plugin commands (`grok plugin ...`) and studio CLI (`cinematic-studio` / `python tools/cinematic_studio_cli.py ...`). Operator UX changes go through **`studio_core`**, then surface UIs (TUI / Streamlit / NiceGUI / FastAPI) — not one-off forks.
-6. For generation: prefer in-session Imagine tools; otherwise handoff packet (Agent Mode Handoff / Execution Bridge) or API CLI. Enforce plate/motion readiness before video spend.
+6. For active film production, execute the physical pipeline via `produce-film` (Flow CDP + Remotion + Deepgram + FFmpeg). For secondary/concept drafting, use the archived Imagine tools or handoff packet. Enforce plate/motion readiness before video spend.
 7. Save all outputs to `artifacts/`.
 8. In the **final response**, use appropriate render components (when available) and provide clear, actionable output.
 

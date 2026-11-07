@@ -260,6 +260,17 @@ GROK_CINEMATIC_STUDIO/
 
 ---
 
-## 📄 License
+## 📄 License & Architectural Disclaimer
+
 This project is open-source under the [MIT License](LICENSE).
-Grok Imagine Cinematic Studio is an independent community project and is not officially affiliated with xAI or Google.
+
+### Architectural Disclaimer
+**Hyper Maker Cinematic Studio** (formerly Grok Imagine Cinematic Studio) is an independent open-source production factory and community project. It is not affiliated with, endorsed by, or sponsored by xAI or Google.
+
+The autonomous production engine is built strictly upon the following verified architecture:
+- **AI Studio Brain & Script Director:** xAI Grok 4.6 (orchestrating 5-stage catastrophe timeline escalation & metric math)
+- **Adversarial Dual-Judge Gate:** Grok 4.6 (retention & viral audience psychology) × Gemini 3.1 Pro (spatial/physics validation)
+- **Physical Video Render Engine:** Google Flow CDP running Veo 3.1 (via Port 9223 Chrome DevTools Protocol)
+- **Dynamic B-Roll & Visual Telemetry:** Remotion 60 FPS Parametric Motion Graphics (zero-hardcode React HUDs & radar maps)
+- **Spoken Voiceover Synthesis:** Deepgram Aura-2 with word-level timestamps (plus ElevenLabs / Azure TTS support)
+- **Broadcast Audio & Video Master:** FFmpeg 7.0 Broadcast Master (-14 LUFS true peak, procedural foley synthesizers, Libass karaoke subtitles)

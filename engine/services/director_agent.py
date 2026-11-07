@@ -69,14 +69,22 @@ class DirectorAction:
 @dataclass
 class Entity:
     id: str
-    kind: str
-    material_class: str
+    kind: str = "prop"
+    material_class: str = "unknown"
     opacity: float = 1.0
     transmission: float = 0.0
     scale: str = "full"
     freeze_attributes: list[str] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=dict)
     active_wear: dict[str, Any] = field(default_factory=dict)
     token_stills: dict[str, str] = field(default_factory=dict)
+    material: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.material and self.material_class != "unknown":
+            self.material = self.material_class
+        elif self.material and self.material_class == "unknown":
+            self.material_class = self.material
 
 
 @dataclass
@@ -95,10 +103,12 @@ class WorldState:
                     "id": v.id,
                     "kind": v.kind,
                     "material_class": v.material_class,
+                    "material": v.material,
                     "opacity": v.opacity,
                     "transmission": v.transmission,
                     "scale": v.scale,
                     "freeze_attributes": v.freeze_attributes,
+                    "attributes": v.attributes,
                     "active_wear": v.active_wear,
                     "token_stills": v.token_stills,
                 }
@@ -117,10 +127,12 @@ class WorldState:
                 id=v.get("id", k),
                 kind=v.get("kind", "prop"),
                 material_class=v.get("material_class", "unknown"),
+                material=v.get("material", ""),
                 opacity=float(v.get("opacity", 1.0)),
                 transmission=float(v.get("transmission", 0.0)),
                 scale=v.get("scale", "full"),
                 freeze_attributes=list(v.get("freeze_attributes", [])),
+                attributes=dict(v.get("attributes", {})),
                 active_wear=dict(v.get("active_wear", {})),
                 token_stills=dict(v.get("token_stills", {})),
             )
@@ -136,24 +148,44 @@ class WorldState:
 def evaluate_visual_delta(
     *,
     entity_id: str,
-    before_desc: str,
-    after_desc: str,
-    continuity_score: float,
+    before_desc: str = "",
+    after_desc: str = "",
+    continuity_score: float = 1.0,
     violations: list[str],
+    entity: Entity | None = None,
+    world_state: WorldState | None = None,
 ) -> VisualDelta:
     """Classify a detected transition deviation into typed severity and narrative utility."""
     v_text = " ".join(violations).lower()
 
+    target_entity = entity
+    if target_entity is None and world_state is not None:
+        target_entity = world_state.entities.get(entity_id)
+
     # 1. Ontological Break: material or kind transformed
-    if any(k in v_text for k in ("glass door", "wood to glass", "material morph", "door is glass", "transparent door")):
+    if any(k in v_text for k in ("glass door", "wood to glass", "material morph", "door is glass", "transparent door", "material change", "transformed into")):
+        mat_before = "canonical_material"
+        if target_entity:
+            mat_before = (
+                getattr(target_entity, "material", "")
+                or getattr(target_entity, "material_class", "")
+                or target_entity.attributes.get("material", "")
+                or mat_before
+            )
+        mat_after = "unauthorized_material"
+        for candidate in ("glass", "transparent", "acrylic", "mesh", "open_air", "metal", "liquid"):
+            if candidate in v_text:
+                mat_after = f"{candidate}_structure"
+                break
+
         return VisualDelta(
             entity_id=entity_id,
             attribute="material_class",
-            before_value="solid_white_oak",
-            after_value="glass_door",
+            before_value=mat_before,
+            after_value=mat_after,
             severity=SeverityLevel.SEV5_ONTOLOGY_BREAK,
             narrative_utility=-1.0,
-            evidence="Opaque barrier transformed into glass or transparent structure.",
+            evidence=f"Entity {entity_id} material transformed from {mat_before} to {mat_after}.",
         )
 
     # 2. Camera Grammar / 180 break
@@ -169,15 +201,27 @@ def evaluate_visual_delta(
         )
 
     # 3. Spatial Drift / Geometry
-    if any(k in v_text for k in ("hinge side flipped", "room scale change", "geometry inversion")):
+    if any(k in v_text for k in ("hinge side flipped", "room scale change", "geometry inversion", "handedness flipped", "axis flipped", "layout reversed")):
+        geom_attr = "spatial_geometry"
+        geom_before = "canonical_orientation"
+        geom_after = "inverted_orientation"
+
+        if target_entity and hasattr(target_entity, "attributes") and target_entity.attributes:
+            for k in ("geometry", "orientation", "handedness", "hinge_side"):
+                if k in target_entity.attributes:
+                    geom_attr = k
+                    geom_before = target_entity.attributes[k]
+                    geom_after = f"inverted_{geom_before}"
+                    break
+
         return VisualDelta(
             entity_id=entity_id,
-            attribute="spatial_geometry",
-            before_value="hinge_right",
-            after_value="hinge_left",
+            attribute=geom_attr,
+            before_value=geom_before,
+            after_value=geom_after,
             severity=SeverityLevel.SEV3_SPATIAL_DRIFT,
             narrative_utility=-0.5,
-            evidence="Set geometry or prop handedness flipped.",
+            evidence=f"Set geometry or prop handedness flipped for {entity_id}.",
         )
 
     # 4. Prop State Shift
@@ -242,8 +286,8 @@ def arbitrate_decision(
             severity=delta.severity,
             reason=f"Fatal continuity breach ({delta.severity.name}): {delta.evidence}",
             corrective_prompt=(
-                "Ensure E_DOOR_01 is 100% opaque solid white-oak slab with zero glass panels, "
-                "iron hinges, and vertical wood grain. Maintain locked camera perspective."
+                f"Ensure {delta.entity_id} maintains original {delta.attribute} ({delta.before_value}). "
+                "Preserve locked camera perspective."
             ),
             scoped_negatives=scoped_negs,
             reframe_strategy=reframe,
@@ -256,7 +300,7 @@ def arbitrate_decision(
             decision=DirectorDecision.HEAL,
             severity=delta.severity,
             reason=f"Spatial geometry flipped ({delta.evidence})",
-            corrective_prompt="Lock door hinges strictly to right jamb; preserve exact room orientation.",
+            corrective_prompt=f"Lock {delta.entity_id} {delta.attribute} strictly to {delta.before_value}; preserve exact scene orientation.",
             scoped_negatives=["hinge on left", "reversed layout"],
             reframe_strategy="tighter_mcu" if current_attempt >= 2 else "keep_framing",
         )

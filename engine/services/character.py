@@ -1,8 +1,9 @@
-"""Generic character identity and character-sheet management.
+"""Generic character identity and lead-subject anchor management.
 
 Defines a generic, parametric character profile model designed for visual stability
-across AI models, supporting dynamic character attributes, wardrobe, and accessories
-without hardcoded narrative lore or static personas.
+across generative AI video models (Veo 3.1 Flow CDP, Grok Imagine), adhering to
+the second-person ("You") / noun-first situational framing paradigm with zero hardcoded
+narrative lore, time-traveler artifacts, or persona relics.
 Zero network/provider calls are made in this module.
 """
 
@@ -18,76 +19,39 @@ from typing import Any
 import config
 
 
-# Generic default constants (empty / neutral for zero-hardcode invariant)
-DEFAULT_TIME_DEVICE: str = ""
-ERA_WARDROBE_CATALOG: dict[str, str] = {}
-ERA_WITNESS_CATALOG: dict[str, list[dict[str, str]]] = {}
-
-
-def detect_era(text: str) -> str:
-    """Infer era identifier from input or return neutral default."""
-    if not text:
-        return "default"
-    cleaned = str(text).strip().casefold()
-    slug = re.sub(r"[^\w]+", "_", cleaned).strip("_")
-    return slug or "default"
-
-
-def get_era_witness(
-    era: str = "default",
-    slot: int = 1,
-    custom_witness: dict[str, str] | None = None,
-) -> dict[str, str]:
-    """Return a witness profile for the given era and slot."""
-    if custom_witness:
-        return dict(custom_witness)
-    key = (era or "default").strip().casefold()
-    pool = ERA_WITNESS_CATALOG.get(key)
-    if pool:
-        idx = max(0, min(len(pool) - 1, slot - 1))
-        return dict(pool[idx])
-    return {
-        "id": f"witness_{slot}",
-        "name": f"Witness {slot}",
-        "era_label": era.replace("_", " ").title() if era and era != "default" else "Historical Record",
-        "location_stamp": f"{era.replace('_', ' ').upper()} — ON SITE" if era and era != "default" else "HISTORICAL ARCHIVE",
-        "appearance": "authentic individual in era-appropriate attire and setting",
-    }
-
-
 @dataclass(frozen=True)
 class CharacterProfile:
-    """Immutable persistent character identity designed for visual stability across AI models."""
+    """Immutable persistent character identity designed for visual stability across AI models.
 
-    name: str = "Protagonist"
+    Conforms to the second-person ("You") / noun-first paradigm for lead subjects and
+    situational visual anchors, with zero hardcoded narrative lore, time-traveler artifacts,
+    or persona relics.
+    """
+
+    name: str = "You"
     gender: str = "unspecified"
     age_range: str = "adult"
     archetype: str = "lead subject"
     face_traits: str = "natural skin texture, authentic facial features, focused and attentive expression"
     hair_traits: str = "natural hair texture, practical cut"
-    time_device: str = DEFAULT_TIME_DEVICE
     wardrobe: str = "practical field attire with authentic textures"
     accessories: str = ""
+    signature_item: str = ""
+    time_device: str = ""  # Backward-compatible neutral alias for signature_item
     default_expression: str = "focused, attentive presence"
     wardrobe_catalog: dict[str, str] = field(default_factory=dict)
 
-    def wardrobe_for_era(self, era: str = "default") -> str:
-        """Return era-appropriate wardrobe from catalog or fallback to base wardrobe."""
-        if self.wardrobe_catalog:
-            key = (era or "default").strip().casefold()
-            return self.wardrobe_catalog.get(key, self.wardrobe)
-        return self.wardrobe
-
-    def anchor_description(self, era: str = "default") -> str:
+    def anchor_description(self, wardrobe_override: str = "", **kwargs: Any) -> str:
         """Condensed visual anchor string injected into prompts to lock appearance."""
-        active_wardrobe = self.wardrobe_for_era(era) if era else self.wardrobe
+        active_wardrobe = wardrobe_override or self.wardrobe
         parts = [
             f"{self.name}, a {self.age_range} {self.gender} {self.archetype}",
             f"FACE LOCK: {self.face_traits}",
             f"HAIR: {self.hair_traits}",
         ]
-        if self.time_device:
-            parts.append(f"SIGNATURE ARTIFACT: {self.time_device}")
+        sig_item = self.signature_item or self.time_device
+        if sig_item:
+            parts.append(f"SIGNATURE ITEM: {sig_item}")
         parts.append(f"WARDROBE: wearing {active_wardrobe}")
         if self.accessories:
             parts.append(self.accessories)
@@ -104,26 +68,26 @@ class CharacterSheetSpec:
     character: CharacterProfile
     aspect_ratio: str = "16:9"
 
-    def frontal_portrait_prompt(self, era: str = "default") -> str:
+    def frontal_portrait_prompt(self, context: str = "") -> str:
         return (
-            f"CHARACTER REFERENCE SHEET [FRONTAL CLOSE-UP]: {self.character.anchor_description(era)}. "
+            f"CHARACTER REFERENCE SHEET [FRONTAL CLOSE-UP]: {self.character.anchor_description()}. "
             "Front-facing portrait, eye-level camera, direct gaze at viewer, neutral closed mouth, "
             "subtle friendly confidence. Professional studio lighting, soft fill light, "
             "sharp focus on facial micro-features and skin texture, 8k resolution, cinematic photorealism, "
             f"{self.aspect_ratio} composition. ZERO text, ZERO watermarks."
         )
 
-    def three_quarter_prompt(self, era: str = "default") -> str:
+    def three_quarter_prompt(self, context: str = "") -> str:
         return (
-            f"CHARACTER REFERENCE SHEET [THREE-QUARTER VIEW]: {self.character.anchor_description(era)}. "
+            f"CHARACTER REFERENCE SHEET [THREE-QUARTER VIEW]: {self.character.anchor_description()}. "
             "Three-quarter angle portrait, looking slightly off-camera, curious inquisitive gaze, "
             "cinematic natural backlight, realistic hair strands, sharp eye catchlights, "
             f"documentary photography quality, {self.aspect_ratio} composition. ZERO text, ZERO watermarks."
         )
 
-    def field_action_prompt(self, location_hint: str = "on location", era: str = "default") -> str:
+    def field_action_prompt(self, location_hint: str = "on location", context: str = "") -> str:
         return (
-            f"CHARACTER REFERENCE SHEET [FIELD ACTION]: {self.character.anchor_description(era)}. "
+            f"CHARACTER REFERENCE SHEET [FIELD ACTION]: {self.character.anchor_description()}. "
             f"Mid-shot holding camera in vlog style on location at {location_hint}. "
             "Background with cinematic atmospheric depth of field blur, natural lighting, "
             "expressive posture, realistic fabric creases, "
@@ -131,7 +95,7 @@ class CharacterSheetSpec:
         )
 
     def artifact_macro_prompt(self) -> str:
-        item = self.character.time_device or "character signature item"
+        item = self.character.signature_item or self.character.time_device or "character signature item"
         return (
             f"CHARACTER REFERENCE SHEET [PROP CLOSE-UP]: Extreme macro close-up of {item}. "
             "Authentic surface textures, fine material details, "
@@ -139,13 +103,17 @@ class CharacterSheetSpec:
             "ZERO text, ZERO watermarks."
         )
 
-    def era_camouflage_prompt(self, era: str) -> str:
+    def variation_prompt(self, variation_label: str = "default") -> str:
         return (
-            f"CHARACTER REFERENCE SHEET [WARDROBE VARIATION - {era.upper()}]: {self.character.anchor_description(era)}. "
-            f"Medium full shot of character walking through authentic {era} setting. "
+            f"CHARACTER REFERENCE SHEET [WARDROBE VARIATION - {variation_label.upper()}]: {self.character.anchor_description()}. "
+            f"Medium full shot of character walking through authentic {variation_label} setting. "
             f"Golden hour atmospheric volumetric lighting, authentic textures, 8k photorealistic cinema, {self.aspect_ratio} composition. "
             "ZERO text, ZERO watermarks."
         )
+
+    def era_camouflage_prompt(self, era: str = "default") -> str:
+        """Backward-compatible alias for variation_prompt."""
+        return self.variation_prompt(variation_label=era)
 
     def to_manifest(self) -> dict[str, Any]:
         sheets = {
@@ -165,8 +133,8 @@ class CharacterSheetSpec:
 
 def get_active_character() -> CharacterProfile:
     """Resolve active character profile from environment or default."""
-    char_name = getattr(config, "EXPLORER_CHARACTER_NAME", "") or "Protagonist"
-    return CharacterProfile(name=char_name.strip().capitalize())
+    char_name = getattr(config, "EXPLORER_CHARACTER_NAME", "") or "You"
+    return CharacterProfile(name=char_name.strip() or "You")
 
 
 def classify_shot_role(shot_index: int, total_shots: int, journey_phase: str = "explore") -> dict[str, Any]:
@@ -318,25 +286,31 @@ def is_lipsync_required_for_shot(shot_role_info: dict[str, Any]) -> bool:
     return bool(shot_role_info.get("lip_sync_required") is True)
 
 
-def get_grok_character_dna(character: CharacterProfile | None = None, era: str = "default") -> str:
+def get_grok_character_dna(character: CharacterProfile | None = None, **kwargs: Any) -> str:
     """Format character into Grok Cinematic Studio [CHARACTER_DNA] token structure."""
     char = character or DEFAULT_CHARACTER
     try:
         import sys
-        tools_path = Path(__file__).resolve().parents[1] / "vendor" / "Grok-Imagine-Cinematic-Studio" / "tools"
+        workspace_root = Path(__file__).resolve().parents[2]
+        tools_path = workspace_root / "tools"
+        if str(workspace_root) not in sys.path:
+            sys.path.insert(0, str(workspace_root))
         if str(tools_path) not in sys.path:
             sys.path.insert(0, str(tools_path))
-        import character_dna
+        from tools import character_dna
+
+        sig_item = char.signature_item or char.time_device
+        key_anchors = [a for a in [sig_item, char.accessories] if a]
 
         scaffold = character_dna.create_dna_scaffold(
             char.name,
             core_identity=f"{char.age_range} {char.gender} {char.archetype}",
             facial_dna=char.face_traits,
             hair_grooming=char.hair_traits,
-            clothing_style=char.wardrobe_for_era(era),
-            key_anchors=[char.time_device, char.accessories] if char.time_device or char.accessories else [],
+            clothing_style=char.wardrobe,
+            key_anchors=key_anchors,
         )
         identity = scaffold.get("core_identity", "")
-        return f"[CHARACTER_DNA: {char.name.upper()} = {identity}, {char.face_traits}, {char.hair_traits}, wearing {char.wardrobe_for_era(era)}]"
+        return f"[CHARACTER_DNA: {char.name.upper()} = {identity}, {char.face_traits}, {char.hair_traits}, wearing {char.wardrobe}]"
     except Exception:
-        return f"[CHARACTER_DNA: {char.name.upper()} = {char.anchor_description(era)}]"
+        return f"[CHARACTER_DNA: {char.name.upper()} = {char.anchor_description()}]"

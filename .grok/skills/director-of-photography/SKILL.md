@@ -159,15 +159,8 @@ Consistency · Emotional Power · Technical Feasibility · Quota Efficiency · C
 
 *Director of Photography v3.8.6 — Grok 4.6 · motivated light · physics-aware camera · motif lock*
 
-## Learned Production Invariants (Adversarial Feedback)
+## Universal AI Cinematography Constraints
 
-- **[Scene 15]**: Avoid descriptor words like 'analog', 'environmental framing', or 'meter' that imply measurable scales or numeric displays in AI video.
-- **[Scene 21]**: Substitute medical or measurement devices with purely structural cold-weather textures like frost, condensation, or rime ice.
-- **[Scene 24]**: Never use the phrase 'control panel' or 'instrument cluster' in Veo prompts to prevent unrenderable UI artifacts.
-- **[Scene 26]**: Ensure visual prompts completely decouple from specific medical devices mentioned in narration to avoid accidental graphic text generation.
-- **[Scene 31]**: Eliminate needles, pointers, and indicator arms from visual prompts to prevent broken mechanical renders.
-- **[Scene scene_01]**: Avoid close-up hand-to-body contact in 1st-person POV prompts to prevent Veo distortion artifacts.
-- **[Scene 17]**: If narration dictates localized physical sensation ('you feel'), the visual must ground it with a physical environmental proxy or a 1st-person POV anchor.
-- **[Scene 11]**: Avoid prompting digital UI, screens, or specific indicators to prevent unreadable text hallucinations in AI video generation.
-- **[Scene 6]**: Avoid prompting rapid character movement, mechanical closures, and explosive fluid dynamics in the same shot; isolate fast actions to prevent AI spatial morphing.
-- **[Scene 23]**: Never prompt macro close-ups of complex articulating geometry (like fingers or hands) undergoing rapid repetitive motion (trembling/shaking).
+1. **Dial & Gauge Diffusion Safety:** Prohibit prompting mechanical gauges with fine indicator needles, dial pointers, or text-heavy digital instrument clusters to eliminate AI geometric distortion.
+2. **First-Person POV Physical Grounding:** Anchor 1st-person sensory narration with environmental proxies or non-articulating structural elements; avoid complex articulating hand/finger macro motions undergoing high-frequency vibration.
+3. **Motion Isolation & Spatial Coherence:** Decouple explosive fluid movement, character locomotion, and mechanical closures into distinct visual beats.

@@ -213,7 +213,12 @@ def _review_allows_render(scorecard: Any, *, dry_run: bool) -> bool:
 def produce_film(
     title: str = typer.Argument(..., help="Title or central premise of the film"),
     genre: str = typer.Option("catastrophe", "--genre", "-g", help="Film genre (e.g. catastrophe, Survival Horror, Sci-Fi, Cyberpunk)"),
-    engine: str = typer.Option("flow", "--engine", "-e", help="Physical render engine: 'flow' (Google Veo / Imagen 3 CDP) or 'xai'"),
+    engine: str = typer.Option("flow", "--engine", "-e", help="Physical render engine: 'flow' (Google Flow CDP: Veo 3.1 + Remotion + Deepgram + FFmpeg) or 'xai'"),
+    veo_mode: str = typer.Option(
+        "quality",
+        "--veo-mode",
+        help="Google Veo 3.1 model quality mode: 'quality' (720p HD master), 'fast' (360p high-speed), or 'lite' (rapid preview pre-vis)",
+    ),
     duration: int = typer.Option(300, "--duration", "-d", help="Target film duration in seconds"),
     aspect: str = typer.Option("16:9", "--aspect", "-a", help="Aspect ratio: '16:9' or '9:16'"),
     screenplay_mode: str = typer.Option("strict-checklist", "--screenplay-mode", help="Screenplay review: strict-checklist or holistic (experimental)."),
@@ -240,7 +245,7 @@ def produce_film(
         False,
         "--export-shorts",
         "--vertical-cut",
-        help="Automatically multiplex 9:16 vertical cut alongside 16:9 master.",
+        help="Legacy: center-crop multiplex 9:16 cut from 16:9 master. For native 9:16 Flow production, use --aspect 9:16.",
     ),
     gemini_judge_model: str = typer.Option("gemini-3.1-pro", "--gemini-judge-model", help="Gemini judge model identifier (default: gemini-3.1-pro via Chrome CDP)"),
     grok_judge_model: str = typer.Option("grok-4.20-non-reasoning", "--grok-judge-model", help="xAI Grok judge model identifier (default: grok-4.20-0309-non-reasoning)"),
@@ -251,6 +256,18 @@ def produce_film(
     Set --max-patch-passes to 0 or 1 to control selective video repairs.
     """
     slug = sanitize_slug(title)
+    normalized_veo_mode = veo_mode.lower()
+    if normalized_veo_mode not in ("quality", "fast", "lite", "720p", "360p"):
+        raise typer.BadParameter("Choose quality, fast, or lite", param_hint="--veo-mode")
+    if normalized_veo_mode in ("quality", "720p", "hd"):
+        os.environ["VEO_QUALITY_MODE"] = "quality"
+        os.environ["FLOW_VIDEO_REAL_QUALITY"] = "720p"
+    elif normalized_veo_mode in ("fast", "360p"):
+        os.environ["VEO_QUALITY_MODE"] = "fast"
+        os.environ["FLOW_VIDEO_TEST_QUALITY"] = "360p"
+    elif normalized_veo_mode in ("lite", "preview"):
+        os.environ["VEO_QUALITY_MODE"] = "lite"
+        os.environ["FLOW_VIDEO_TEST_QUALITY"] = "360p"
     if screenplay_mode not in {"strict-checklist", "holistic"}:
         raise typer.BadParameter("Choose strict-checklist or holistic", param_hint="--screenplay-mode")
     if short_test:
@@ -273,7 +290,8 @@ def produce_film(
         f"[bold cyan]Grok Imagine Cinematic Studio v4.0[/bold cyan] [yellow]x[/yellow] [bold green]Google Flow CDP Engine[/bold green]\n\n"
         f"[FILM] [b]Project Title:[/b] {title}\n"
         f"[GENRE] [b]Genre:[/b] {genre}\n"
-        f"[ENGINE] [b]Physical Engine:[/b] {engine.upper()}\n"
+        f"[ENGINE] [b]Physical Engine:[/b] {engine.upper()} (Google Flow CDP + Remotion + Deepgram + FFmpeg)\n"
+        f"[VEO] [b]Veo 3.1 Quality/Mode:[/b] {veo_mode.upper()} ({'720p HD Master' if normalized_veo_mode in ('quality', '720p') else '360p High-Speed Preview'})\n"
         f"[VOICE] [b]Voice Provider:[/b] {voice_provider.upper()} (100% English Invariant)\n"
         f"[AUDIO] [b]Audio Layers:[/b] 3 Layers Active (TTS + Music + SFX)\n"
         f"[DIRECTOR] [b]Director Mode:[/b] {director_mode} (UDSE v4.2 & HEAL/CANONIZE)\n"
@@ -427,9 +445,9 @@ def produce_film(
         scorecard = reviewer.review(scenes, title=title, genre=genre, consult_ai=consult_ai_active)
     except GeminiWebAPIUnavailableError:
         console.print("\n[bold red][FAIL-CLOSED USER GATE][/bold red] [yellow]gemini_webapi (Chrome CDP port 9223) is unavailable or timed out.[/yellow]")
-        proceed_fallback = typer.confirm("gemini_webapi bağlantısı kurulamadı. DeepMind alternatif protokolüne geçilsin mi?", default=False)
+        proceed_fallback = typer.confirm("Could not connect to gemini_webapi. Fallback to alternative DeepMind protocol?", default=False)
         if not proceed_fallback:
-            console.print("[bold red]İşlem kullanıcı tarafından durduruldu (Fail-Closed). gemini_webapi veya Chrome CDP (port 9223) oturumunu kontrol edin.[/bold red]")
+            console.print("[bold red]Operation halted by user (Fail-Closed). Check gemini_webapi or Chrome CDP (port 9223) session.[/bold red]")
             raise typer.Exit(code=1)
         allow_deepmind = True
         reviewer = ScreenplayReviewer(
@@ -801,5 +819,5 @@ def register(app: typer.Typer) -> None:
     """Register 'produce-film' command to the root Typer CLI."""
     app.command(
         name="produce-film",
-        help="Produce a complete film through Flow, voice and FFmpeg. Set --max-patch-passes to 0 or 1 for selective video repairs.",
+        help="[Primary Engine] Produce a complete film through Flow CDP, voice, and FFmpeg. Set --max-patch-passes to 0 or 1 for selective video repairs. Supports --veo-mode (quality/fast/lite).",
     )(produce_film)

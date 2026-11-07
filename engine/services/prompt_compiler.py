@@ -73,14 +73,21 @@ def compile_longform_broll_prompt(
     truth_sheet: HistoricalTruthSheet | None = None,
     aspect_ratio: str = "16:9",
     action_description: str = "",
+    visual_style: str = "Photorealistic 8k 35mm documentary frame",
+    lighting: str = "Atmospheric volumetric lighting, authentic textures, deep shadow contrast",
 ) -> str:
-    """Compile photorealistic documentary frame prompt enforcing aspect ratio and visual mandates."""
+    """Compile photorealistic frame prompt enforcing aspect ratio and visual mandates."""
+    style_prefix = visual_style.strip().rstrip(". ")
     parts = [
-        f"Photorealistic 8k 35mm documentary frame of {scene_description.strip().rstrip('. ')}.",
+        f"{style_prefix} of {scene_description.strip().rstrip('. ')}.",
     ]
     if proof_target.strip():
         parts.append(f"Visible physical evidence: {proof_target.strip().rstrip('. ')}.")
-    parts.append(f"Atmospheric volumetric lighting, {aspect_ratio} widescreen, authentic textures, deep shadow contrast.")
+    light_str = lighting.strip().rstrip(". ")
+    if light_str:
+        parts.append(f"{light_str}, {aspect_ratio} widescreen.")
+    else:
+        parts.append(f"{aspect_ratio} widescreen.")
     if action_description.strip():
         parts.append(f"Action: {action_description.strip().rstrip('. ')}.")
 
@@ -88,7 +95,7 @@ def compile_longform_broll_prompt(
         "STRICT VISUAL MANDATE: ZERO text, ZERO printed letters, ZERO typography, ZERO date stamps, "
         "ZERO year numbers written on image, ZERO name plaques, ZERO title banners, ZERO graphic cards, "
         "ZERO caption boxes, ZERO lower thirds, ZERO subtitles, ZERO watermarks. "
-        "Pure photographic 35mm cinema only without written words."
+        "Pure photographic cinema only without written words."
     )
     if truth_sheet and truth_sheet.prohibited_anachronisms:
         for forbidden in truth_sheet.prohibited_anachronisms[:6]:
@@ -100,11 +107,12 @@ def compile_longform_broll_prompt(
 def format_veo_cinematography_prompt(
     shot_type: str,
     subject_labor: str,
-    lighting: str = "golden hour sunlight, volumetric dust motes dancing in air",
-    historical_atmosphere: str = "authentic documentary atmosphere",
+    lighting: str = "cinematic atmospheric lighting",
+    historical_atmosphere: str = "authentic atmosphere",
     camera_vector: str = "slow cinematic dolly in",
     fps: str = "24fps",
     era: str = "default",
+    visual_style: str = "photorealistic cinema",
 ) -> str:
     """Format prompt adhering strictly to Veo Cinematography ordering:
 
@@ -112,11 +120,22 @@ def format_veo_cinematography_prompt(
     """
     st = (shot_type or "Cinematic medium tracking shot").strip().rstrip(",. ")
     subj = subject_labor.strip().rstrip(",. ")
-    light = (lighting or "golden hour sunlight, volumetric dust motes dancing in air").strip().rstrip(",. ")
-    atm = (historical_atmosphere or "authentic documentary atmosphere").strip().rstrip(",. ")
-    vec = (camera_vector or "slow cinematic dolly in").strip().rstrip(",. ")
+    light = lighting.strip().rstrip(",. ") if lighting else ""
+    atm = historical_atmosphere.strip().rstrip(",. ") if historical_atmosphere else ""
+    vec = camera_vector.strip().rstrip(",. ") if camera_vector else ""
+    style = visual_style.strip().rstrip(",. ") if visual_style else "photorealistic cinema"
 
-    return f"{st}, {subj}, {light}, {atm}, {vec}, {fps} motion blur, 35mm photorealistic documentary cinema."
+    elements = [st, subj]
+    if light:
+        elements.append(light)
+    if atm:
+        elements.append(atm)
+    if vec:
+        elements.append(vec)
+    elements.append(f"{fps} motion blur")
+    elements.append(style)
+
+    return ", ".join(e for e in elements if e) + "."
 
 
 # ---------------------------------------------------------------------------
@@ -146,35 +165,15 @@ def lint_prompt_for_unpartitioned_bleed(prompt: str) -> None:
                 )
 
 
-def build_contrastive_barrier_clause(
-    entity_id: str = "E_DOOR_01",
-    material: str = "solid 44mm quarter-sawn white-oak slab",
-) -> str:
-    """Return contrastive material clause ensuring the diffusion model never renders an opaque door as glass."""
-    return (
-        f"{entity_id} is a {material}, 100% opaque timber through-and-through, vertical grain. "
-        f"It is NOT glass, NOT frosted, NOT a French door, NOT a window in a doorway. "
-        f"The hallway behind is completely blocked by the timber slab; specular highlights are surface varnish sheen only, zero optical transmission."
-    )
-
-
-def build_scoped_negatives_for_barrier() -> str:
-    """Return targeted negative prompt tokens preventing door-to-window metamorphosis."""
-    return (
-        "glass door, French door, sidelights, transom glass, transparent door slab, "
-        "interior visible through door, door morphing into window, cracked door pane, "
-        "frosted-glass entry, window in door core, modern glass sliding door"
-    )
-
-
 def inject_active_deltas_with_visibility_gating(
     prompt: str,
     world_state: Any,
     shot_spec: dict[str, Any] | None = None,
 ) -> str:
-    """Inject active canon deltas strictly if the entity is visible in the frame (Grok 4.6 Mandate).
+    """Inject active canon deltas strictly if the entity is visible in the frame (Pure Engine Gating).
 
-    Prevents latent space pollution (e.g. injecting door cracks into a macro shot of floor bottles).
+    Prevents latent space pollution across unrelated frames.
+    Driven generically by entity registry / attributes or generic token visibility.
     """
     if not world_state or not getattr(world_state, "delta_ledger", None):
         return prompt
@@ -186,16 +185,63 @@ def inject_active_deltas_with_visibility_gating(
     if shot_spec.get("focus_entity"):
         declared_visible.add(shot_spec["focus_entity"])
 
+    entity_source = (
+        getattr(world_state, "entity_registry", None)
+        or getattr(world_state, "entities", None)
+    )
+
     injected_deltas = []
     for delta in world_state.delta_ledger:
         ent_id = delta.get("entity_id", "")
-        # Check if entity is visible in frame (either explicitly declared or lexically present)
+        if not ent_id:
+            continue
+
+        # Collect keywords for generic visibility gating
+        entity_keywords: set[str] = set()
+
+        # Check entity object from registry or entities dictionary
+        entity_obj = None
+        if isinstance(entity_source, dict):
+            entity_obj = entity_source.get(ent_id)
+
+        if entity_obj:
+            if isinstance(entity_obj, dict):
+                kws = entity_obj.get("keywords", [])
+                kind = entity_obj.get("kind", "")
+                mat = entity_obj.get("material_class", "") or entity_obj.get("material", "")
+                name = entity_obj.get("name", "")
+            else:
+                kws = getattr(entity_obj, "keywords", [])
+                kind = getattr(entity_obj, "kind", "")
+                mat = getattr(entity_obj, "material_class", "") or getattr(entity_obj, "material", "")
+                name = getattr(entity_obj, "name", "")
+
+            if isinstance(kws, (list, tuple, set)):
+                entity_keywords.update(str(k).lower().strip() for k in kws if k)
+            if kind:
+                entity_keywords.add(str(kind).lower().strip())
+            if mat:
+                entity_keywords.add(str(mat).lower().strip())
+            if name:
+                entity_keywords.add(str(name).lower().strip())
+
+        # Generic token derivation from entity_id (e.g. ENTITY_DOOR_01 -> door, PROP_FLASHLIGHT -> flashlight)
+        id_tokens = [
+            token.lower().strip()
+            for token in re.split(r"[_\W]+", ent_id)
+            if token and not token.isdigit() and len(token) > 1 and token.lower() not in ("e", "ent", "entity", "prop")
+        ]
+        entity_keywords.update(id_tokens)
+        entity_keywords.add(ent_id.lower().strip())
+
+        # Generic visibility check: declared explicitly, or keyword found in prompt text
         is_visible = (
             ent_id in declared_visible
-            or ("door" in ent_id.lower() and any(k in p_lower for k in ("door", "portal", "barrier", "entry")))
-            or ("bottle" in ent_id.lower() and any(k in p_lower for k in ("bottle", "floor", "tripwire")))
-            or ("peep" in ent_id.lower() and any(k in p_lower for k in ("peephole", "optic", "lens")))
-            or ("win" in ent_id.lower() and any(k in p_lower for k in ("window", "pane", "glass")))
+            or any(
+                re.search(r"\b" + re.escape(kw) + r"\b", p_lower)
+                for kw in entity_keywords
+                if len(kw) > 1
+            )
         )
 
         if is_visible:
@@ -216,15 +262,14 @@ def inject_active_deltas_with_visibility_gating(
 def compile_udse_prompt(
     visual_prompt: str,
     scene_type: str = "standard",
-    barrier_entity_id: str = "E_DOOR_01",
     world_state: Any | None = None,
     shot_spec: dict[str, Any] | None = None,
+    **kwargs: Any,
 ) -> str:
-    """Compile visual prompt according to UDSE v4.3 standards:
+    """Compile visual prompt according to UDSE standards:
     1. Lints against unpartitioned coplanar conflation.
-    2. If barrier is present, attaches contrastive material clause.
-    3. Injects active canon deltas strictly if entities are visible in the frame (Visibility Gating).
-    4. Guarantees photographic realism without program syntax leakage.
+    2. Injects active canon deltas strictly if entities are visible in the frame (Visibility Gating).
+    3. Guarantees photographic realism without program syntax leakage.
     """
     clean_p = visual_prompt.strip()
     # Strip any accidental brackets like [INVARIANT: ...]
@@ -232,11 +277,6 @@ def compile_udse_prompt(
 
     # Apply dispatch linter
     lint_prompt_for_unpartitioned_bleed(clean_p)
-
-    # Attach contrastive barrier anchor if barrier is mentioned
-    if "door" in clean_p.lower() and "contrastive" not in clean_p.lower() and "opaque timber" not in clean_p.lower():
-        anchor = build_contrastive_barrier_clause(entity_id=barrier_entity_id)
-        clean_p = f"{clean_p}. {anchor}"
 
     # Apply Visibility Gating on active deltas
     if world_state:

@@ -19,7 +19,7 @@ _SKILLS_DIR = _ROOT / ".grok" / "skills"
 
 
 class SkillLoader:
-    """Diskteki .grok/skills/ klasörünü dinamik tarayan ve üretim hattına bağlayan motor."""
+    """Dynamic engine for scanning .grok/skills/ on disk and wiring them into production."""
 
     def __init__(self, skills_dir: Path | str | None = None) -> None:
         self.skills_dir = Path(skills_dir) if skills_dir else _SKILLS_DIR
