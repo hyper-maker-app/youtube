@@ -224,6 +224,56 @@ def synthesize_dry_run_video_block(
     subprocess.run(cmd, check=True)
 
 
+def synthesize_hero_frame(
+    out_jpg: Path,
+    aspect_ratio: str = "9:16",
+    color: str = "#111827",
+    prompt: str = "",
+) -> Path:
+    """Generate a clean hero frame fixture image using local FFmpeg lavfi."""
+    out_jpg = Path(out_jpg)
+    out_jpg.parent.mkdir(parents=True, exist_ok=True)
+    ffmpeg = config.resolve_ffmpeg()
+    dims = "1920x1080" if aspect_ratio == "16:9" else "1080x1920"
+    cmd = [
+        ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
+        "-f", "lavfi", "-i", f"color=c={color}:s={dims}:d=1",
+        "-frames:v", "1",
+        str(out_jpg),
+    ]
+    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return out_jpg
+
+
+async def generate_nano_banana_hero_frame(
+    *,
+    prompt: str,
+    out_path: Path,
+    aspect_ratio: str = "9:16",
+    model: str = "nano_banana_2_1",
+) -> Path:
+    """Generate Hero DNA Frame via 🍌 Nano Banana 2.1 (0 credits, free) before block animation."""
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Generating Hero DNA Frame via 🍌 Nano Banana 2.1 (0 credits) at %s: %s...", out_path.name, prompt[:60])
+    try:
+        from providers.flow_browser.native_transport import BrowserNativeFlowTransport
+        transport = BrowserNativeFlowTransport()
+        await transport.generate_asset(
+            prompt=prompt,
+            out_path=out_path,
+            asset_type="image",
+            aspect_ratio=aspect_ratio,
+            model=model,
+            authorize=True,
+        )
+    except Exception as exc:
+        logger.warning("Native 🍌 Nano Banana 2.1 image generation skipped/fallback: %s", exc)
+        if not out_path.is_file() or out_path.stat().st_size < 100:
+            synthesize_hero_frame(out_path, aspect_ratio=aspect_ratio, prompt=prompt)
+    return out_path
+
+
 def make_mock_words(scenes: list[dict[str, Any]], total_duration: float) -> list[dict[str, Any]]:
     """Synthesize evenly-spaced word timings for dry-run captions."""
     all_words: list[str] = []
@@ -787,6 +837,27 @@ async def execute_grok_flow_production(
     else:
         world_state = WorldState(project_id=slug)
 
+    # Auto-generate Hero DNA Frame via 🍌 Nano Banana 2.1 (0 credits) in --real mode if missing and scene has character/setting
+    if not dry_run and (not hero_plate_path or not Path(hero_plate_path).is_file()):
+        first_sc = aligned_scenes[0] if aligned_scenes else {}
+        has_character_or_setting = bool(
+            first_sc.get("character")
+            or first_sc.get("setting")
+            or first_sc.get("environment")
+            or first_sc.get("visual_prompt")
+            or (world_state and getattr(world_state, "entities", None))
+        )
+        if has_character_or_setting:
+            hero_prompt = str(first_sc.get("visual_prompt") or first_sc.get("setting") or first_sc.get("character") or project_title)
+            hero_target = out_dir / "keyframes" / f"{slug}_hero.jpg"
+            logger.info("Auto-triggering Hero Frame generation via 🍌 Nano Banana 2.1 (0 credits) before block animation: %s", hero_target.name)
+            hero_plate_path = await generate_nano_banana_hero_frame(
+                prompt=hero_prompt,
+                out_path=hero_target,
+                aspect_ratio=aspect_ratio,
+            )
+            logger.info("Hero Frame locked via 🍌 Nano Banana 2.1 -> %s", hero_plate_path)
+
     for i, sc in enumerate(aligned_scenes, 1):
         block_file = out_dir / "blocks" / f"block_{i:02d}.mp4"
         dur = float(sc.get("duration", block_duration))
@@ -880,6 +951,9 @@ async def execute_grok_flow_production(
                 cv2.imwrite(str(kf_path), exit_img)
                 start_frame_path = kf_path
                 logger.info(f"Conditioning Block {i} on previous block exit frame: {kf_path.name}")
+        elif not is_broll and not block_paths and hero_plate_path and Path(hero_plate_path).is_file():
+            start_frame_path = Path(hero_plate_path)
+            logger.info(f"Conditioning Block {i} (initial scene) on Hero Frame: {start_frame_path.name}")
 
         max_retries = 3
         for attempt in range(1, max_retries + 1):

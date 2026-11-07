@@ -18,6 +18,8 @@ VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
 
 def _run_bash(script: str, env: dict[str, str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    if os.name == "nt":
+        pytest.skip("Bash shell tests require POSIX environment")
     return subprocess.run(
         ["bash", "-c", script],
         capture_output=True,

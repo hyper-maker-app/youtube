@@ -20,14 +20,39 @@ def test_reference_requires_explicit_fallback(tmp_path, monkeypatch):
 
     monkeypatch.setattr(transport, "generate", fake_generate)
     with pytest.raises(Exception, match="explicit allow_text_fallback"):
-        asyncio.run(transport.generate_asset(prompt="scene", out_path=tmp_path / "out.mp4", start_frame=image))
+        asyncio.run(transport.generate_asset(prompt="scene", out_path=tmp_path / "out.mp4", reference_images=[image]))
     assert not calls
-    asyncio.run(transport.generate_asset(prompt="scene", out_path=tmp_path / "out.mp4", start_frame=image, allow_text_fallback=True))
+    asyncio.run(transport.generate_asset(prompt="scene", out_path=tmp_path / "out.mp4", reference_images=[image], allow_text_fallback=True))
     request, options = calls[0]
     evidence = options["conditioning_evidence"]
     assert request.conditioning == "text_to_video"
-    assert evidence["requested_conditioning"] == "first_frame"
+    assert evidence["requested_conditioning"] == "reference_images"
     assert evidence["reference_upload_observed"] is False
+    assert evidence["local_reference_sha256"] == [hashlib.sha256(b"reference").hexdigest()]
+
+
+def test_first_frame_conditioning_allowed_without_fallback(tmp_path, monkeypatch):
+    transport = BrowserNativeFlowTransport()
+    image = tmp_path / "hero.jpg"
+    image.write_bytes(b"reference")
+    calls = []
+
+    async def fake_generate(request, out_path, **kwargs):
+        calls.append((request, kwargs))
+        return out_path
+
+    monkeypatch.setattr(transport, "generate", fake_generate)
+    # start_frame should succeed without allow_text_fallback
+    asyncio.run(transport.generate_asset(prompt="scene", out_path=tmp_path / "out.mp4", start_frame=image, allow_text_fallback=False))
+    assert len(calls) == 1
+    request, options = calls[0]
+    evidence = options["conditioning_evidence"]
+    assert request.conditioning == "first_frame"
+    assert request.start_image_sha256 == hashlib.sha256(b"reference").hexdigest()
+    assert "[First Frame Anchor: hero.jpg] scene" in request.prompt
+    assert evidence["requested_conditioning"] == "first_frame"
+    assert evidence["submitted_conditioning"] == "first_frame"
+    assert evidence["reference_upload_observed"] is True
     assert evidence["local_frame_sha256"] == [hashlib.sha256(b"reference").hexdigest()]
 
 

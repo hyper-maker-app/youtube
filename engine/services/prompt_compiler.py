@@ -283,3 +283,124 @@ def compile_udse_prompt(
         clean_p = inject_active_deltas_with_visibility_gating(clean_p, world_state, shot_spec)
 
     return clean_p
+
+# ---------------------------------------------------------------------------
+# Gemini Omni Flash 1.1 Video Prompt Compilation & Sanitization
+# ---------------------------------------------------------------------------
+
+_OMNI_FLASH_FORBIDDEN_PATTERNS = [
+    re.compile(r"\btrending\s+on\s+artstation\b", re.IGNORECASE),
+    re.compile(r"\bartstation\b", re.IGNORECASE),
+    re.compile(r"\bunreal\s+engine(?:\s*5)?\b", re.IGNORECASE),
+    re.compile(r"\bue5\b", re.IGNORECASE),
+    re.compile(r"\boctane(?:\s+render)?\b", re.IGNORECASE),
+    re.compile(r"\bv-?ray(?:\s+render)?\b", re.IGNORECASE),
+    re.compile(r"\bhyper-?realistic\b", re.IGNORECASE),
+    re.compile(r"\bhyper\s+realistic\b", re.IGNORECASE),
+    re.compile(r"\bphoto-?realistic(?:\s*8k)?\b", re.IGNORECASE),
+    re.compile(r"\bphoto\s+realistic(?:\s*8k)?\b", re.IGNORECASE),
+    re.compile(r"\b8k(?:\s+uhd)?\b", re.IGNORECASE),
+    re.compile(r"\b16k\b", re.IGNORECASE),
+    re.compile(r"\b4k(?:\s+uhd)?\b", re.IGNORECASE),
+    re.compile(r"\bmasterpiece\b", re.IGNORECASE),
+    re.compile(r"\baward[\s-]winning\b", re.IGNORECASE),
+    re.compile(r"\bbest\s+quality\b", re.IGNORECASE),
+    re.compile(r"\bultra[\s-]detailed\b", re.IGNORECASE),
+    re.compile(r"\bintricate\s+details\b", re.IGNORECASE),
+]
+
+
+def sanitize_omni_flash_prompt(prompt: str) -> str:
+    """Sanitize prompt for Omni Flash by removing penalized keyword stuffing terms.
+
+    Removes artificial quality boosters (hyperrealistic, photorealistic 8k,
+    trending on artstation, unreal engine 5, octane render, etc.) while
+    preserving physical and optical cinematography terminology (dolly zoom,
+    locked off, macro grip, anamorphic lens flare, etc.).
+    """
+    if not prompt:
+        return ""
+
+    text = prompt
+    for pattern in _OMNI_FLASH_FORBIDDEN_PATTERNS:
+        text = pattern.sub("", text)
+
+    # Clean up punctuation and whitespace artifacts
+    text = re.sub(r"\s*,\s*(?:,\s*)+", ", ", text)
+    text = re.sub(r",\s*\.", ".", text)
+    text = re.sub(r",\s*$", "", text)
+    text = re.sub(r"^\s*[,;\s]+", "", text)
+    text = re.sub(r"\s+([.,;:!?])", r"\1", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"([.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
+
+    cleaned = text.strip()
+    if cleaned and not cleaned.endswith((".", "!", "?")):
+        cleaned += "."
+
+    if cleaned and cleaned[0].islower():
+        cleaned = cleaned[0].upper() + cleaned[1:]
+
+    return cleaned
+
+
+def compile_omni_flash_prompt(
+    subject_and_look: str,
+    action: str,
+    setting: str,
+    camera_movement: str,
+    lighting_atmosphere: str,
+    audio_cue: str | None = None,
+    first_frame_active: bool = False,
+    unbroken_take: bool = True,
+) -> str:
+    """Compile structured cinematography prompt for Gemini Omni Flash 1.1 video generation.
+
+    Syntax Order:
+    [Subject & Distinct Features] + [Action / Physical Physics] + [Setting / Environment]
+    + [Camera & Movement Vector] + [Lighting & Atmosphere]
+
+    - When first_frame_active=True: Attaches explicit frame reference locking facial geometry,
+      wardrobe, and physical attributes.
+    - When unbroken_take=True: Appends directive preventing AI jump-cuts or unwanted montage edits.
+    - When audio_cue is provided: Attaches synchronized audio cue description.
+    - Cleans keyword stuffing terms via sanitize_omni_flash_prompt.
+    """
+    parts: list[str] = []
+
+    if first_frame_active:
+        parts.append(
+            "Using the provided image reference as the starting frame, "
+            "keep facial geometry, wardrobe, and physical attributes strictly identical."
+        )
+
+    # Core 5-part Omni Flash syntax:
+    # [Subject & Distinct Features] + [Action / Physical Physics] + [Setting / Environment]
+    # + [Camera & Movement Vector] + [Lighting & Atmosphere]
+    core_items = [
+        item.strip().rstrip("., ")
+        for item in (subject_and_look, action, setting, camera_movement, lighting_atmosphere)
+        if item and item.strip()
+    ]
+
+    if unbroken_take:
+        core_items.append("one continuous shot, a single unbroken take")
+
+    if core_items:
+        core_text = ", ".join(core_items)
+        if core_text and core_text[0].islower():
+            core_text = core_text[0].upper() + core_text[1:]
+        if not core_text.endswith((".", "!", "?")):
+            core_text += "."
+        parts.append(core_text)
+
+    if audio_cue and audio_cue.strip():
+        cue = audio_cue.strip().rstrip("., ")
+        if cue.lower().startswith(("synchronized audio:", "audio:", "audio cue:", "sound:")):
+            parts.append(f"{cue}.")
+        else:
+            parts.append(f"Synchronized audio: {cue}.")
+
+    compiled = " ".join(parts)
+    return sanitize_omni_flash_prompt(compiled)
+

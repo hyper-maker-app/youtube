@@ -1,92 +1,214 @@
 ---
-description: Grok Imagine Cinematic Studio Core System Invariants & Directives
+
+description: Grok Imagine Cinematic Studio Core System Invariants & Directives (v4.6 Hyper Maker)
+
 globs: **/*
+
 alwaysApply: true
+
 ---
 
-# Grok Imagine Cinematic Studio v3.11.4 — System Directives
 
-**Project Identity:** Grok Imagine Cinematic Studio v3.11.4  
-**Project Status:** Independent community AI cinematic production suite (not affiliated with or endorsed by xAI).  
+
+# Hyper Maker Cinematic Studio v4.6 — System Directives
+
+
+
+**Project Identity:** Hyper Maker Cinematic Studio v4.6 (Procedural Catastrophe & Micro-Survival Cinema)  
+
+**Project Status:** Independent community AI cinematic production suite (not affiliated with or endorsed by xAI or Google).  
+
 **Canonical Master Reference:** `AGENTS.md` and `references/agents/AGENT_INDEX.md`.
 
----
 
-## 1. Skill Bridge & Modular Domain Delegation
-
-Always leverage the 64 specialized production skills in `.grok/skills/` instead of improvising ad-hoc logic:
-- Consult `references/agents/AGENT_INDEX.md` and `references/agents/*.md` for authoritative domain role definitions:
-  - **Directing & Architecture:** `studio-director`, `mega-production-architect`, `narrative-arc-pacing-strategist`, `sequence-director`
-  - **Visual & Style:** `director-of-photography`, `production-designer-set-decorator`, `post-production-color-grading-supervisor`
-  - **Character & Identity:** `character-dna-extractor`, `identity-lock-specialist`, `multi-clip-continuity-orchestrator`
-  - **Audio & Foley:** `sonic-architect-native-audio-virtuoso`, `foley-sound-design-specialist`
-  - **Quality & Safety:** `quality-assurance-guardian`, `handoff-packet-validator`, `chain-qa-protocol`
-  - **Automation & CLI:** `imagine-execution-bridge`, `cinematic-ffmpeg`, `grok-doctor`
 
 ---
 
-## 2. Zero Ad-Hoc Probing & Infrastructure Testing
 
-- **Strict Ban on Ad-Hoc Scripts:** Do NOT generate scratch scripts (`test_cdp.py`, `check_ports.py`, `probe_*.py`) to query background servers, sockets, Chrome CDP port 9223, or local proxy port 8085.
-- **Direct CLI Execution Only:**
-  - Fast script & blueprint generation:
-    ```bash
-    python tools/cinematic_studio_cli.py produce-film "Title" --genre "Genre" --duration 60 --plan-only
-    ```
-  - Full automated physical render:
-    ```bash
-    python tools/cinematic_studio_cli.py produce-film "Title" --genre "Genre" --duration 60 --voice-provider deepgram
-    ```
-  - Dry run validation:
-    ```bash
-    python tools/cinematic_studio_cli.py produce-film "Title" --genre "Genre" --duration 60 --dry-run
-    ```
-- All health verification, port lifecycles, and cookie handshakes are handled internally within `engine/flow_bridge.py`.
+
+## 1. 3-Tier Production Architecture (Google Flow CDP Port 9223)
+
+
+
+All active film and series production is driven through `tools/cinematic_studio_cli.py produce-film`:
+
+
+
+- **Tier 1 (Zero-Cost Draft & Experiment Mode):**
+
+  ```bash
+
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "catastrophe" --duration 60 --plan-only
+
+  ```
+
+  *Cost: 0 Credits.* Grok 4.6 screenplay, Deepgram Aura-2 voiceover, Remotion graphics, and color storyboard proxy cards.
+
+
+
+- **Tier 2 (Rapid Test Validation Mode):**
+
+  ```bash
+
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "catastrophe" --duration 60 --test
+
+  ```
+
+  *Cost: ~30-40 credits for 60s (360p).* Pinned to **Omni 1.1 Flash** (360p / 4s = 4 credits) until December 5, 2026; automatically falls through to **Veo 3.1 - Lite** (10 credits) after December 5, 2026.
+
+
+
+- **Tier 3 (Broadcast Cinematic Master Mode):**
+
+  ```bash
+
+  python tools/cinematic_studio_cli.py produce-film "Title" --genre "catastrophe" --duration 60 --real
+
+  ```
+
+  *Cost: 720p HD Master.* Driven by **Gemini Omni 1.2 Flash** (November 2026 flagship). Uses **🍌 Nano Banana 2.1** (0-Credit Free Image Model) to generate character Hero DNA plates upfront and feeds them as `first_frame` into Omni 1.2 Flash, completely preventing AI facial morphing.
+
+
 
 ---
 
-## 3. Pure Engine & Skill Invariant: Absolute Zero Hardcode
+
+
+## 2. Universal Omni Flash Prompting Standard & Sanitizer
+
+
+
+All generative video prompts in Flow must follow the official 5-dimension syntax:
+
+1. **Syntax Order:** `[Subject & Distinct Features] + [Action / Physical Physics] + [Setting / Environment] + [Camera & Movement Vector] + [Lighting & Atmosphere]`.
+
+2. **Keyword Stuffing Sanitizer:** Strips degraded latent keywords (`"hyperrealistic"`, `"4k photorealistic"`, `"trending on artstation"`, `"unreal engine 5"`, `"octane render"`). Enforces authentic physical/optical camera grammar (`dolly zoom`, `locked off`, `macro grip`, `anamorphic lens flare`, `35mm`).
+
+3. **Unbroken Take Lock:** Appends `"one continuous shot, a single unbroken take"` to prevent unwanted sub-clip cuts.
+
+4. **First-Frame Persistence:** When character hero frames are anchored via Nano Banana 2.1, instructs `"Using the provided image reference as the starting frame, keep facial geometry, wardrobe, and physical attributes strictly identical."`
+
+
+
+---
+
+
+
+## 3. Screenwriter Pacing Authority & Duration Packer Native Preservation
+
+
+
+1. **Screenwriter (Grok 4.6 / Universal Narrative) is the primary authority on shot duration:**
+
+   - Fast action, pursuit, sudden breaches, kinetic shock: **`duration: 4.0`**.
+
+   - Dialogue, internal monologue, dread, survival preparation, environmental exploration: **`duration: 8.0`** (leveraging Omni 1.2 Flash native 8s coherence).
+
+   - Radar, maps, tactical HUD, resource depletion counters: **`is_data_broll: true`** (Remotion 60 FPS B-roll, 0 Flow credits).
+
+2. **Duration Packer Native Preservation:** The legacy artificial `5.2s` ceiling is removed; `duration_packer.py` preserves 4s and 8s native tiers directly without unwanted slicing.
+
+
+
+---
+
+
+
+## 4. Pure Engine & Skill Invariant: Absolute Zero Hardcode
+
+
 
 - **Engines (`engine/`, `tools/`):** Must remain strictly pure pipelines. Never embed hardcoded story lines, character dialogue, creative narrative text, camera angles, or literal word replacement maps.
+
 - **Skills (`.grok/skills/*.md`):** Must encode universal directing principles, physical/acoustic rules, and structural constraints. Never embed hardcoded scene lines or literal CTA text strings.
-- **Parametric UI / Remotion:** All components in `web_ui/`, `web_react/`, and `web_nicegui/` must consume props and dynamic JSON payloads.
+
+- **Parametric UI / Remotion:** All components must consume props and dynamic JSON payloads.
+
+
 
 ---
 
-## 4. Viral Second-Person & Foley Standard (Protocol v4.0)
+
+
+## 5. Viral Second-Person & Foley Standard (Protocol v4.0)
+
+
 
 All narrative and screenplay generation must adhere to `references/agents/VIRAL_SECOND_PERSON_RETENTION_FOLEY_PROTOCOL_v4.0.md`:
+
 1. **100% English Invariant:** Zero Turkish output allowed in screenplay, prompt, caption, or TTS streams.
+
 2. **2nd-Person POV ("You / Your"):** Direct singular perspective. No 3rd-person narrator.
+
 3. **In Media Res Hook (0–3s):** Immediate danger and tangible stakes within the opening 3 seconds.
+
 4. **Micro-Survival Mathematics:** Concrete numerical resources (milliliters, decibels, battery %, physical barrier layers).
-5. **Text Sanitization Gateway:** Narration strings must be filtered through `engine/services/text_sanitizer.py` to eliminate formatting metadata and bracketed cues.
-6. **Atmospheric / Situational Visuals:** Focus on peephole POV, macro tool grips, sensor LED readouts, and backlit rain silhouettes to eliminate AI facial uncanny-valley defects.
-7. **Dual-Stage SFX & Procedural Foley:** Primary Hugging Face Space (`fffiloni/audiogen`, `declare-lab/TangoFlux`) with automatic fallback to local FFmpeg Lavfi synthetic foley.
-8. **Transition Continuity QA:** Triplet QA via Gemini 2.5 Flash / OpenCV comparing `[Hero DNA] | [Block N Exit] | [Block N+1 Entry]`.
+
+5. **Text Sanitization Gateway:** Narration strings must be filtered through `engine/services/text_sanitizer.py`.
+
+6. **Dual-Stage SFX & Procedural Foley:** Primary Hugging Face Space (`fffiloni/audiogen`, `declare-lab/TangoFlux`) with automatic fallback to local FFmpeg Lavfi synthetic foley.
+
+7. **Transition Continuity QA:** Triplet QA via Gemini 2.5 Flash / OpenCV comparing `[Hero DNA] | [Block N Exit] | [Block N+1 Entry]`.
+
+
 
 ---
 
-## 5. Model Architecture & Flow CDP Factory
 
-- **Model Registry:** Locked to `grok-4.6` via `tools/models.py`. 1M-context bank opt-in: `grok-4.3`. Imagine Video default: `grok-imagine-video` (1.0 default) / `grok-imagine-video-1.5` (native audio / r2v). Imagine Image hero default: `grok-imagine-image-2.0`.
-- **"Flow" Engine:** Refers strictly to the Google Flow CDP factory (Port 9223) + Deepgram Aura-2 / Voyslity / ElevenLabs + FFmpeg pipeline (`engine/flow_bridge.py`, `engine/editor.py`).
-- **Asset Continuity:** Generated hero plates must be saved in `characters/<character_slug>_hero.jpg` and registered in sequence handoffs (`sequences/<project>_handoff.json`).
+
+## 6. Zero Ad-Hoc Probing & Infrastructure Testing
+
+
+
+- **Strict Ban on Ad-Hoc Scripts:** Do NOT generate scratch scripts (`test_cdp.py`, `check_ports.py`, `probe_*.py`) to query background servers, sockets, Chrome CDP port 9223, or local proxy port 8085.
+
+- Direct CLI execution only (`produce-film`). All health verification, port lifecycles, and cookie handshakes are handled internally.
+
+
 
 ---
 
-## 6. Testing & Operational Commands
+
+
+## 7. Testing & Operational Commands
+
+
 
 ```bash
+
 # Verify environment & dependencies:
+
 python tools/cinematic_studio_cli.py doctor
 
+
+
 # Verify model registry:
+
 python tools/cinematic_studio_cli.py models verify
 
+
+
 # Run studio multi-surface smoke tests:
+
 python scripts/smoke_studio_surfaces.py
 
+
+
 # Execute full pytest suite:
+
 pytest tests/
+
 ```
+
+
+---
+
+## 8. Mandatory Multi-IDE Rules & Governance Synchronization (CRITICAL)
+
+Agents and developers working in this workspace MUST NEVER restrict their work to Python engines and unit tests. Whenever any architectural, engine, CLI, or model changes are made:
+1. **Synchronous IDE Rules Update:** You MUST synchronously update all agent governance directories:
+   - `.cursor/rules/` (Cursor IDE)
+   - `.gemini/rules/` (Gemini & Antigravity)
+   - `.grok/skills/` (Grok Build skill prompts)
+   - `AGENTS.md`, `README.md`, and `references/MODELS.md`
+2. **Fail-Closed Audit:** Any feature implementation or refactoring where IDE rules and skill instructions are left outdated or inconsistent with code is strictly rejected.

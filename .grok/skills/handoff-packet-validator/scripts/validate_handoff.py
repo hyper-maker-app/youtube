@@ -13,6 +13,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Resolve studio tools/ so we can import the canonical handoff schema
 _SCRIPT = Path(__file__).resolve()
 _STUDIO_ROOT = _SCRIPT.parents[4]  # .../.grok/skills/<skill>/scripts → repo root

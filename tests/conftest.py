@@ -1,6 +1,23 @@
 """Pytest configuration ensuring repository root, engine, tools, and legacy tools are on sys.path."""
 import sys
 import os
+import subprocess
+
+# Ensure UTF-8 I/O across tests
+os.environ["PYTHONIOENCODING"] = "utf-8"
+os.environ["PYTHONUTF8"] = "1"
+
+# On Windows, default subprocess text decoding to utf-8 with replacement to prevent charmap crashes
+if os.name == "nt":
+    _orig_popen_init = subprocess.Popen.__init__
+
+    def _patched_popen_init(self, *args, **kwargs):
+        if (kwargs.get("text") or kwargs.get("universal_newlines")) and kwargs.get("encoding") is None:
+            kwargs["encoding"] = "utf-8"
+            kwargs.setdefault("errors", "replace")
+        return _orig_popen_init(self, *args, **kwargs)
+
+    subprocess.Popen.__init__ = _patched_popen_init
 
 # Set before test module imports so dotenv cannot refill a live account key.
 os.environ["XAI_API_KEY"] = ""

@@ -12,9 +12,9 @@ from typing import Any
 
 from providers.flow_contract import default_capabilities
 
-# Editorial shot ceiling is separate from the provider's legal generation durations.
-MAX_VEO_SHOT_DURATION = 5.2
+# Provider-native Veo duration tiers (4s, 6s, 8s, 10s) and maximum shot ceiling
 VEO_NATIVE_TIERS = tuple(float(v) for v in default_capabilities().supported_native_durations)
+MAX_VEO_SHOT_DURATION = float(max(VEO_NATIVE_TIERS)) if VEO_NATIVE_TIERS else 10.0
 
 @dataclass
 class BlockPlan:
@@ -57,6 +57,23 @@ def split_scene_durations(duration: float, max_duration: float = MAX_VEO_SHOT_DU
     allowed = [tier for tier in VEO_NATIVE_TIERS if tier <= max_duration]
     if not allowed:
         raise ValueError("Shot ceiling is below every supported provider-native duration")
+
+    # If duration fits within max_duration without splitting into multiple blocks:
+    if duration <= max_duration:
+        # Screenwriter 4.0s scene -> preserve as 4.0s native
+        if duration <= 4.0 and 4.0 in allowed:
+            return [4.0]
+        # Screenwriter 6.0s scene -> preserve as 6.0s native
+        if duration <= 6.0 and 6.0 in allowed:
+            return [6.0]
+        # Screenwriter 8.0s scene or 6.0 - 8.5s speech range -> preserve as 8.0s native (do not split 4+4)
+        if duration <= 8.5 and 8.0 in allowed:
+            return [8.0]
+        candidates = [tier for tier in allowed if tier >= duration - 1e-9]
+        if candidates:
+            return [min(candidates)]
+
+    # If duration exceeds max_duration (e.g. > 10.0s), split across native tiers intelligently
     count = math.ceil(duration / max(allowed))
     needed = duration / count
     native = min(tier for tier in allowed if tier >= needed - 1e-9)
@@ -97,7 +114,7 @@ def _scene_audio_boundaries(scenes, durations, total_duration, words):
 
 def pack_durations_to_veo_blocks(
     scenes: list[dict[str, Any]], total_audio_duration: float,
-    words: list[dict[str, Any]] | None = None, default_block_duration: float = 5.0,
+    words: list[dict[str, Any]] | None = None, default_block_duration: float = 8.0,
 ) -> list[BlockPlan]:
     if not scenes:
         return []
@@ -111,7 +128,18 @@ def pack_durations_to_veo_blocks(
     for index, scene in enumerate(scenes):
         cursor, end = boundaries[index:index+2]
         span = end - cursor
-        native_durations = [span] if is_data_broll_scene(scene) else split_scene_durations(span)
+        if is_data_broll_scene(scene):
+            native_durations = [span]
+        else:
+            authored_dur = float(scene.get("duration", 0.0))
+            if authored_dur == 8.0 and span <= 8.5:
+                native_durations = [8.0]
+            elif authored_dur == 4.0 and span <= 4.0:
+                native_durations = [4.0]
+            elif authored_dur in VEO_NATIVE_TIERS and span <= authored_dur:
+                native_durations = [authored_dur]
+            else:
+                native_durations = split_scene_durations(span)
         count = len(native_durations)
         scene_id = str(scene.get("id") or scene.get("scene_id") or f"scene_{index+1:02d}")
         for part, native in enumerate(native_durations):

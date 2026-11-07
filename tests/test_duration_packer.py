@@ -19,9 +19,23 @@ def test_native_durations_match_actual_provider_contract():
 
 def test_six_second_scenes_have_contiguous_audio_slots():
     plans = pack_durations_to_veo_blocks([{"id":"a", "duration":6}, {"id":"b", "duration":6}], 12)
-    assert [(p.audio_t0,p.audio_t1) for p in plans] == [(0,3),(3,6),(6,9),(9,12)]
+    assert [(p.audio_t0,p.audio_t1) for p in plans] == [(0,6),(6,12)]
     assert all(p.veo_duration >= p.speech_duration for p in plans)
-    assert sum(p.speech_duration for p in plans[:2]) == 6
+    assert sum(p.speech_duration for p in plans) == 12
+
+
+def test_eight_second_scene_native_preservation():
+    scene = {"id": "hero_scene", "duration": 8.0, "narration": "You stare into the raging vortex."}
+    plans = pack_durations_to_veo_blocks([scene], 8.0)
+    assert len(plans) == 1
+    assert plans[0].scene_id == "hero_scene"
+    assert plans[0].veo_duration == 8.0
+    assert plans[0].audio_t0 == 0.0
+    assert plans[0].audio_t1 == 8.0
+    assert plans[0].speech_duration == 8.0
+    assert split_scene_durations(8.0) == [8.0]
+    assert split_scene_durations(7.5) == [8.0]
+    assert split_scene_durations(8.5) == [8.0]
 
 
 def test_measured_voice_duration_scales_scene_windows_without_final_overflow():

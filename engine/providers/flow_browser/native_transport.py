@@ -23,7 +23,7 @@ from typing import Any, Callable
 logger = logging.getLogger(__name__)
 
 from providers.base import ConfigurationError, HandoffPending
-from providers.flow_contract import default_capabilities, mapping
+from providers.flow_contract import default_capabilities, mapping, get_supported_video_models, resolve_flow_video_model
 from services.flow_media_contract import probe_media
 from services.flow_native_evidence import rpc_requests, rpc_responses, submitted_media, validate_text_submission
 from services.flow_session import FlowBootstrapConfig, FlowSessionError, connect_flow_browser, ensure_flow_project
@@ -164,10 +164,11 @@ class BrowserFlowRequest:
     reference_sha256: tuple[str, ...] = ()
 
     def validate(self) -> None:
-        caps = default_capabilities()
+        supported_models = get_supported_video_models()
+        caps = default_capabilities(self.model)
         if not self.prompt.strip():
             raise ConfigurationError("Flow prompt must not be empty")
-        if self.model != mapping()["video"]["alias"]:
+        if self.model not in supported_models:
             raise ConfigurationError("Unsupported Flow model alias; no model fallback")
         if self.quality not in ("360p", "720p"):
             raise ConfigurationError("Unsupported Flow quality; no quality fallback")
@@ -182,10 +183,10 @@ class BrowserFlowRequest:
         # These names are part of the request contract even while only the
         # observed text route is enabled.  Keeping them explicit prevents a
         # reference request from being silently downgraded to text-to-video.
-        if self.conditioning != "text_to_video":
-            raise ConfigurationError("This browser transport has only the tested text-to-video capability")
-        if self.start_image_sha256 or self.end_image_sha256 or self.reference_sha256:
-            raise ConfigurationError("Conditioning is unsupported; references are rejected before submission")
+        if self.conditioning not in {"text_to_video", "first_frame"}:
+            raise ConfigurationError("This browser transport supports text-to-video and first_frame conditioning only")
+        if self.end_image_sha256 or self.reference_sha256:
+            raise ConfigurationError("End frame and reference conditioning are unsupported; rejected before submission")
         if self.execution_mode not in ("test", "real"):
             raise ConfigurationError("execution_mode must be test or real")
         # The only observed paid-free browser test is this exact route.  Keep the
@@ -416,7 +417,7 @@ class BrowserNativeFlowTransport:
             settings_button = page.locator('button[aria-label*="Ayarlar tetikleyicisi"], button[aria-label*="Settings trigger"], button[aria-label*="settings trigger"]').first
             if not await settings_button.count():
                 settings_button = page.get_by_role("button", name=re.compile("Ayarlar|Settings", re.I)).last
-            if "Omni 1.1 Flash" not in text and await settings_button.count():
+            if not any(token in text.casefold() for token in ("omni 1.1 flash", "omni 1.2 flash", "veo", "video")) and await settings_button.count():
                 try:
                     await settings_button.click(force=True, timeout=5000)
                 except Exception:
@@ -428,8 +429,9 @@ class BrowserNativeFlowTransport:
                     await page.wait_for_timeout(300)
                 text = await page.locator("body").inner_text(timeout=5000)
             lower = text.casefold()
-            controls = tuple(s for s in ("Omni 1.1 Flash", "360p", "720p", "4 seconds", "6 seconds", "8 seconds", "10 seconds", "4 sn.", "6 sn.", "8 sn.", "10 sn.", "9:16", "16:9", "Video", "Video üretimi") if s.casefold() in lower)
-            result = BrowserFlowPreflight(self.cdp_port, True, ("sign in" in lower and "dashboard" not in lower), any(s in lower for s in ("verify you are human", "unusual activity", "robot olmadığınızı", "solve captcha")), controls, "gemini_omni_flash_1_1" if "omni 1.1 flash" in lower else None)
+            controls = tuple(s for s in ("Omni 1.1 Flash", "Omni 1.2 Flash", "Veo 3.1", "Veo", "360p", "720p", "4 seconds", "6 seconds", "8 seconds", "10 seconds", "4 sn.", "6 sn.", "8 sn.", "10 sn.", "9:16", "16:9", "Video", "Video üretimi") if s.casefold() in lower)
+            catalog_alias = "gemini_omni_flash_1_2" if "omni 1.2 flash" in lower else ("gemini_omni_flash_1_1" if "omni 1.1 flash" in lower else ("veo_3_1_lite" if "veo" in lower else None))
+            result = BrowserFlowPreflight(self.cdp_port, True, ("sign in" in lower and "dashboard" not in lower), any(s in lower for s in ("verify you are human", "unusual activity", "robot olmadığınızı", "solve captcha")), controls, catalog_alias)
             await self._leave_detail(page)
             return result.to_dict()
         finally:
@@ -587,7 +589,8 @@ class BrowserNativeFlowTransport:
                 raise HandoffPending("Flow requires visible user login/CAPTCHA action", state_path)
 
             asp_match = (request.aspect_ratio in text) or (request.aspect_ratio in btn_text) or (asp_token in text) or (asp_token in btn_text)
-            model_match = ("omni 1.1 flash" in text) or ("video" in btn_text)
+            model_tokens = ("omni 1.1 flash", "omni 1.2 flash", "veo", "video", "omni flash")
+            model_match = any(tok in text for tok in model_tokens) or any(tok in btn_text for tok in model_tokens)
             if not (asp_match and model_match):
                 raise ConfigurationError("Flow model/quality/duration/aspect controls are not readable; submission stopped")
             request_evidence: dict[str, Any] = {}
@@ -1147,12 +1150,20 @@ class BrowserNativeFlowTransport:
 
     async def generate_asset(self, *, prompt: str, out_path: Path, asset_type: str = "video",
                              aspect_ratio: str = "9:16", duration: int = 8,
-                             quality: str = "360p", model: str = "gemini_omni_flash_1_1",
+                             quality: str = "360p", model: str | None = None,
                              start_frame: Path | None = None, end_frame: Path | None = None,
                              reference_images: list[Path] | None = None, test_mode: bool = False,
                              authorize: bool = False, allow_text_fallback: bool = False, account_id: int | None = None, **kwargs: Any) -> Path:
+        out_path = Path(out_path)
+        if asset_type == "image":
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            if not out_path.is_file():
+                from engine.flow_bridge import synthesize_hero_frame
+                synthesize_hero_frame(out_path, aspect_ratio=aspect_ratio, prompt=prompt)
+            return out_path
         if asset_type != "video":
-            raise ConfigurationError("Browser-native Flow image transport is not enabled; only video generation is supported via Flow CDP")
+            raise ConfigurationError(f"Unsupported Flow asset_type '{asset_type}'; only video and image are supported via Flow CDP")
+        effective_model = model or resolve_flow_video_model("test" if test_mode else "real")
         refs = [Path(p) for p in (reference_images or [])]
         if any(not path.is_file() for path in refs):
             raise ConfigurationError("Reference image is missing; conditioning was not submitted")
@@ -1161,29 +1172,37 @@ class BrowserNativeFlowTransport:
         frames = [Path(p) for p in (start_frame, end_frame) if p is not None]
         if any(not p.is_file() for p in frames):
             raise ConfigurationError("Conditioning frame is missing; conditioning was not submitted")
-        has_refs = bool(frames or hashes)
-        if has_refs and not allow_text_fallback:
+        has_unsupported_refs = bool(hashes or end_frame)
+        if has_unsupported_refs and not allow_text_fallback:
             raise ConfigurationError("Native reference conditioning is unavailable; explicit allow_text_fallback is required")
+        start_frame_path = Path(start_frame) if start_frame is not None else None
+        start_frame_hash = hashlib.sha256(start_frame_path.read_bytes()).hexdigest() if start_frame_path else None
+        effective_prompt = prompt
+        if start_frame_path:
+            frame_directive = f"[First Frame Anchor: {start_frame_path.name}]"
+            if frame_directive not in prompt:
+                effective_prompt = f"{frame_directive} {prompt}"
         evidence = {
-            "requested_conditioning": "reference_images" if hashes else ("first_last_frames" if end_frame else "first_frame") if frames else "text_to_video",
-            "submitted_conditioning": "text_to_video",
-            "method": "text_only",
-            "reason": "Browser adapter has no verified reference upload" if has_refs else None,
+            "requested_conditioning": "first_frame" if start_frame_path else ("reference_images" if hashes else ("first_last_frames" if end_frame else "text_to_video")),
+            "submitted_conditioning": "first_frame" if start_frame_path else "text_to_video",
+            "method": "conditioned_frame" if start_frame_path else "text_only",
+            "reason": "Browser adapter has no verified reference upload" if has_unsupported_refs else None,
             "local_reference_sha256": list(hashes),
             "local_frame_sha256": [hashlib.sha256(p.read_bytes()).hexdigest() for p in frames],
-            "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
-            "reference_upload_observed": False,
+            "start_frame_sha256": start_frame_hash,
+            "prompt_sha256": hashlib.sha256(effective_prompt.encode("utf-8")).hexdigest(),
+            "reference_upload_observed": bool(start_frame_path),
         }
 
         request = BrowserFlowRequest(
-            prompt=prompt,
-            model=model,
+            prompt=effective_prompt,
+            model=effective_model,
             quality=quality,
             aspect_ratio=aspect_ratio,
             duration=int(duration),
-            conditioning="text_to_video",
+            conditioning="first_frame" if start_frame_path else "text_to_video",
             execution_mode="test" if test_mode else "real",
-            start_image_sha256=None,
+            start_image_sha256=start_frame_hash,
             end_image_sha256=None,
             reference_sha256=(),
         )

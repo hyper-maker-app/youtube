@@ -17,11 +17,13 @@ from engine.services.prompt_compiler import (
     DispatchLintError,
     HistoricalTruthSheet,
     compile_longform_broll_prompt,
+    compile_omni_flash_prompt,
     compile_udse_prompt,
     format_multi_shot_prompt,
     format_veo_cinematography_prompt,
     inject_active_deltas_with_visibility_gating,
     lint_prompt_for_unpartitioned_bleed,
+    sanitize_omni_flash_prompt,
 )
 
 
@@ -193,3 +195,88 @@ def test_thumbnail_generator_title_text_required_and_no_volcano():
 
     with pytest.raises(TypeError):
         generate_thumbnail()  # type: ignore[call-arg]
+
+
+def test_compile_omni_flash_prompt_syntax_ordering():
+    """Verify compile_omni_flash_prompt formats components in exact 5-part Omni Flash ordering."""
+    prompt = compile_omni_flash_prompt(
+        subject_and_look="a weathered survivor in an insulated yellow hazmat suit",
+        action="struggles to pry open a jammed pneumatic valve wheel",
+        setting="inside a submerged concrete reactor basement",
+        camera_movement="slow forward tracking dolly in",
+        lighting_atmosphere="pulsing emergency red strobe cutting through toxic mist",
+        first_frame_active=False,
+        unbroken_take=False,
+    )
+    # Check syntax order
+    idx_subject = prompt.find("A weathered survivor in an insulated yellow hazmat suit")
+    idx_action = prompt.find("struggles to pry open a jammed pneumatic valve wheel")
+    idx_setting = prompt.find("inside a submerged concrete reactor basement")
+    idx_camera = prompt.find("slow forward tracking dolly in")
+    idx_lighting = prompt.find("pulsing emergency red strobe cutting through toxic mist")
+
+    assert idx_subject != -1
+    assert idx_action != -1
+    assert idx_setting != -1
+    assert idx_camera != -1
+    assert idx_lighting != -1
+
+    assert idx_subject < idx_action < idx_setting < idx_camera < idx_lighting
+    assert "one continuous shot, a single unbroken take" not in prompt
+    assert "starting frame" not in prompt
+
+
+def test_compile_omni_flash_prompt_first_frame_and_unbroken_take():
+    """Verify first_frame_active and unbroken_take inject respective continuity directives."""
+    prompt = compile_omni_flash_prompt(
+        subject_and_look="a tired field doctor",
+        action="bandages a wounded civilian forearm",
+        setting="in an underground triage bunker",
+        camera_movement="subtle handheld motion",
+        lighting_atmosphere="harsh flickering halogen light",
+        audio_cue="muffled artillery rumbles and heart monitor beeps",
+        first_frame_active=True,
+        unbroken_take=True,
+    )
+
+    assert "Using the provided image reference as the starting frame, keep facial geometry, wardrobe, and physical attributes strictly identical." in prompt
+    assert "one continuous shot, a single unbroken take" in prompt
+    assert "Synchronized audio: muffled artillery rumbles and heart monitor beeps." in prompt
+
+
+def test_sanitize_omni_flash_prompt_removes_stuffing_and_preserves_optics():
+    """Verify keyword stuffing is sanitized while physical and optical camera terminology is preserved."""
+    raw = (
+        "Hyperrealistic, photorealistic 8k render of a technician, trending on artstation, "
+        "dolly zoom, locked off, macro grip, unreal engine 5, octane render, anamorphic lens flare."
+    )
+    cleaned = sanitize_omni_flash_prompt(raw)
+
+    # Keyword stuffing removed
+    assert "hyperrealistic" not in cleaned.lower()
+    assert "photorealistic" not in cleaned.lower()
+    assert "8k" not in cleaned.lower()
+    assert "artstation" not in cleaned.lower()
+    assert "unreal engine" not in cleaned.lower()
+    assert "octane" not in cleaned.lower()
+
+    # Optical/camera terminology strictly preserved
+    assert "dolly zoom" in cleaned
+    assert "locked off" in cleaned
+    assert "macro grip" in cleaned
+    assert "anamorphic lens flare" in cleaned
+
+
+def test_rhythmic_duration_directives_in_system_prompt():
+    """Verify universal narrative injects rhythmic duration and B-roll directives into system prompt."""
+    from engine.services.universal_narrative import (
+        RHYTHMIC_DURATION_DIRECTIVE,
+        build_llm_genre_system_prompt,
+    )
+    prompt = build_llm_genre_system_prompt("What if 100 Tsunami Waves Hit Tokyo?", "catastrophe", 300)
+
+    assert '"duration": 4.0' in prompt
+    assert '"duration": 8.0' in prompt
+    assert '"is_data_broll": true' in prompt
+    assert RHYTHMIC_DURATION_DIRECTIVE in prompt
+

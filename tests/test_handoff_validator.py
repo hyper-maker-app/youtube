@@ -1,6 +1,7 @@
 """Tests for handoff packet validator script."""
 
 from __future__ import annotations
+import os
 
 import json
 import subprocess
@@ -16,13 +17,17 @@ def run_validator(
     data: dict,
     *extra_args: str,
 ) -> subprocess.CompletedProcess[str]:
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
         json.dump(data, f)
         path = f.name
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     return subprocess.run(
         [sys.executable, str(VALIDATOR), path, *extra_args],
         capture_output=True,
         text=True,
+        env=env,
+        encoding="utf-8",
+        errors="replace",
     )
 
 

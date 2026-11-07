@@ -223,8 +223,10 @@ def produce_film(
     aspect: str = typer.Option("16:9", "--aspect", "-a", help="Aspect ratio: '16:9' or '9:16'"),
     screenplay_mode: str = typer.Option("strict-checklist", "--screenplay-mode", help="Screenplay review: strict-checklist or holistic (experimental)."),
     voice_provider: str = typer.Option("deepgram", "--voice-provider", "-v", help="Narration provider: 'deepgram', 'voyslity', 'elevenlabs', or 'azure'"),
-    plan_only: bool = typer.Option(False, "--plan-only", "-p", help="Generate production bible, character DNA, and handoff scenes without rendering"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Run local offline simulation without remote provider calls"),
+    plan_only: bool = typer.Option(False, "--plan-only", "-p", help="Generate production bible, character DNA, and handoff scenes without rendering (Tier 1: Zero-Cost Draft & Experiment Mode)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Run local offline simulation without remote provider calls (Tier 1: Zero-Cost Draft & Experiment Mode)"),
+    test: bool = typer.Option(False, "--test", help="Tier 2: Rapid test validation mode (360p low resolution, ~30-40 credits)"),
+    real: bool = typer.Option(False, "--real", help="Tier 3: Final broadcast cinematic master mode (720p HD master)"),
     no_music: bool = typer.Option(False, "--no-music", help="Disable background audio bed"),
     no_captions: bool = typer.Option(False, "--no-captions", help="Disable burned Libass karaoke subtitles"),
     hero_plate: Optional[str] = typer.Option(None, "--hero-plate", help="Path to character hero plate image for continuity QA"),
@@ -254,8 +256,34 @@ def produce_film(
     """Produce a complete cinematic film through Flow, voice, and FFmpeg.
 
     Set --max-patch-passes to 0 or 1 to control selective video repairs.
+
+    Tiers:
+      - Tier 1: Zero-Cost Draft & Experiment Mode (--plan-only, --dry-run)
+      - Tier 2: Rapid test validation mode (--test, 360p, ~30-40 credits)
+      - Tier 3: Final broadcast cinematic master (--real, 720p Broadcast Master)
     """
+    if test and real:
+        console.print("[bold red][ERROR] Conflicting options: Cannot specify both --test and --real simultaneously.[/bold red]")
+        raise typer.BadParameter("Cannot specify both --test and --real simultaneously.", param_hint="--test / --real")
+
     slug = sanitize_slug(title)
+
+    # Resolve Execution Mode & VEO Mode
+    if test:
+        veo_mode = "fast"
+        execution_mode = "test"
+    elif real:
+        veo_mode = "quality"
+        execution_mode = "real"
+    elif dry_run:
+        execution_mode = "test"
+    elif plan_only:
+        execution_mode = "plan"
+    elif veo_mode.lower() in ("fast", "360p", "lite", "preview"):
+        execution_mode = "test"
+    else:
+        execution_mode = "real"
+
     normalized_veo_mode = veo_mode.lower()
     if normalized_veo_mode not in ("quality", "fast", "lite", "720p", "360p"):
         raise typer.BadParameter("Choose quality, fast, or lite", param_hint="--veo-mode")
@@ -268,6 +296,33 @@ def produce_film(
     elif normalized_veo_mode in ("lite", "preview"):
         os.environ["VEO_QUALITY_MODE"] = "lite"
         os.environ["FLOW_VIDEO_TEST_QUALITY"] = "360p"
+
+    os.environ["FLOW_EXECUTION_MODE"] = execution_mode
+    os.environ["EXECUTION_MODE"] = execution_mode
+
+    # Tier Classification and Prominent Log Notice
+    if plan_only or dry_run:
+        tier_level = 1
+        tier_name = "TIER 1: ZERO-COST DRAFT & EXPERIMENT MODE"
+        tier_desc = "Tier 1: Zero-Cost Draft & Experiment Mode (Bible, DNA & Handoff Scenes)" if plan_only else "Tier 1: Zero-Cost Draft & Experiment Mode (Offline Simulation)"
+        tier_badge = "[bold cyan][TIER 1: ZERO-COST DRAFT & EXPERIMENT MODE][/bold cyan]"
+        tier_badge_plain = "[TIER 1: ZERO-COST DRAFT & EXPERIMENT MODE]"
+        logger.info("[TIER 1: ZERO-COST DRAFT & EXPERIMENT MODE]")
+    elif execution_mode == "test":
+        tier_level = 2
+        tier_name = "TIER 2: RAPID TEST VALIDATION MODE (360p, Low Credit Cost)"
+        tier_desc = "Tier 2: Rapid Test Validation Mode (360p, ~30-40 credits)"
+        tier_badge = "[bold yellow][TIER 2: RAPID TEST VALIDATION MODE (360p, Low Credit Cost)][/bold yellow]"
+        tier_badge_plain = "[TIER 2: RAPID TEST VALIDATION MODE (360p, Low Credit Cost)]"
+        logger.info("[TIER 2: RAPID TEST VALIDATION MODE (360p, Low Credit Cost)]")
+    else:
+        tier_level = 3
+        tier_name = "TIER 3: BROADCAST CINEMATIC MASTER (720p Omni 1.2 Flash + Nano Banana Hero Frame)"
+        tier_desc = "Tier 3: Broadcast Cinematic Master (720p HD Master)"
+        tier_badge = "[bold green][TIER 3: BROADCAST CINEMATIC MASTER (720p Omni 1.2 Flash + Nano Banana Hero Frame)][/bold green]"
+        tier_badge_plain = "[TIER 3: BROADCAST CINEMATIC MASTER (720p Omni 1.2 Flash + Nano Banana Hero Frame)]"
+        logger.info("[TIER 3: BROADCAST CINEMATIC MASTER (720p Omni 1.2 Flash + Nano Banana Hero Frame)]")
+
     if screenplay_mode not in {"strict-checklist", "holistic"}:
         raise typer.BadParameter("Choose strict-checklist or holistic", param_hint="--screenplay-mode")
     if short_test:
@@ -286,8 +341,11 @@ def produce_film(
     sequences_dir = _ROOT / "sequences"
     sequences_dir.mkdir(parents=True, exist_ok=True)
 
+    console.print(tier_badge)
     console.print(Panel(
         f"[bold cyan]Grok Imagine Cinematic Studio v4.0[/bold cyan] [yellow]x[/yellow] [bold green]Google Flow CDP Engine[/bold green]\n\n"
+        f"[TIER] [b]Production Tier:[/b] {tier_name}\n"
+        f"[EXECUTION] [b]Execution Mode:[/b] {execution_mode.upper()} ({'360p Low-Cost Preview' if execution_mode == 'test' else '720p Broadcast Master' if execution_mode == 'real' else 'Pre-Production Plan'})\n"
         f"[FILM] [b]Project Title:[/b] {title}\n"
         f"[GENRE] [b]Genre:[/b] {genre}\n"
         f"[ENGINE] [b]Physical Engine:[/b] {engine.upper()} (Google Flow CDP + Remotion + Deepgram + FFmpeg)\n"
@@ -297,8 +355,8 @@ def produce_film(
         f"[DIRECTOR] [b]Director Mode:[/b] {director_mode} (UDSE v4.2 & HEAL/CANONIZE)\n"
         f"[TIME] [b]Target Duration:[/b] {duration}s ({aspect})\n"
         f"[DRY-RUN] [b]Dry Run:[/b] {dry_run}",
-        title="[FILM] Production Launch v4.0",
-        border_style="cyan"
+        title=f"[FILM] Production Launch v4.0 -- Tier {tier_level}",
+        border_style="cyan" if tier_level == 1 else ("yellow" if tier_level == 2 else "green")
     ))
 
     # Phase 1: Grok Studio Brain (Production Bible & Scenario Generation)
@@ -670,6 +728,10 @@ def produce_film(
         "episode": episode,
         "duration": duration,
         "aspect": aspect,
+        "tier": tier_level,
+        "tier_name": tier_name,
+        "execution_mode": execution_mode,
+        "veo_mode": veo_mode,
         "ai_critique": scorecard.ai_critique,
         "adversarial_review": {
             "passed": scorecard.passed,
@@ -687,13 +749,16 @@ def produce_film(
 
     if plan_only:
         console.print(Panel(
-            f"[bold yellow][PLAN ONLY] Pre-Production Complete[/bold yellow]\n\n"
+            f"[bold yellow][{tier_badge_plain}] Pre-Production Complete[/bold yellow]\n\n"
+            f"[TIER] [b]Production Tier:[/b] {tier_name}\n"
+            f"[EXECUTION] [b]Execution Mode:[/b] {execution_mode.upper()}\n"
             f"[BIBLE] [b]Production Bible:[/b] {bible_path}\n"
             f"[HANDOFF] [b]Handoff Scenes:[/b] {handoff_path}\n"
             f"[SCENES] [b]Scene Count:[/b] {len(scenes)} scenes\n\n"
-            f"[TIP] To physically produce video, run without --plan-only:\n"
-            f"python tools/cinematic_studio_cli.py produce-film \"{title}\" --genre \"{genre}\" --duration {duration}{' --short-test' if short_test else ''}",
-            title="[HALT] Ready for Production Review",
+            f"[TIP] To physically produce video, choose your execution tier:\n"
+            f"  - Rapid Test (Tier 2, 360p, ~30-40 credits): python tools/cinematic_studio_cli.py produce-film \"{title}\" --genre \"{genre}\" --duration {duration}{' --short-test' if short_test else ''} --test\n"
+            f"  - Broadcast Master (Tier 3, 720p HD Master): python tools/cinematic_studio_cli.py produce-film \"{title}\" --genre \"{genre}\" --duration {duration}{' --short-test' if short_test else ''} --real",
+            title="[HALT] Ready for Production Review -- Tier 1 Complete",
             border_style="yellow"
         ))
         return
@@ -801,6 +866,8 @@ def produce_film(
         shorts_line = f"\n[VERTICAL] [b]Vertical Cut (9:16):[/b] {shorts_path}" if (shorts_path and shorts_path.is_file()) else ""
         console.print(Panel(
             f"[bold green][DONE] Film Successfully Produced![/bold green]\n\n"
+            f"[TIER] [b]Production Tier:[/b] {tier_name}\n"
+            f"[EXECUTION] [b]Execution Mode:[/b] {execution_mode.upper()}\n"
             f"[VIDEO] [b]Final MP4:[/b] {final_mp4}\n"
             f"[THUMBNAIL] [b]Thumbnail:[/b] {thumbnail_path}{shorts_line}\n"
             f"[AUDIO] [b]Audio Layers Active (3 Layers):[/b]\n"
@@ -808,7 +875,7 @@ def produce_film(
             f"  • Layer 2 (Background Music Bed): -14 LUFS (TTS Sidechain Ducked)\n"
             f"  • Layer 3 (SFX Foley): {os.getenv('SFX_PROVIDER', 'gradio_space')} / AudioGen / TangoFlux\n"
             f"[OUT] [b]Production Assets:[/b] {out_dir}",
-            title="[COMPLETE] Production Complete",
+            title=f"[COMPLETE] Production Complete -- Tier {tier_level}",
             border_style="green"
         ))
     else:
@@ -819,5 +886,5 @@ def register(app: typer.Typer) -> None:
     """Register 'produce-film' command to the root Typer CLI."""
     app.command(
         name="produce-film",
-        help="[Primary Engine] Produce a complete film through Flow CDP, voice, and FFmpeg. Set --max-patch-passes to 0 or 1 for selective video repairs. Supports --veo-mode (quality/fast/lite).",
+        help="[Primary Engine] Produce a complete film through Flow CDP, voice, and FFmpeg. Set --max-patch-passes to 0 or 1 for selective video repairs. Supports Tiers: Tier 1 (--plan-only, --dry-run), Tier 2 (--test, 360p), Tier 3 (--real, 720p).",
     )(produce_film)

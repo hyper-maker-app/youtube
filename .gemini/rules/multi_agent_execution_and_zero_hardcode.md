@@ -17,7 +17,16 @@ When executing any engineering, feature integration, or multi-step implementatio
    - After all implementation subagents complete their tasks, an independent **Auditor / QA Reviewer Subagent** MUST be invoked.
    - The Auditor Subagent inspects all changed files, checks for code regressions, verifies zero hardcode, runs the automated test suite (`pytest`, `npm test`, CLI tests), and actively fixes any detected defects.
 
-4. **Main Lead Agent Final Verification & User Presentation:**
+4. **Mandatory Multi-IDE & Governance Synchronization (CRITICAL):**
+   - Coding agents MUST NEVER stop at Python engines and unit tests.
+   - Every architectural, pipeline, model, or CLI change MUST synchronously update all agent governance files:
+     * `.gemini/rules/` (Antigravity / Gemini guidelines)
+     * `.cursor/rules/` (Cursor IDE rules)
+     * `.grok/skills/` (Grok Build skills)
+     * `AGENTS.md`, `README.md`, and `references/MODELS.md`
+   - The Auditor Subagent MUST verify that all IDE rule directories reflect the latest changes before giving final sign-off.
+
+5. **Main Lead Agent Final Verification & User Presentation:**
    - Once the Auditor Subagent reports full pass, the Main Lead Agent conducts a final end-to-end sanity verification.
    - The Main Lead Agent compiles and presents the final summary, test evidence, and walkthrough to the user.
 

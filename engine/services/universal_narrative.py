@@ -61,9 +61,19 @@ def format_catastrophe_title(threat: str, number: int | str, location: str) -> s
 def is_catastrophe_title(title: str) -> bool:
     return bool(re.match(r"what\s+if\s+.+", (title or "").strip(), re.I))
 
+RHYTHMIC_DURATION_DIRECTIVE = (
+    "=== [RHYTHMIC DURATION & B-ROLL DIRECTIVE] ===\n"
+    "Enforce dynamic rhythmic pacing using discrete video block durations:\n"
+    "- High-action, escape, pursuit, shock, or rapid impact scenes: set \"duration\": 4.0\n"
+    "- Dialogue, monologue, tension, survival preparation, or atmospheric moments: set \"duration\": 8.0\n"
+    "- Radar, maps, telemetry HUDs, or resource depletion counters: set \"is_data_broll\": true (Remotion B-roll template).\n"
+    "Ensure every scene's duration matches its dramatic tempo (4.0 or 8.0 seconds)."
+)
+
 def build_llm_genre_system_prompt(title: str, genre: str, duration: int, aspect: str = "16:9") -> str:
     from engine.services.skill_loader import get_skill_loader
-    return get_skill_loader().build_unified_system_prompt(title=title,genre=genre,duration=duration,aspect=aspect)
+    base_prompt = get_skill_loader().build_unified_system_prompt(title=title,genre=genre,duration=duration,aspect=aspect)
+    return f"{base_prompt}\n\n{RHYTHMIC_DURATION_DIRECTIVE}"
 
 def build_llm_catastrophe_system_prompt(title: str, duration: int = 300, aspect: str = "16:9") -> str:
     return build_llm_genre_system_prompt(title, "catastrophe", duration, aspect)
@@ -92,6 +102,8 @@ def screenplay_schema(scene_count: int) -> dict[str, Any]:
 
 async def _generate_script_async(title: str, genre: str, duration: int, aspect: str, llm_provider: Any, skill_loader: Any = None, short_test: bool = False) -> list[dict[str,Any]]:
     system_prompt = skill_loader.build_unified_system_prompt(title=title,genre=genre,duration=duration,aspect=aspect) if skill_loader is not None else build_llm_genre_system_prompt(title,genre,duration,aspect)
+    if RHYTHMIC_DURATION_DIRECTIVE not in system_prompt:
+        system_prompt += f"\n\n{RHYTHMIC_DURATION_DIRECTIVE}"
     if short_test:
         loader = skill_loader
         if loader is None:
@@ -209,4 +221,4 @@ class UniversalNarrativeEngine:
     def generate_screenplay(self,title: str,genre: str = "catastrophe",duration: int = 300,aspect: str = "16:9",voice_provider: str = "deepgram",dry_run: bool = False,**kwargs: Any) -> list[dict[str,Any]]:
         return generate_5act_script(title,genre,duration,aspect,self.llm_provider,simulation=dry_run,skill_loader=self.skill_loader,short_test=kwargs.get("short_test", False))
 
-__all__ = ["GENRE_CATASTROPHE","GenreArchetype","UniversalNarrativeEngine","detect_genre_archetype","generate_catastrophe_scenes","generate_universal_scenes","generate_5act_script","build_llm_genre_system_prompt","build_llm_catastrophe_system_prompt","standardize_catastrophe_title","format_catastrophe_title","is_catastrophe_title","snap_to_veo_duration","load_simulation_scenes","screenplay_schema"]
+__all__ = ["GENRE_CATASTROPHE","GenreArchetype","UniversalNarrativeEngine","detect_genre_archetype","generate_catastrophe_scenes","generate_universal_scenes","generate_5act_script","build_llm_genre_system_prompt","build_llm_catastrophe_system_prompt","standardize_catastrophe_title","format_catastrophe_title","is_catastrophe_title","snap_to_veo_duration","load_simulation_scenes","screenplay_schema","RHYTHMIC_DURATION_DIRECTIVE"]

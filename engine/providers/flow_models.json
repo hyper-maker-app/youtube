@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "checked_at": "2026-10-21",
+  "checked_at": "2026-11-07",
   "source": "https://support.google.com/flow/answer/16352836?hl=en",
   "video": {
-    "alias": "gemini_omni_flash_1_1",
-    "display_name": "Omni 1.1 Flash",
+    "alias": "gemini_omni_flash_1_2",
+    "display_name": "Omni 1.2 Flash",
     "cli_name": null,
     "transport_verified": false,
     "transport_strategy": "internal_conditioned_model",
@@ -68,110 +68,236 @@
     "display_name_verified": true,
     "display_name_match": true,
     "reference_transport_verified": false,
-    "requested_display_name": "Gemini Omni Flash 1.1",
-    "response_contract_verified": true,
-    "catalog_evidence": {
-      "observed_at": "2026-10-21T20:59:59.528102+00:00",
-      "origin": "https://flow.google.com",
-      "rpc_id": "HTrJv",
-      "http_status": 200,
-      "record_path": [
-        0,
-        4,
-        0
-      ],
+    "requested_display_name": "Gemini Omni Flash 1.2",
+    "response_contract_verified": true
+  },
+  "video_models": {
+    "gemini_omni_flash_1_1": {
+      "alias": "gemini_omni_flash_1_1",
       "display_name": "Omni 1.1 Flash",
-      "internal_model_keys": [
-        "abra_i2v_10s",
-        "abra_i2v_10s_360p",
-        "abra_i2v_4s",
-        "abra_i2v_4s_360p",
-        "abra_i2v_6s",
-        "abra_i2v_6s_360p",
-        "abra_i2v_8s",
-        "abra_i2v_8s_360p",
-        "abra_r2v_10s",
-        "abra_r2v_10s_360p",
-        "abra_r2v_4s",
-        "abra_r2v_4s_360p",
-        "abra_r2v_6s",
-        "abra_r2v_6s_360p",
-        "abra_r2v_8s",
-        "abra_r2v_8s_360p",
-        "abra_t2v_10s",
-        "abra_t2v_10s_360p",
-        "abra_t2v_4s",
-        "abra_t2v_4s_360p",
-        "abra_t2v_6s",
-        "abra_t2v_6s_360p",
-        "abra_t2v_8s",
-        "abra_t2v_8s_360p",
-        "omni_flash_i2v_10s_first_last",
-        "omni_flash_i2v_10s_first_last_360p",
-        "omni_flash_i2v_4s_first_last",
-        "omni_flash_i2v_4s_first_last_360p",
-        "omni_flash_i2v_6s_first_last",
-        "omni_flash_i2v_6s_first_last_360p",
-        "omni_flash_i2v_8s_first_last",
-        "omni_flash_i2v_8s_first_last_360p"
+      "retired_after": "2026-12-05",
+      "cli_name": null,
+      "transport_verified": false,
+      "transport_strategy": "internal_conditioned_model",
+      "model_families": {
+        "text_to_video": "abra_t2v_{duration}s",
+        "start_frame": "abra_i2v_{duration}s",
+        "start_and_end_frame": "omni_flash_i2v_{duration}s_first_last",
+        "references": "abra_r2v_{duration}s"
+      },
+      "supported_native_durations": [
+        4,
+        6,
+        8,
+        10
       ],
-      "method": "Passive HTrJv HTTP 200 during reload of existing signed-in project; scripts/flow_preflight.py; no generation or credential access"
+      "supported_qualities": [
+        "360p",
+        "720p"
+      ],
+      "supported_aspect_ratios": [
+        "9:16",
+        "16:9"
+      ],
+      "supports_text_to_video": true,
+      "supports_first_frame": true,
+      "supports_first_and_last_frame": true,
+      "supports_references": true,
+      "supports_video_editing": true,
+      "supports_extend": false,
+      "source_dispatch_verified": true,
+      "internal_model_keys": [
+        "abra_t2v_4s",
+        "abra_t2v_6s",
+        "abra_t2v_8s",
+        "abra_t2v_10s",
+        "abra_i2v_4s",
+        "abra_i2v_6s",
+        "abra_i2v_8s",
+        "abra_i2v_10s",
+        "omni_flash_i2v_4s_first_last",
+        "omni_flash_i2v_6s_first_last",
+        "omni_flash_i2v_8s_first_last",
+        "omni_flash_i2v_10s_first_last",
+        "abra_r2v_4s",
+        "abra_r2v_6s",
+        "abra_r2v_8s",
+        "abra_r2v_10s"
+      ],
+      "conditioning_dispatch": {
+        "text_to_video": "abra_t2v_{duration}s",
+        "start_frame": "abra_i2v_{duration}s",
+        "start_and_end_frame": "omni_flash_i2v_{duration}s_first_last",
+        "references": "abra_r2v_{duration}s"
+      },
+      "rpc_ids": {
+        "text_to_video": "YhhmEf",
+        "start_frame": "eb1hJf",
+        "start_and_end_frame": "nprQif",
+        "references": "MZZa6b"
+      },
+      "display_name_verified": true,
+      "display_name_match": true,
+      "reference_transport_verified": false,
+      "requested_display_name": "Gemini Omni Flash 1.1",
+      "response_contract_verified": true
     },
-    "requested_display_name_exact_match": false,
-    "conditioning_evidence": {
-      "text_to_video": {
-        "request_fields_verified": true,
-        "outcome_schema": "batch_video_evidence_v2",
-        "runtime_verified": false
+    "gemini_omni_flash_1_2": {
+      "alias": "gemini_omni_flash_1_2",
+      "display_name": "Omni 1.2 Flash",
+      "cli_name": null,
+      "transport_verified": false,
+      "transport_strategy": "internal_conditioned_model",
+      "model_families": {
+        "text_to_video": "abra_t2v_{duration}s",
+        "start_frame": "abra_i2v_{duration}s",
+        "start_and_end_frame": "omni_flash_i2v_{duration}s_first_last",
+        "references": "abra_r2v_{duration}s"
       },
-      "start_frame": {
-        "request_fields_verified": true,
-        "outcome_schema": "batch_video_evidence_v2",
-        "runtime_verified": false
+      "supported_native_durations": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "supported_qualities": [
+        "360p",
+        "720p"
+      ],
+      "supported_aspect_ratios": [
+        "9:16",
+        "16:9"
+      ],
+      "supports_text_to_video": true,
+      "supports_first_frame": true,
+      "supports_first_and_last_frame": true,
+      "supports_references": true,
+      "supports_video_editing": true,
+      "supports_extend": false,
+      "source_dispatch_verified": true,
+      "internal_model_keys": [
+        "abra_t2v_4s",
+        "abra_t2v_6s",
+        "abra_t2v_8s",
+        "abra_t2v_10s",
+        "abra_i2v_4s",
+        "abra_i2v_6s",
+        "abra_i2v_8s",
+        "abra_i2v_10s",
+        "omni_flash_i2v_4s_first_last",
+        "omni_flash_i2v_6s_first_last",
+        "omni_flash_i2v_8s_first_last",
+        "omni_flash_i2v_10s_first_last",
+        "abra_r2v_4s",
+        "abra_r2v_6s",
+        "abra_r2v_8s",
+        "abra_r2v_10s"
+      ],
+      "conditioning_dispatch": {
+        "text_to_video": "abra_t2v_{duration}s",
+        "start_frame": "abra_i2v_{duration}s",
+        "start_and_end_frame": "omni_flash_i2v_{duration}s_first_last",
+        "references": "abra_r2v_{duration}s"
       },
-      "start_and_end_frame": {
-        "request_fields_verified": true,
-        "outcome_schema": "batch_video_evidence_v2",
-        "runtime_verified": false
+      "rpc_ids": {
+        "text_to_video": "YhhmEf",
+        "start_frame": "eb1hJf",
+        "start_and_end_frame": "nprQif",
+        "references": "MZZa6b"
       },
-      "references": {
-        "request_fields_verified": false,
-        "outcome_schema": null,
-        "runtime_verified": false
-      }
+      "display_name_verified": true,
+      "display_name_match": true,
+      "reference_transport_verified": false,
+      "requested_display_name": "Gemini Omni Flash 1.2",
+      "response_contract_verified": true
+    },
+    "veo_3_1_lite": {
+      "alias": "veo_3_1_lite",
+      "display_name": "Veo 3.1 Lite",
+      "cli_name": null,
+      "credits": 10,
+      "credit_cost": 10,
+      "transport_verified": false,
+      "transport_strategy": "internal_conditioned_model",
+      "supported_native_durations": [
+        4,
+        6,
+        8,
+        10
+      ],
+      "supported_qualities": [
+        "360p",
+        "720p"
+      ],
+      "supported_aspect_ratios": [
+        "9:16",
+        "16:9"
+      ],
+      "supports_text_to_video": true,
+      "supports_first_frame": true,
+      "supports_first_and_last_frame": true,
+      "supports_references": false,
+      "supports_video_editing": false,
+      "supports_extend": false,
+      "source_dispatch_verified": true,
+      "display_name_verified": true,
+      "display_name_match": true,
+      "requested_display_name": "Veo 3.1 Lite",
+      "response_contract_verified": true
     }
   },
   "image": {
-    "alias": "nano_banana_pro",
-    "display_name": "\ud83c\udf4c Nano Banana Pro",
-    "cli_name": "gem_pix_2",
+    "alias": "nano_banana_2_1",
+    "display_name": "🍌 Nano Banana 2.1",
+    "cli_name": "gem_pix_2_1",
+    "credits": 0,
+    "credit_cost": 0,
+    "free": true,
     "transport_verified": false,
-    "transport_strategy": "flow_go_image_models.GEM_PIX_2",
+    "transport_strategy": "flow_go_image_models.GEM_PIX_2_1",
     "source_dispatch_verified": true,
     "internal_model_keys": [
-      "GEM_PIX_2"
+      "GEM_PIX_2_1"
     ],
     "display_name_match": true,
     "display_name_verified": true,
-    "requested_display_name": "Nano Banana Pro",
-    "response_contract_verified": false,
-    "catalog_evidence": {
-      "observed_at": "2026-10-21T20:59:59.528102+00:00",
-      "origin": "https://flow.google.com",
-      "rpc_id": "HTrJv",
-      "http_status": 200,
-      "record_path": [
-        0,
-        5,
-        0
-      ],
-      "display_name": "\ud83c\udf4c Nano Banana Pro",
+    "requested_display_name": "Nano Banana 2.1",
+    "response_contract_verified": false
+  },
+  "image_models": {
+    "nano_banana_pro": {
+      "alias": "nano_banana_pro",
+      "display_name": "🍌 Nano Banana Pro",
+      "cli_name": "gem_pix_2",
+      "transport_verified": false,
+      "transport_strategy": "flow_go_image_models.GEM_PIX_2",
+      "source_dispatch_verified": true,
       "internal_model_keys": [
         "GEM_PIX_2"
       ],
-      "method": "Passive HTrJv HTTP 200 during reload of existing signed-in project; scripts/flow_preflight.py; no generation or credential access"
+      "display_name_match": true,
+      "display_name_verified": true,
+      "requested_display_name": "Nano Banana Pro",
+      "response_contract_verified": false
     },
-    "requested_display_name_exact_match": false
+    "nano_banana_2_1": {
+      "alias": "nano_banana_2_1",
+      "display_name": "🍌 Nano Banana 2.1",
+      "cli_name": "gem_pix_2_1",
+      "credits": 0,
+      "credit_cost": 0,
+      "free": true,
+      "transport_verified": false,
+      "transport_strategy": "flow_go_image_models.GEM_PIX_2_1",
+      "source_dispatch_verified": true,
+      "internal_model_keys": [
+        "GEM_PIX_2_1"
+      ],
+      "display_name_match": true,
+      "display_name_verified": true,
+      "requested_display_name": "Nano Banana 2.1",
+      "response_contract_verified": false
+    }
   },
   "transport": {
     "verified_binary_sha256": "8f3527ef192a61ae8cecfc2ca2a889258b63b8a5220e4f7c4069bb12df7e49b9",
